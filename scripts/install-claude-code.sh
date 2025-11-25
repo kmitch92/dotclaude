@@ -14,7 +14,7 @@ if command_exists claude; then
     echo ""
     if confirm "Update Claude Code to latest version?"; then
         if is_macos; then
-            brew upgrade claude
+            brew upgrade --cask claude-code
             print_success "Claude Code updated"
         elif is_linux; then
             print_info "Updating Claude Code..."
@@ -46,13 +46,8 @@ else
     if confirm "Install Claude Code?"; then
         if is_macos; then
             print_info "Installing via Homebrew..."
-            
-            # Add Anthropic tap if not already added
-            if ! brew tap | grep -q "anthropics/claude"; then
-                brew tap anthropics/claude
-            fi
-            
-            brew install claude
+
+            brew install --cask claude-code
             print_success "Claude Code installed"
             
         elif is_linux; then
