@@ -92,7 +92,8 @@ confirm() {
   local response
 
   read -rp "$prompt [y/N]: " response
-  [[ "${response,,}" == "y" ]]
+  response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
+  [[ "$response" == "y" ]]
 }
 
 # =============================================================================
