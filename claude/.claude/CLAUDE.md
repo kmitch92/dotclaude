@@ -162,7 +162,8 @@ My primary responsibility is routing tasks to the appropriate specialized agents
 | **Technical Architect** | Task breakdown, WIP.md | All | Complex features, multi-session work |
 | **Test Writer** | TDD, behavioral testing | All | Writing tests, coverage verification |
 | **TypeScript Connoisseur** | TypeScript, Zod schemas | All | Type definitions, schema design |
-| **Quality & Refactoring** | Code review + refactoring + git | All | Post-green assessment, commits, PRs |
+| **Quality & Refactoring** | Code review + refactoring | All | Post-green assessment, refactoring opportunities |
+| **Git Specialist** | Git operations, commits, branches | Bash(git:*), Read, Grep, Glob | Commits, branches, push to remote (user creates PRs in browser) |
 | **Production Readiness** | Security + performance | All + Browser Tools MCP | Security audits, performance profiling |
 | **Backend TypeScript** | API/DB design + implementation | All | API contracts, database schemas, Lambda |
 | **Shell Specialist** | Shell scripting + automation | All | Shell scripts, git hooks (implementation), CLI automation |
@@ -173,13 +174,13 @@ My primary responsibility is routing tasks to the appropriate specialized agents
 
 | Task Type | Pattern |
 |-----------|---------|
-| **New Features** | Architect → Design (API/DB) → For each task: Test Writer (RED) → Domain Agent (GREEN) → Test Writer (verify) → Production Readiness (if needed) → Quality & Refactoring (assess) → Documentation (CHANGELOG + CLAUDE.md) → Quality & Refactoring (commit) |
-| **Bug Fixes** | Test Writer (failing test) → Domain Agent (fix) → Test Writer (verify + edge cases) → Quality & Refactoring (assess) → Documentation (CHANGELOG + CLAUDE.md) → Quality & Refactoring (commit) |
-| **Refactoring** | Quality & Refactoring (assess) → Test Writer (100% coverage check) → Domain Agent (refactor maintaining API) → Test Writer (tests pass without changes) → Quality & Refactoring (review) → Documentation (CHANGELOG + CLAUDE.md) → Quality & Refactoring (commit) |
+| **New Features** | Architect → Design (API/DB) → For each task: Test Writer (RED) → Domain Agent (GREEN) → Test Writer (verify) → Production Readiness (if needed) → Quality & Refactoring (assess) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit) |
+| **Bug Fixes** | Test Writer (failing test) → Domain Agent (fix) → Test Writer (verify + edge cases) → Quality & Refactoring (assess) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit) |
+| **Refactoring** | Quality & Refactoring (assess) → Test Writer (100% coverage check) → Domain Agent (refactor maintaining API) → Test Writer (tests pass without changes) → Quality & Refactoring (review) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit) |
 | **Code Review** | Batch 1: Quality & Refactoring + Test Writer + TypeScript Connoisseur (3 parallel), then Batch 2: Production Readiness (if security-critical). NEVER run >3 agents in parallel. Synthesize feedback. |
-| **Documentation** | documentation-specialist → Domain Agent (if needed) → Quality & Refactoring (commit) |
-| **Security Review** | Production Readiness (identify) → Test Writer (security tests) → Domain Agent (fix) → Production Readiness (verify) → Documentation (CHANGELOG + CLAUDE.md) → Quality & Refactoring (commit) |
-| **Performance Optimization** | Production Readiness (profile) → Test Writer (benchmark) → Domain Agent (optimize) → Production Readiness (verify) → Test Writer (regression test) → Documentation (CHANGELOG + CLAUDE.md) → Quality & Refactoring (commit) |
+| **Documentation** | documentation-specialist → Domain Agent (if needed) → Git Specialist (commit) |
+| **Security Review** | Production Readiness (identify) → Test Writer (security tests) → Domain Agent (fix) → Production Readiness (verify) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit) |
+| **Performance Optimization** | Production Readiness (profile) → Test Writer (benchmark) → Domain Agent (optimize) → Production Readiness (verify) → Test Writer (regression test) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit) |
 
 **⚠️ COMMIT DISCIPLINE:** For multi-task features, commit after EACH task completes (not at the end of all tasks). Each pattern above = one commit. See "Commit at Every Stable State" section below.
 
@@ -242,7 +243,7 @@ All code changes follow this delegated process:
    - Delegate to **Test Writer**: Verify tests pass
    - Delegate to **quality-refactoring-specialist**: Assess refactoring opportunities
    - Delegate to **documentation-specialist**: Update CHANGELOG.md + project CLAUDE.md
-   - Delegate to **quality-refactoring-specialist**: Commit changes
+   - Delegate to **git-specialist**: Commit changes
 
 Main Agent role: Orchestrate this workflow. NEVER implement any step directly.
 
@@ -273,7 +274,7 @@ Main Agent role: Orchestrate this workflow. NEVER implement any step directly.
 - ✗ Breaking existing functionality
 
 **Enforcement:**
-- quality-refactoring-specialist: Commit after EACH task completion
+- git-specialist: Commit after EACH task completion
 - Main Agent: Ensure commits happen before moving to next task
 - Benefits: Clear progress, easy rollback, reviewable history
 
@@ -312,7 +313,7 @@ Main Agent role: Orchestrate this workflow. NEVER implement any step directly.
 **Timing:**
 1. Update CHANGELOG.md first (required)
 2. Update project CLAUDE.md second (if technical context discovered)
-3. Then quality-refactoring-specialist commits both
+3. Then git-specialist commits both
 
 ### Documentation Directory Structure
 
@@ -329,7 +330,7 @@ Main Agent role: Orchestrate this workflow. NEVER implement any step directly.
 | Refactoring | Quality & Refactoring → Domain Agent | Assess → Execute |
 | Code review | Quality & Refactoring + Test Writer + TypeScript + Production Readiness (batched) | Sequential batches |
 | Documentation | documentation-specialist | Update docs |
-| Git operation | Quality & Refactoring | Commits, PRs |
+| Git operation | git-specialist | Commits, branches, push |
 | Unclear requirements | Ask user | Clarify first |
 
 ### Agent Quick Lookup
@@ -343,7 +344,7 @@ Main Agent role: Orchestrate this workflow. NEVER implement any step directly.
 - **Shell Scripts**: Shell Specialist
 - **React**: React TypeScript Expert
 - **Docs**: documentation-specialist
-- **Git Operations**: quality-refactoring-specialist
+- **Git Operations**: git-specialist
 
 ### Core Principles Quick Check
 
