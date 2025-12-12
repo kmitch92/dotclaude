@@ -53,6 +53,10 @@
 !claude/.claude/scripts/
 !claude/.claude/scripts/**
 
+# Claude commands - ALLOW ALL
+!claude/.claude/commands/
+!claude/.claude/commands/**
+
 # =============================================================================
 # RUNTIME/GENERATED FILES - EXPLICIT IGNORES
 # =============================================================================
