@@ -63,14 +63,6 @@
     "aws-core",
     "aws-cdk"
   ],
-  "statusLine": {
-    "type": "command",
-    "command": "npx -y ccstatusline@latest",
-    "padding": 0
-  },
-  "enabledPlugins": {
-    "dotfiles-commands@dotfiles-marketplace": true
-  },
   "hooks": {
     "Stop": [
       {
@@ -93,6 +85,14 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "dotfiles-commands@dotfiles-marketplace": true
+  },
   "forceLoginMethod": "claudeai",
-  "alwaysThinkingEnabled": true
+  "alwaysThinkingEnabled": false
 }
