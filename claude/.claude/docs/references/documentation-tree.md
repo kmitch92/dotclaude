@@ -1,6 +1,6 @@
 # Documentation Directory Structure
 
-**Complete documentation repository structure (34 files across 4 categories):**
+**Complete documentation repository structure (35 files across 4 categories):**
 
 ```
 ~/.claude/docs/
@@ -25,11 +25,12 @@
 │   ├── severity-levels.md
 │   ├── indexing-strategies.md
 │   └── normalization.md
-└── examples/            (4 files - Walkthroughs)
+└── examples/            (5 files - Walkthroughs)
     ├── tdd-complete-cycle.md
     ├── schema-composition.md
     ├── factory-patterns.md
-    └── refactoring-journey.md
+    ├── refactoring-journey.md
+    └── git-commands-cheatsheet.md
 ```
 
 All agents have access to these docs via the Read tool.
@@ -79,6 +80,9 @@ Read file: ~/.claude/docs/references/code-style.md
 
 # Read factory pattern examples
 Read file: ~/.claude/docs/examples/factory-patterns.md
+
+# Read git commands cheatsheet
+Read file: ~/.claude/docs/examples/git-commands-cheatsheet.md
 ```
 
 ## Categories Quick Reference
@@ -91,4 +95,4 @@ Read file: ~/.claude/docs/examples/factory-patterns.md
 - **patterns/refactoring/** (3 files) - Common patterns, DRY semantics, when to refactor
 - **patterns/performance/** (2 files) - Database optimization, React optimization
 - **references/** (8 files) - Standards checklist, code style, HTTP status codes, indexing strategies, normalization, severity levels, agent quick ref, working with Claude
-- **examples/** (4 files) - TDD complete cycle, schema composition, factory patterns, refactoring journey
+- **examples/** (5 files) - TDD complete cycle, schema composition, factory patterns, refactoring journey, git commands cheatsheet
