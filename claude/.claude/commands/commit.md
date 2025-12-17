@@ -39,30 +39,27 @@ Create strictly atomic commits for all pending changes. ONE logical change per c
 
 1. **Analyze ALL changes first** (git status, git diff)
 2. **Create explicit commit plan** listing each commit BEFORE executing:
-   ```
+
    Creating N commits:
    1. feat(api): add user authentication endpoint
    2. test(api): add authentication tests
    3. docs(api): document authentication flow
    4. chore(config): update API base URL
-   ```
 3. **If >5 commits needed**: Present plan and wait for confirmation before executing
 4. **Execute commits one at a time** in planned order
 5. **Report completion**: List all created commits with SHAs
 
 ## Conventional Commit Format
 
-```
 type(scope): imperative description
 
 [optional body explaining WHY]
 
 [optional footer: breaking changes, references]
-```
 
 **Types**: feat, fix, docs, refactor, test, chore, style, perf, ci, build
 
-**Breaking changes**: Add `!` after scope. Example: `feat(api)!: change response format`
+**Breaking changes**: Add ! after scope. Example: feat(api)!: change response format
 
 **Message guidelines:**
 - Imperative mood: "add feature" not "added feature"
@@ -74,29 +71,26 @@ type(scope): imperative description
 ## Examples of Correct Atomicity
 
 ✅ **Separate commits:**
-```
+
 1. feat(auth): add JWT token generation
 2. test(auth): add JWT token tests
 3. docs(auth): document token lifecycle
 4. chore(env): add JWT_SECRET to env template
-```
 
 ✅ **Feature with tests (acceptable single commit):**
-```
+
 feat(payment): add Stripe integration
 
 Implements payment processing with Stripe API.
 Includes validation, error handling, and webhook support.
 Tests cover success and error cases.
-```
 
 ❌ **Wrong - bundling unrelated changes:**
-```
+
 feat(api): add user endpoints, update config, fix typos
 
 Added GET/POST/DELETE for users, updated CORS settings,
 fixed spelling in README.
-```
 
 ## Never Commit
 
