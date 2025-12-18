@@ -235,21 +235,75 @@ fix: fixed the thing           // Vague description
 
 # Section 2: Commit Best Practices
 
-## Atomic Commits
+## Atomic Commits & Granularity
 
-**One logical change per commit.**
+**One logical change per commit. Small file count preferred.**
 
-**Good - Atomic:**
+**Philosophy: Granularity > Completeness**
+- Small commits are easily reviewed and reverted
+- Target 1-5 files per commit
+- Separate concerns (tests, docs, config, implementation)
+- Multiple small commits for large features
+
+**Good - Atomic & Granular:**
 ```
-Commit 1: feat(auth): add user registration
-Commit 2: feat(auth): add email verification
-Commit 3: test(auth): add registration edge cases
+Commit 1: feat(auth): add user registration schema (2 files)
+Commit 2: test(auth): add registration validation tests (1 file)
+Commit 3: feat(auth): implement registration endpoint (3 files)
+Commit 4: docs(auth): document registration API (2 files)
+Commit 5: test(auth): add registration edge cases (1 file)
 ```
 
-**Bad - Non-atomic:**
+**Acceptable - Atomic but larger:**
 ```
-Commit 1: feat(auth): add registration, fix login bug, update docs, refactor database
+Commit 1: feat(auth): add user registration (8 files: schema, tests, implementation)
+[Justification in body: "Minimal registration feature requires coordinated schema, validation, and endpoint"]
 ```
+
+**Bad - Non-atomic & too large:**
+```
+Commit 1: feat(auth): add registration, fix login bug, update docs, refactor database (47 files)
+[Multiple concerns, impossible to review or revert safely]
+```
+
+**Hard limits enforced:**
+- ✓ 1-5 files: Ideal, commit immediately
+- ⚠️ 6-10 files: Acceptable if justified
+- ⚠️ 11-20 files: Requires user approval and strong justification
+- ❌ >20 files: REFUSED - must split first
+
+## Handling Large Changes (>10 files)
+
+**When facing commit with >10 files, use split strategy:**
+
+**Strategy 1: By Concern Type**
+```
+Commit 1: refactor(types): update type definitions (5 files)
+Commit 2: refactor(api): update API implementations (8 files)
+Commit 3: test(api): update tests for refactored APIs (7 files)
+Commit 4: docs: update API documentation (3 files)
+```
+
+**Strategy 2: By Module/Directory**
+```
+Commit 1: refactor(auth): modernize authentication module (9 files in src/auth/)
+Commit 2: refactor(payment): modernize payment module (8 files in src/payment/)
+Commit 3: refactor(user): modernize user module (7 files in src/user/)
+```
+
+**Strategy 3: By Dependency Chain**
+```
+Commit 1: refactor(core): update core utilities (6 files)
+Commit 2: refactor(services): update services using core (9 files)
+Commit 3: refactor(api): update API using services (8 files)
+```
+
+**If >20 files staged:**
+1. REFUSE to commit
+2. Analyze changes: `git diff --stat --staged`
+3. Identify logical groupings (by directory, concern, or dependency)
+4. Return to Main Agent with split recommendation
+5. Execute commits only after split strategy approved
 
 ## What NOT to Commit
 
@@ -269,6 +323,8 @@ Commit 1: feat(auth): add registration, fix login bug, update docs, refactor dat
 
 **Before creating commit, verify:**
 
+- [ ] **File count**: ≤5 ideal, ≤10 acceptable, ≤20 requires approval, >20 REFUSED
+- [ ] **Separation of concerns**: Config/docs/tests/code in separate commits
 - [ ] All tests passing (`npm test`)
 - [ ] Linting passes (`npm run lint`)
 - [ ] TypeScript compiles (`npm run type-check`)
@@ -277,24 +333,41 @@ Commit 1: feat(auth): add registration, fix login bug, update docs, refactor dat
 - [ ] Only intended files staged
 - [ ] Commit message follows conventional format
 - [ ] Commit is atomic (one logical change)
+- [ ] If >10 files: justification documented in commit body
+- [ ] If >20 files: STOP and request split strategy from Main Agent
 
-## Commit Timing
+## Commit Granularity & Timing
 
-**Commit at every stable state:**
+**CRITICAL: Small, frequent, revertable commits. File count is primary metric.**
+
+**Hard Limits (ENFORCED BY ME):**
+- **Target**: 1-5 files per commit (ideal)
+- **Soft limit**: 10 files per commit (require justification in commit body)
+- **Hard limit**: 20 files per commit (require explicit user approval)
+- **NEVER**: >20 files - MUST refuse and request split strategy from Main Agent
+
+**Enforcement Actions:**
+1. **>20 files**: REFUSE commit, return to Main Agent with split recommendation
+2. **10-20 files**: ASK for justification, include in commit body if provided
+3. **>5 files mixed concerns**: RECOMMEND splitting (config separate from code, docs separate)
+4. **Generated files + source**: RECOMMEND splitting
 
 **When to commit:**
-- ✓ After RED phase (failing test written and verified)
-- ✓ After GREEN phase (test passes, implementation complete)
-- ✓ After REFACTOR phase (code improved, tests still pass)
-- ✓ After documentation updates
-- ✓ After configuration changes
-- ✓ After each completed task in multi-task features
+- ✓ Schema changes → commit immediately (usually 1-3 files)
+- ✓ Test files (RED) → commit alone if >5 files total when combined with implementation
+- ✓ Implementation (GREEN) → commit (<10 files ideal)
+- ✓ Refactoring → commit in batches by module (7-10 files per commit)
+- ✓ Config changes → ALWAYS separate commit
+- ✓ Documentation → ALWAYS separate commit (CHANGELOG, README, CLAUDE.md)
+- ✓ Type definitions → commit separately if >5 files total
 
 **When NOT to commit:**
-- ✗ Mid-implementation (code doesn't compile)
+- ✗ Mid-implementation (code doesn't compile) unless using feature flags
 - ✗ Tests failing
 - ✗ Refactoring incomplete
-- ✗ Breaking existing functionality
+- ✗ Breaking existing functionality without feature flags
+- ✗ >20 files accumulated (split first)
+- ✗ Mixing unrelated concerns (config + features, docs + code)
 
 ---
 
@@ -537,14 +610,16 @@ RECOMMENDATION: Prompt user to create PR in browser for review and merge. After 
 
 Before creating any commit, verify:
 
+- ✓ **File count ≤10** (or ≤20 with approval, >20 REFUSED)
+- ✓ **Concerns separated** (config, docs, tests, code in separate commits)
 - ✓ Conventional commit format (type, scope, description)
 - ✓ Imperative mood, lowercase, ≤72 chars
 - ✓ Atomic (one logical change)
 - ✓ All tests passing
 - ✓ Linting and type checking pass
 - ✓ No secrets or sensitive data
-- ✓ CHANGELOG.md updated (user-facing changes)
-- ✓ Project CLAUDE.md updated (technical context)
+- ✓ CHANGELOG.md updated separately (user-facing changes)
+- ✓ Project CLAUDE.md updated separately (technical context)
 
 ## Branch Quality Checklist
 
@@ -579,8 +654,12 @@ Before PR creation:
 
 **Branches**: `type/description` • feature/, bugfix/, hotfix/, docs/, refactor/, test/
 
-**Atomic Commits**: One logical change per commit • Tests pass • Linting passes • Documentation updated
+**Commit Granularity**: 1-5 files ideal • 6-10 acceptable • 11-20 requires approval • >20 REFUSED
+
+**Atomic Commits**: One logical change • Small file count • Separate concerns • Tests pass • Linting passes
+
+**Separation**: Config separate • Docs separate • Tests can bundle with code if <5 files total
 
 **Deployment**: Main always deployable • NEVER auto-deploy • ALWAYS prompt user
 
-**Pre-commit**: Tests pass • Linting passes • Types valid • No secrets • Conventional format • CHANGELOG.md updated
+**Pre-commit**: File count ≤10 • Tests pass • Linting passes • Types valid • No secrets • Conventional format • CHANGELOG.md separate

@@ -144,13 +144,13 @@ My primary responsibility is routing tasks to the appropriate specialized agents
 
 | Task Type | Pattern |
 |-----------|---------|
-| **New Features** | Architect → Design (API/DB) → For each task: Test Writer (RED) → Domain Agent (GREEN) → Test Writer (verify) → Production Readiness (if needed) → Quality & Refactoring (assess) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit) |
-| **Bug Fixes** | Test Writer (failing test) → Domain Agent (fix) → Test Writer (verify + edge cases) → Quality & Refactoring (assess) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit) |
-| **Refactoring** | Quality & Refactoring (assess) → Test Writer (100% coverage check) → Domain Agent (refactor maintaining API) → Test Writer (tests pass without changes) → Quality & Refactoring (review) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit) |
+| **New Features** | Architect → Design (API/DB) → For each task: Test Writer (RED) → Git Specialist (commit test if >5 files away from target) → Domain Agent (GREEN) → Git Specialist (commit implementation, <10 files) → Test Writer (verify) → Production Readiness (if needed) → Quality & Refactoring (assess) → Domain Agent (refactor if needed) → Git Specialist (commit refactor by module) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit docs separately) |
+| **Bug Fixes** | Test Writer (failing test) → Git Specialist (commit test) → Domain Agent (fix) → Git Specialist (commit fix, <10 files) → Test Writer (verify + edge cases) → Quality & Refactoring (assess) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit docs separately) |
+| **Refactoring** | Quality & Refactoring (assess) → Test Writer (100% coverage check) → Domain Agent (refactor maintaining API, commit per module) → Git Specialist (commit batches of 7-10 files per module) → Test Writer (tests pass without changes) → Quality & Refactoring (review) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit docs separately) |
 | **Code Review** | Batch 1: Quality & Refactoring + Test Writer + TypeScript Connoisseur (3 parallel), then Batch 2: Production Readiness (if security-critical). NEVER run >3 agents in parallel. Synthesize feedback. |
-| **Documentation** | documentation-specialist → Domain Agent (if needed) → Git Specialist (commit) |
-| **Security Review** | Production Readiness (identify) → Test Writer (security tests) → Domain Agent (fix) → Production Readiness (verify) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit) |
-| **Performance Optimization** | Production Readiness (profile) → Test Writer (benchmark) → Domain Agent (optimize) → Production Readiness (verify) → Test Writer (regression test) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit) |
+| **Documentation** | documentation-specialist → Git Specialist (commit docs separately, never with code) |
+| **Security Review** | Production Readiness (identify) → Test Writer (security tests) → Git Specialist (commit tests) → Domain Agent (fix) → Git Specialist (commit fixes, <10 files per commit) → Production Readiness (verify) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit docs separately) |
+| **Performance Optimization** | Production Readiness (profile) → Test Writer (benchmark) → Git Specialist (commit benchmarks) → Domain Agent (optimize) → Git Specialist (commit optimization, <10 files) → Production Readiness (verify) → Test Writer (regression test) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit docs separately) |
 
 For comprehensive agent orchestration guidelines, see @~/.claude/docs/workflows/collaboration-workflows.md
 
@@ -185,18 +185,61 @@ All code changes follow this delegated process:
 
 Main Agent role: Orchestrate this workflow. NEVER implement any step directly.
 
-### ⚠️ COMMIT AT EVERY STABLE STATE ⚠️
+### ⚠️ COMMIT GRANULARITY: SMALL, FREQUENT, REVERTABLE ⚠️
 
-**CRITICAL: Commit frequently at every stable checkpoint. Never accumulate multiple completed tasks before committing.**
+**CRITICAL: Commits must be small, focused, and easily revertable. File count matters more than "stable states".**
 
-**When to commit (examples):**
-- ✓ After RED phase (failing test written and verified)
-- ✓ After GREEN phase (test passes, implementation complete)
-- ✓ After REFACTOR phase (code improved, tests still pass)
-- ✓ After each completed task in multi-task features
-- ✓ After documentation updates (standalone doc improvements)
-- ✓ After configuration changes (agent consolidation, settings updates)
-- ✓ After any self-contained improvement
+**Core Philosophy (Prioritized):**
+1. **Granularity over stability** - Small, reviewable commits trump "complete" commits
+2. **Revertability** - Each commit safely revertable without breaking unrelated code
+3. **Bisectability** - Git bisect should pinpoint issues to small changesets
+4. **Discoverability** - Reviewers can understand changes in isolation
+
+**Hard Limits (ENFORCED):**
+- **Target**: 1-5 files per commit (ideal)
+- **Soft limit**: 10 files per commit (requires justification in commit body)
+- **Hard limit**: 20 files per commit (requires explicit user approval)
+- **NEVER**: >20 files without splitting first
+
+**Commit Timing (New Rules):**
+
+**Commit DURING development, not just at stable states:**
+- ✓ Schema changes → commit immediately
+- ✓ Test file written (RED) → can commit alone OR with implementation if <5 files total
+- ✓ Implementation (GREEN) → commit (if not bundled with test)
+- ✓ Refactor (REFACTOR) → commit changes in batches by module/directory
+- ✓ Config changes → ALWAYS separate commit (never bundle with features)
+- ✓ Documentation → ALWAYS separate commit (CHANGELOG, README, CLAUDE.md)
+- ✓ Type definitions → commit separately from implementation
+
+**Multi-file Refactors:**
+- Commit in batches by directory or logical module
+- Example: Refactoring 30 files → 3-4 commits of 7-10 files each, grouped by module
+
+**Process for Large Changes:**
+1. **Before starting**: Estimate commit count based on files affected
+2. **During work**: Commit incrementally, don't accumulate changes
+3. **If accumulated >10 files**: STOP, commit what you have, then continue
+4. **If change spans >20 files**: Create implementation plan with commit boundaries
+
+**Anti-patterns to REJECT:**
+- ❌ "Initial implementation of X" with 50+ files
+- ❌ Bundling unrelated changes because they happened in same session
+- ❌ Waiting until "feature complete" to commit
+- ❌ Committing generated files with source changes
+- ❌ Mixing config, docs, tests, and implementation in one commit
+- ❌ "Mass refactor" commits touching 40+ files
+
+**Git Specialist Enforcement:**
+- **MUST refuse** commits >20 files
+- **MUST request** split strategy from Main Agent
+- **MUST ask** for justification if 10-20 files
+- **SHOULD recommend** splitting if >5 files and unrelated concerns mixed
+
+**Stable State Preserved:**
+- Commits should still compile and pass tests when possible
+- Partial features committed incrementally are PREFERRED over complete features in mega-commits
+- If splitting requires temporary broken state: use feature flags or skip CI
 
 **Plan Format (REQUIRED):**
 - Assign sub-agents to every step ("Backend TypeScript Specialist: implement X")
