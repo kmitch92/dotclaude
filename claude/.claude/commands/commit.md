@@ -62,7 +62,6 @@ type(scope): imperative description
 
 **Types**: feat, fix, docs, refactor, test, chore, style, perf, ci, build
 
-**Breaking changes**: Add `!` after scope. Example: `feat(api)!: change response format`
 
 **Message guidelines:**
 - Imperative mood: "add feature" not "added feature"
