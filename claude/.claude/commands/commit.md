@@ -13,6 +13,12 @@ Create strictly atomic commits for all pending changes. ONE logical change per c
 
 ## Atomicity Rules (NON-NEGOTIABLE)
 
+**ALWAYS prefer multiple granular commits over single bundled commits.**
+
+**Granularity > working intermediate states.**
+
+Lack of working intermediate state does NOT justify bundling multiple logical changes into one commit.
+
 **ONE commit = ONE logical change:**
 - Each file modification serving a distinct purpose = separate commit
 - If commit message needs "and", "also", commas = TOO BIG, split it
@@ -34,6 +40,7 @@ Create strictly atomic commits for all pending changes. ONE logical change per c
 ❌ "Various improvements" or "Multiple fixes"
 ❌ "Update files" or generic messages
 ❌ Mixing refactor with new features
+❌ Bundling tightly coupled changes just because intermediate state won't work
 
 ## Required Process
 
@@ -105,17 +112,56 @@ fixed spelling in README.
 - Large binaries (>1MB without justification)
 - Personal editor configs (.vscode, .idea) unless team standard
 
-## If Changes Cannot Be Cleanly Separated
+## If Changes Cannot Be Physically Separated
 
-**STOP and explain:**
+**Non-working intermediate commits are acceptable when they enable granular history.**
+
+**Use granular staging techniques:**
+
+1. **Partial file staging with patch mode:**
+   ```bash
+   git add -p <file>
+   # Interactively select hunks to stage
+   # Commit only the selected changes
+   ```
+
+2. **Explicit file-by-file staging:**
+   ```bash
+   git add file1.ts
+   git commit -m "feat(api): add user model"
+
+   git add file2.ts
+   git commit -m "feat(api): add user repository"
+   ```
+
+3. **Accept non-compiling intermediate commits:**
+   - Granular history is more valuable than bisectable history
+   - Intermediate commits that don't compile/work are OK
+   - Clear commit messages explain the progression
+
+**ONLY bundle as absolute last resort when:**
+- Same line contains changes serving multiple distinct purposes
+- Physical file structure makes separation literally impossible
+- Partial staging (git add -p) cannot isolate changes
+
+**If bundling required, STOP and explain:**
 1. What changes exist
-2. Why they cannot be separated
-3. Proposed alternatives
+2. Why physical separation is impossible (not just "won't work")
+3. What staging techniques were attempted (git add -p, etc)
 4. Request user guidance
 
-**Example blocking scenario:**
-"Files A, B, C are tightly coupled - changing A requires simultaneous changes to B and C to maintain working state. Recommend: single commit with detailed explanation, or refactor coupling first."
+**Example acceptable non-working intermediate:**
+```
+Commit 1: feat(api): add User type definition
+  (code doesn't compile - no implementation yet)
+
+Commit 2: feat(api): implement User repository
+  (code compiles and works)
+```
+
+**Example requiring bundling (rare):**
+"Line 42 of config.ts simultaneously changes database connection AND adds authentication - same line serves two purposes, cannot stage partially even with git add -p."
 
 ---
 
-Execute this process with discipline. Atomic commits create reviewable, revertable, bisectable history.
+Execute this process with discipline. Atomic commits create reviewable, revertable, and historically transparent changes.
