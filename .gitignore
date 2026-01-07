@@ -101,3 +101,9 @@ claude/.claude/settings.local.json
 # 2. New files/directories are ignored by default (safe by default)
 # 3. Runtime and generated files never leak into version control
 # 4. Clear separation between template (.env.mcp) and local secrets (.env.mcp.local)
+
+# =============================================================================
+# VENDOR DIRECTORY - ALLOW ALL (for git submodules)
+# =============================================================================
+!vendor/
+!vendor/**

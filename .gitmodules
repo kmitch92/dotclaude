@@ -1,0 +1,3 @@
+[submodule "vendor/coderag"]
+	path = vendor/coderag
+	url = https://github.com/JonnoC/CodeRAG.git

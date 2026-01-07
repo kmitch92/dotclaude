@@ -474,6 +474,36 @@ deploy_mcp_config() {
 }
 
 # =============================================================================
+# CodeRAG Installation (Optional)
+# =============================================================================
+
+install_coderag() {
+  print_header "Installing CodeRAG (Optional)"
+
+  print_info "CodeRAG provides a code knowledge graph for intelligent code search"
+  print_info "Requires: Docker, Node.js, ~500MB disk space"
+  echo ""
+
+  if ! confirm "Install CodeRAG MCP server?"; then
+    print_warning "Skipping CodeRAG installation"
+    print_info "You can install later with: scripts/setup-coderag.sh"
+    return 0
+  fi
+
+  # Check if setup script exists
+  if [[ ! -f "$SCRIPT_DIR/scripts/setup-coderag.sh" ]]; then
+    print_error "CodeRAG setup script not found: scripts/setup-coderag.sh"
+    return 1
+  fi
+
+  # Run CodeRAG setup script
+  print_info "Running CodeRAG setup script..."
+  bash "$SCRIPT_DIR/scripts/setup-coderag.sh"
+
+  print_success "CodeRAG installation complete"
+}
+
+# =============================================================================
 # Validation
 # =============================================================================
 
@@ -552,6 +582,9 @@ ${YELLOW}1. Configure API keys (optional):${NC}
 
    Note: 4 of 6 MCP servers work without API keys!
 
+${YELLOW}   CodeRAG (if installed):${NC}
+   ${BLUE}# Set CODERAG_NEO4J_PASSWORD in .env.mcp.local if you customized it${NC}
+
 ${YELLOW}2. Test Claude Code:${NC}
    ${BLUE}claude --version${NC}
 
@@ -593,6 +626,7 @@ ${BLUE}Configuration:${NC}
    • Claude config: ~/.claude/
    • MCP config: ~/.mcp.json
    • API keys: $SCRIPT_DIR/.env.mcp.local
+   • CodeRAG (if installed): docker compose -f coderag/docker-compose.yml ps
 
 ${GREEN}Happy coding with Claude!${NC}
 
@@ -652,6 +686,9 @@ main() {
   # Deploy MCP configuration
   # Always deploy MCP config (works even without API keys for some servers)
   deploy_mcp_config
+
+  # Install CodeRAG (optional)
+  install_coderag
 
   # Validate installation
   validate_installation

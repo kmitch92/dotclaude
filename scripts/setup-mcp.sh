@@ -38,6 +38,11 @@ if ! command -v uvx &> /dev/null; then
     MISSING_TOOLS+=("uvx (Python/uv)")
 fi
 
+# Check for docker (for coderag)
+if ! command -v docker &> /dev/null; then
+    MISSING_TOOLS+=("docker (for coderag)")
+fi
+
 # If tools are missing, warn but continue
 if [ ${#MISSING_TOOLS[@]} -gt 0 ]; then
     print_warning "Some runtime tools are missing:"
@@ -51,6 +56,9 @@ if [ ${#MISSING_TOOLS[@]} -gt 0 ]; then
     fi
     if [[ " ${MISSING_TOOLS[@]} " =~ "uvx" ]]; then
         echo "  - aws-core, aws-cdk (require uvx)"
+    fi
+    if [[ " ${MISSING_TOOLS[@]} " =~ "docker" ]]; then
+        echo "  - coderag (requires docker)"
     fi
     echo ""
     print_info "Config will be deployed but these servers won't work until tools are installed"
@@ -107,14 +115,28 @@ if [ "$ANTHROPIC_API_KEY" = "your_anthropic_api_key_here" ] || [ -z "$ANTHROPIC_
     export ANTHROPIC_API_KEY=""
 fi
 
+# Check CODERAG_NEO4J_PASSWORD
+if [ "$CODERAG_NEO4J_PASSWORD" = "your_neo4j_password_here" ] || [ -z "$CODERAG_NEO4J_PASSWORD" ]; then
+    print_warning "CODERAG_NEO4J_PASSWORD not configured - coderag server will not be available"
+    print_info "To enable coderag later: Add CODERAG_NEO4J_PASSWORD to .env.mcp.local and re-run setup-mcp.sh"
+    print_info "  • Setup guide: ./docs/coderag-setup.md"
+    MISSING_KEYS+=("CODERAG_NEO4J_PASSWORD")
+    export CODERAG_NEO4J_PASSWORD=""
+fi
+
 # Show what will work without API keys
 if [ ${#MISSING_KEYS[@]} -gt 0 ]; then
     echo ""
-    print_info "The following MCP servers will be available without API keys:"
+    print_info "The following MCP servers will be available without additional configuration:"
     echo "  ✓ sequential-thinking (no key required)"
     echo "  ✓ playwright (no key required)"
     echo "  ✓ aws-core (uses AWS credentials)"
     echo "  ✓ aws-cdk (uses AWS credentials)"
+    echo ""
+    print_info "The following require configuration:"
+    echo "  ✗ context7 (needs CONTEXT7_API_KEY)"
+    echo "  ✗ taskmaster (needs ANTHROPIC_API_KEY)"
+    echo "  ✗ coderag (needs CODERAG_NEO4J_PASSWORD + docker)"
     echo ""
 fi
 
@@ -153,8 +175,9 @@ if ! command -v envsubst &> /dev/null; then
     fi
 fi
 
-# Substitute environment variables in template
-envsubst < "$DOTFILES_DIR/mcp/mcp.json.template" > "$HOME/.mcp.json"
+# First resolve DOTFILES_DIR path, then substitute env vars
+# DOTFILES_DIR is a shell variable, not an env var - resolve it before envsubst
+sed "s|\${DOTFILES_DIR}|$DOTFILES_DIR|g" "$DOTFILES_DIR/mcp/mcp.json.template" | envsubst > "$HOME/.mcp.json"
 
 print_success "MCP configuration deployed to ~/.mcp.json"
 

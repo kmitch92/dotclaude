@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:5.12
+    container_name: coderag-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - "${CODERAG_DATA_DIR:-$HOME/neo4j-coderag}/data:/data"
+      - "${CODERAG_DATA_DIR:-$HOME/neo4j-coderag}/logs:/logs"
+      - "${CODERAG_DATA_DIR:-$HOME/neo4j-coderag}/plugins:/plugins"
+    environment:
+      - NEO4J_AUTH=neo4j/${CODERAG_NEO4J_PASSWORD}
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      - NEO4J_dbms_security_procedures_allowlist=apoc.*
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7474"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
