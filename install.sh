@@ -478,7 +478,19 @@ deploy_mcp_config() {
 # =============================================================================
 
 install_coderag() {
-  print_header "Installing CodeRAG (Optional)"
+  print_header "CodeRAG Setup"
+
+  # Check if already set up (idempotent check)
+  if [[ -d "$SCRIPT_DIR/vendor/coderag/build" ]] && [[ -f "$SCRIPT_DIR/.env.mcp.local" ]]; then
+    if grep -q "CODERAG_NEO4J_PASSWORD=" "$SCRIPT_DIR/.env.mcp.local" 2>/dev/null; then
+      local password
+      password=$(grep "CODERAG_NEO4J_PASSWORD=" "$SCRIPT_DIR/.env.mcp.local" | cut -d'=' -f2)
+      if [[ -n "$password" ]] && [[ "$password" != "your_neo4j_password_here" ]]; then
+        print_success "CodeRAG already configured"
+        return 0
+      fi
+    fi
+  fi
 
   print_info "CodeRAG provides a code knowledge graph for intelligent code search"
   print_info "Requires: Docker, Node.js, ~500MB disk space"
@@ -486,7 +498,7 @@ install_coderag() {
 
   if ! confirm "Install CodeRAG MCP server?"; then
     print_warning "Skipping CodeRAG installation"
-    print_info "You can install later with: scripts/setup-coderag.sh"
+    print_info "You can install later with: ./install.sh"
     return 0
   fi
 
@@ -496,11 +508,10 @@ install_coderag() {
     return 1
   fi
 
-  # Run CodeRAG setup script
-  print_info "Running CodeRAG setup script..."
+  # Run setup script (handles everything including password)
   bash "$SCRIPT_DIR/scripts/setup-coderag.sh"
 
-  print_success "CodeRAG installation complete"
+  print_success "CodeRAG setup complete"
 }
 
 # =============================================================================
@@ -683,12 +694,12 @@ main() {
   # Install Claude Code CLI
   install_claude_code
 
-  # Deploy MCP configuration
-  # Always deploy MCP config (works even without API keys for some servers)
-  deploy_mcp_config
-
-  # Install CodeRAG (optional)
+  # Install CodeRAG (optional) - MUST come before MCP config
   install_coderag
+
+  # Deploy MCP configuration
+  # This must come AFTER CodeRAG setup so passwords are configured
+  deploy_mcp_config
 
   # Validate installation
   validate_installation
