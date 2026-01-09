@@ -37,6 +37,7 @@ readonly CONFIG_ITEMS=(
   "docs"
   "plugins"
   "scripts"
+  "skills"
 )
 
 # Runtime items: symlinked from runtime/ directory (shared across profiles)
