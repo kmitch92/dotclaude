@@ -23,9 +23,13 @@ source "$SCRIPT_DIR/utils.sh"
 
 usage() {
   cat <<EOF
-Usage: $(basename "$0") <git-url> [profile-name]
+Usage: $(basename "$0") [OPTIONS] <git-url> [profile-name]
 
 Add an external Claude profile repository as a git submodule.
+
+Options:
+  -s, --subpath <path>  Path within repo where .claude/ is located
+                        (e.g., --subpath claude means repo/claude/.claude/)
 
 Arguments:
   git-url       Git repository URL (required)
@@ -34,6 +38,7 @@ Arguments:
 Examples:
   $(basename "$0") https://github.com/user/their-dotclaude.git
   $(basename "$0") https://github.com/user/their-dotclaude.git custom-name
+  $(basename "$0") --subpath claude https://github.com/user/dotfiles.git my-profile
 EOF
 }
 
@@ -93,12 +98,25 @@ profile_exists() {
 
 validate_profile_structure() {
   local profile_path="$1"
-  local claude_dir="$profile_path/.claude"
+  local subpath="${2:-}"
+  local base_path="$profile_path"
+  local claude_dir
   local has_valid_content=false
+
+  # Adjust base path if subpath is set
+  if [[ -n "$subpath" ]]; then
+    base_path="$profile_path/$subpath"
+  fi
+
+  claude_dir="$base_path/.claude"
 
   # Check for .claude directory
   if [[ ! -d "$claude_dir" ]]; then
-    print_error "Profile missing required .claude/ directory"
+    if [[ -n "$subpath" ]]; then
+      print_error "Profile missing required .claude/ directory at: $subpath/.claude/"
+    else
+      print_error "Profile missing required .claude/ directory"
+    fi
     return 1
   fi
 
@@ -115,8 +133,8 @@ validate_profile_structure() {
     has_valid_content=true
   fi
 
-  # Also check root level CLAUDE.md
-  if [[ -f "$profile_path/CLAUDE.md" ]]; then
+  # Also check root level CLAUDE.md (relative to base_path)
+  if [[ -f "$base_path/CLAUDE.md" ]]; then
     has_valid_content=true
   fi
 
@@ -126,6 +144,19 @@ validate_profile_structure() {
   fi
 
   return 0
+}
+
+save_profile_config() {
+  local profile_path="$1"
+  local subpath="$2"
+  local config_file="$profile_path/.profile-config"
+
+  cat > "$config_file" <<EOF
+# Profile configuration
+SUBPATH=$subpath
+EOF
+
+  print_info "Saved profile configuration with subpath: $subpath"
 }
 
 cleanup_submodule() {
@@ -155,6 +186,7 @@ cleanup_submodule() {
 add_profile() {
   local git_url="$1"
   local name="$2"
+  local subpath="${3:-}"
   local profile_path="$EXTERNAL_PROFILES_DIR/$name"
 
   print_header "Adding External Profile"
@@ -185,12 +217,17 @@ add_profile() {
   # Initialize and update submodule
   git -C "$REPO_ROOT" submodule update --init --recursive "profiles/external/$name"
 
-  # Validate profile structure
+  # Validate profile structure (with optional subpath)
   print_info "Validating profile structure..."
-  if ! validate_profile_structure "$profile_path"; then
+  if ! validate_profile_structure "$profile_path" "$subpath"; then
     print_error "Profile validation failed"
     cleanup_submodule "$name"
     return 1
+  fi
+
+  # Save profile config if subpath is set
+  if [[ -n "$subpath" ]]; then
+    save_profile_config "$profile_path" "$subpath"
   fi
 
   print_success "Profile added successfully."
@@ -204,10 +241,48 @@ add_profile() {
 # =============================================================================
 
 main() {
-  local git_url="${1:-}"
-  local name="${2:-}"
+  local subpath=""
+  local git_url=""
+  local name=""
 
-  # Show usage if no arguments
+  # Parse options
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -s|--subpath)
+        if [[ -z "${2:-}" ]]; then
+          print_error "--subpath requires a path argument"
+          usage
+          exit 1
+        fi
+        subpath="$2"
+        shift 2
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      -*)
+        print_error "Unknown option: $1"
+        usage
+        exit 1
+        ;;
+      *)
+        # Positional arguments
+        if [[ -z "$git_url" ]]; then
+          git_url="$1"
+        elif [[ -z "$name" ]]; then
+          name="$1"
+        else
+          print_error "Too many arguments"
+          usage
+          exit 1
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  # Show usage if no git URL
   if [[ -z "$git_url" ]]; then
     usage
     exit 1
@@ -227,7 +302,7 @@ main() {
   # Require git
   require_command git || exit 1
 
-  add_profile "$git_url" "$name"
+  add_profile "$git_url" "$name" "$subpath"
 }
 
 main "$@"

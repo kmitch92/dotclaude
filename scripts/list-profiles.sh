@@ -24,6 +24,44 @@ source "$SCRIPT_DIR/utils.sh"
 # Helper Functions
 # =============================================================================
 
+# Get the path to .claude/ directory for a profile, accounting for subpath config
+# Args: profile_path (full path to profile directory)
+# Output: Prints the path to .claude/ directory
+get_profile_claude_path() {
+    local profile_path="$1"
+    local config_file="${profile_path}/.profile-config"
+
+    if [[ -f "${config_file}" ]]; then
+        local subpath=""
+        subpath=$(grep -E '^SUBPATH=' "${config_file}" 2>/dev/null | cut -d'=' -f2 || true)
+        if [[ -n "${subpath}" ]]; then
+            echo "${profile_path}/${subpath}/.claude"
+            return 0
+        fi
+    fi
+
+    echo "${profile_path}/.claude"
+}
+
+# Get the subpath for a profile (empty if none configured)
+# Args: profile_path (full path to profile directory)
+# Output: Prints the subpath or empty string
+get_profile_subpath() {
+    local profile_path="$1"
+    local config_file="${profile_path}/.profile-config"
+
+    if [[ -f "${config_file}" ]]; then
+        local subpath=""
+        subpath=$(grep -E '^SUBPATH=' "${config_file}" 2>/dev/null | cut -d'=' -f2 || true)
+        if [[ -n "${subpath}" ]]; then
+            echo "${subpath}"
+            return 0
+        fi
+    fi
+
+    echo ""
+}
+
 # Get the currently active profile name (from symlink target)
 get_active_profile() {
     local active_link="$PROFILES_DIR/active"
@@ -62,7 +100,8 @@ has_directory() {
 # Returns: "agents docs commands" (space-separated counts)
 get_profile_stats() {
     local profile_path="$1"
-    local claude_dir="$profile_path/.claude"
+    local claude_dir
+    claude_dir=$(get_profile_claude_path "$profile_path")
 
     local agents=0
     local docs=0
@@ -97,16 +136,24 @@ print_profile_entry() {
         marker=" (active)"
     fi
 
+    # Check for subpath
+    local subpath
+    subpath=$(get_profile_subpath "$path")
+    local subpath_indicator=""
+    if [[ -n "$subpath" ]]; then
+        subpath_indicator=" (subpath: ${subpath})"
+    fi
+
     # Get stats
     local stats
     stats=$(get_profile_stats "$path")
     read -r agents docs commands <<< "$stats"
 
-    # Print profile name with active marker
+    # Print profile name with active marker and subpath indicator
     if [[ "$is_active" == "true" ]]; then
-        echo "  * ${name}${marker}"
+        echo "  * ${name}${marker}${subpath_indicator}"
     else
-        echo "    ${name}"
+        echo "    ${name}${subpath_indicator}"
     fi
 
     # Print stats line

@@ -63,6 +63,48 @@ readonly RUNTIME_ITEMS=(
 # Functions
 # -----------------------------------------------------------------------------
 
+# Get the path to .claude/ directory for a profile, accounting for subpath config
+# Args: profile_name
+# Output: Prints the path to .claude/ directory
+get_profile_claude_path() {
+  local profile_name="$1"
+  local profile_path="${PROFILES_DIR}/${profile_name}"
+  local config_file="${profile_path}/.profile-config"
+
+  if [[ -f "${config_file}" ]]; then
+    local subpath=""
+    # Source config file to get SUBPATH variable
+    # shellcheck source=/dev/null
+    subpath=$(grep -E '^SUBPATH=' "${config_file}" 2>/dev/null | cut -d'=' -f2 || true)
+    if [[ -n "${subpath}" ]]; then
+      echo "${profile_path}/${subpath}/.claude"
+      return 0
+    fi
+  fi
+
+  echo "${profile_path}/.claude"
+}
+
+# Get the subpath for a profile (empty if none configured)
+# Args: profile_name
+# Output: Prints the subpath or empty string
+get_profile_subpath() {
+  local profile_name="$1"
+  local profile_path="${PROFILES_DIR}/${profile_name}"
+  local config_file="${profile_path}/.profile-config"
+
+  if [[ -f "${config_file}" ]]; then
+    local subpath=""
+    subpath=$(grep -E '^SUBPATH=' "${config_file}" 2>/dev/null | cut -d'=' -f2 || true)
+    if [[ -n "${subpath}" ]]; then
+      echo "${subpath}"
+      return 0
+    fi
+  fi
+
+  echo ""
+}
+
 usage() {
   cat <<EOF
 Usage: $(basename "$0") [-f|--force] <profile-name>
@@ -131,7 +173,7 @@ validate_profile() {
     if [[ -d "${PROFILES_DIR}" ]]; then
       echo ""
       print_info "Available profiles:"
-      find "${PROFILES_DIR}" -mindepth 1 -maxdepth 2 -type d -name ".claude" | while read -r claude_dir; do
+      find "${PROFILES_DIR}" -mindepth 1 -maxdepth 3 -type d -name ".claude" | while read -r claude_dir; do
         local pdir
         pdir="$(dirname "${claude_dir}")"
         local pname="${pdir#${PROFILES_DIR}/}"
@@ -141,8 +183,19 @@ validate_profile() {
     return 1
   fi
 
-  if [[ ! -d "${profile_path}/.claude" ]]; then
+  # Get the actual .claude/ path (accounting for subpath config)
+  local claude_path
+  claude_path="$(get_profile_claude_path "${profile_name}")"
+
+  if [[ ! -d "${claude_path}" ]]; then
     print_error "Profile is missing .claude/ directory: ${profile_name}"
+    local subpath
+    subpath="$(get_profile_subpath "${profile_name}")"
+    if [[ -n "${subpath}" ]]; then
+      print_info "Expected location (with subpath '${subpath}'): ${claude_path}"
+    else
+      print_info "Expected location: ${claude_path}"
+    fi
     print_info "A valid profile must contain a .claude/ directory"
     return 1
   fi
@@ -235,7 +288,6 @@ prepare_claude_home() {
 update_active_symlink() {
   local profile_name="$1"
   local active_link="${PROFILES_DIR}/active"
-  local profile_path="${PROFILES_DIR}/${profile_name}"
 
   print_info "Updating active profile symlink..."
 
@@ -248,8 +300,18 @@ update_active_symlink() {
     return 1
   fi
 
+  # Determine symlink target (profile_name or profile_name/subpath)
+  local subpath
+  subpath="$(get_profile_subpath "${profile_name}")"
+  local symlink_target="${profile_name}"
+
+  if [[ -n "${subpath}" ]]; then
+    symlink_target="${profile_name}/${subpath}"
+    print_info "Profile uses subpath: ${subpath}"
+  fi
+
   # Create new symlink (relative path for portability)
-  ln -s "${profile_name}" "${active_link}"
+  ln -s "${symlink_target}" "${active_link}"
   print_success "Active profile: ${profile_name}"
 }
 
