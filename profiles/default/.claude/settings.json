@@ -1,0 +1,100 @@
+{
+  "cleanupPeriodDays": 90,
+  "env": {
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "8192",
+    "BASH_DEFAULT_TIMEOUT_MS": "31000",
+    "BASH_MAX_TIMEOUT_MS": "600000",
+    "BASH_MAX_OUTPUT_LENGTH": "50000",
+    "DISABLE_COST_WARNINGS": "1",
+    "DISABLE_BUG_COMMAND": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "DISABLE_TELEMETRY": "1",
+    "MCP_TIMEOUT": "30000",
+    "MCP_TOOL_TIMEOUT": "60000",
+    "MAX_MCP_OUTPUT_TOKENS": "40000"
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "LS",
+      "Read",
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Glob",
+      "Grep",
+      "NotebookRead",
+      "NotebookEdit",
+      "Task",
+      "TodoWrite",
+      "WebFetch(domain:*)",
+      "WebSearch",
+      "Bash(source:*)",
+      "Bash(cd:*)",
+      "Bash(claude config --help)",
+      "Bash(claude config get:*)",
+      "Bash(claude config list:*)",
+      "Bash(./utils/configure-claude-code-settings.sh:*)",
+      "Bash(check-mcp-logs:*)",
+      "Bash(python:*)",
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(ls:*)",
+      "Bash(tmux display-message \"[A-Za-z0-9\\s\\-_.:!?,]+\")",
+      "mcp__playwright"
+    ],
+    "deny": [
+      "Bash(git push:main)",
+      "Bash(git push:master)",
+      "Bash(git add -A:*)",
+      "Bash(git add:.:*)"
+    ],
+    "defaultMode": "bypassPermissions",
+    "additionalDirectories": [
+      "//"
+    ]
+  },
+  "enableAllProjectMcpServers": false,
+  "enabledMcpjsonServers": [
+    "playwright",
+    "context7",
+    "serena",
+    "sequential-thinking",
+    "aws-core",
+    "aws-cdk"
+  ],
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/notify-claude.sh"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/notify-claude.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "dotfiles-commands@dotfiles-marketplace": true,
+    "frontend-design@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true
+  },
+  "forceLoginMethod": "claudeai"
+}

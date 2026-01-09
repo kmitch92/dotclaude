@@ -27,7 +27,39 @@
 !scripts/**
 
 # =============================================================================
-# CLAUDE DIRECTORY - SELECTIVE ALLOW
+# PROFILES DIRECTORY - SELECTIVE ALLOW
+# =============================================================================
+!profiles/
+!profiles/*/
+!profiles/*/.claude/
+
+# Profile configuration files - ALLOW
+!profiles/*/.claude/CLAUDE.md
+!profiles/*/.claude/CHANGELOG_TEMPLATE.md
+!profiles/*/.claude/settings.json
+
+# Profile agents - ALLOW ALL
+!profiles/*/.claude/agents/
+!profiles/*/.claude/agents/**
+
+# Profile docs - ALLOW ALL
+!profiles/*/.claude/docs/
+!profiles/*/.claude/docs/**
+
+# Profile plugins - ALLOW ALL
+!profiles/*/.claude/plugins/
+!profiles/*/.claude/plugins/**
+
+# Profile scripts - ALLOW ALL
+!profiles/*/.claude/scripts/
+!profiles/*/.claude/scripts/**
+
+# Profile commands - ALLOW ALL
+!profiles/*/.claude/commands/
+!profiles/*/.claude/commands/**
+
+# =============================================================================
+# LEGACY CLAUDE DIRECTORY - KEEP FOR BACKWARD COMPATIBILITY
 # =============================================================================
 !claude/
 !claude/.claude/
@@ -62,7 +94,26 @@
 # =============================================================================
 # These are explicitly ignored even if parent directories are allowed
 
-# Claude runtime directories
+# Profile runtime directories (applies to all profiles)
+profiles/*/.claude/debug/
+profiles/*/.claude/debug/**
+profiles/*/.claude/history.jsonl
+profiles/*/.claude/shell-snapshots/
+profiles/*/.claude/shell-snapshots/**
+profiles/*/.claude/statsig/
+profiles/*/.claude/statsig/**
+profiles/*/.claude/todos/
+profiles/*/.claude/todos/**
+profiles/*/.claude/projects/
+profiles/*/.claude/projects/**
+profiles/*/.claude/file-history/
+profiles/*/.claude/file-history/**
+profiles/*/.claude/session-env/
+profiles/*/.claude/session-env/**
+profiles/*/.claude/ide/
+profiles/*/.claude/ide/**
+
+# Claude runtime directories (legacy)
 claude/.claude/debug/
 claude/.claude/debug/**
 claude/.claude/history.jsonl
@@ -81,10 +132,12 @@ claude/.claude/session-env/**
 claude/.claude/ide/
 claude/.claude/ide/**
 
-# Claude log files
+# Log files (all locations)
+profiles/*/.claude/*.log
 claude/.claude/*.log
 
 # Local settings and secrets
+profiles/*/.claude/settings.local.json
 claude/.claude/settings.local.json
 .env.mcp.local
 **/*.local
@@ -94,6 +147,11 @@ claude/.claude/settings.local.json
 **/.DS_Store
 
 # =============================================================================
+# WORKTREES - IGNORE
+# =============================================================================
+/worktrees/
+
+# =============================================================================
 # NOTES
 # =============================================================================
 # This whitelist approach ensures:
@@ -101,3 +159,4 @@ claude/.claude/settings.local.json
 # 2. New files/directories are ignored by default (safe by default)
 # 3. Runtime and generated files never leak into version control
 # 4. Clear separation between template (.env.mcp) and local secrets (.env.mcp.local)
+# 5. Supports both legacy claude/ and new profiles/ structure
