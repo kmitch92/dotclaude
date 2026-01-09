@@ -89,6 +89,76 @@ docs/
 - **`scripts/list-mcp-tools.sh`**: MCP tools verification
 - **`scripts/utils.sh`**: Shared utility functions
 
+### Profile Management Scripts
+
+dotclaude supports multiple configuration profiles, allowing you to switch between different agent configurations, documentation sets, and settings.
+
+| Script | Location | Purpose |
+|--------|----------|---------|
+| **`list-profiles.sh`** | `scripts/list-profiles.sh` | List all available profiles with status and statistics |
+| **`switch-profile.sh`** | `scripts/switch-profile.sh` | Switch the active profile by updating symlinks |
+| **`add-profile.sh`** | `scripts/add-profile.sh` | Add an external profile repository as a git submodule |
+| **`migrate-to-profiles.sh`** | `scripts/migrate-to-profiles.sh` | Migrate from legacy structure to the profiles system |
+
+#### Profile Commands
+
+```bash
+# List all available profiles
+./scripts/list-profiles.sh
+
+# Switch to a different profile
+./scripts/switch-profile.sh <profile-name>
+./scripts/switch-profile.sh default
+
+# Force switch (overwrites existing symlinks)
+./scripts/switch-profile.sh --force <profile-name>
+
+# Switch to an external profile
+./scripts/switch-profile.sh external/someone-config
+
+# Add an external profile from a git repository
+./scripts/add-profile.sh https://github.com/user/their-dotclaude.git
+
+# Add with custom name
+./scripts/add-profile.sh https://github.com/user/their-dotclaude.git custom-name
+
+# Add from a repo where .claude/ is in a subdirectory
+./scripts/add-profile.sh --subpath claude https://github.com/user/dotfiles.git my-profile
+```
+
+#### Profile Directory Structure
+
+```
+profiles/
+├── default/              # Built-in default profile
+│   └── .claude/
+│       ├── CLAUDE.md
+│       ├── settings.json
+│       ├── agents/
+│       ├── commands/
+│       ├── docs/
+│       └── plugins/
+└── external/             # External profiles (git submodules)
+    ├── team-config/      # Example: team shared config
+    │   └── .claude/
+    └── experimental/     # Example: experimental setup
+        └── .claude/
+
+runtime/                  # Shared runtime data (not profile-specific)
+├── cache/
+├── debug/
+├── file-history/
+├── logs/
+└── projects/
+```
+
+#### How Profiles Work
+
+1. **Config items** (CLAUDE.md, agents/, docs/, etc.) are symlinked from the active profile's `.claude/` directory to `~/.claude/`
+2. **Runtime items** (cache, logs, projects) are shared across all profiles via the `runtime/` directory
+3. Switching profiles updates symlinks instantly - no file copying required
+4. External profiles are managed as git submodules for easy updates
+
 ---
 
 ## 🚀 Quick Start
