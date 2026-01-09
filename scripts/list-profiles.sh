@@ -63,19 +63,76 @@ get_profile_subpath() {
 }
 
 # Get the currently active profile name (from symlink target)
+# Handles subpath configurations by checking .profile-config
 get_active_profile() {
     local active_link="$PROFILES_DIR/active"
 
-    if [[ -L "$active_link" ]]; then
-        local target
-        target=$(readlink "$active_link")
-        # Remove trailing slash if present
-        target="${target%/}"
-        # Return just the profile name (basename)
-        basename "$target"
-    else
+    if [[ ! -L "$active_link" ]]; then
         echo ""
+        return 0
     fi
+
+    local target
+    target=$(readlink "$active_link")
+    # Remove trailing slash if present
+    target="${target%/}"
+
+    # Check all profiles to find which one matches the symlink target
+    # This handles subpath configurations correctly
+
+    # Check local profiles first
+    for entry in "$PROFILES_DIR"/*; do
+        [[ -e "$entry" ]] || continue
+        [[ -d "$entry" ]] || continue
+
+        local name
+        name=$(basename "$entry")
+
+        # Skip the active symlink and external directory
+        [[ "$name" == "active" ]] && continue
+        [[ "$name" == "external" ]] && continue
+
+        # Get expected symlink target for this profile (accounting for subpath)
+        local subpath
+        subpath=$(get_profile_subpath "$entry")
+        local expected_target="$name"
+        if [[ -n "$subpath" ]]; then
+            expected_target="${name}/${subpath}"
+        fi
+
+        if [[ "$target" == "$expected_target" ]]; then
+            echo "$name"
+            return 0
+        fi
+    done
+
+    # Check external profiles
+    if [[ -d "$PROFILES_DIR/external" ]]; then
+        for ext_entry in "$PROFILES_DIR/external"/*; do
+            [[ -e "$ext_entry" ]] || continue
+            [[ -d "$ext_entry" ]] || continue
+
+            local ext_name
+            ext_name=$(basename "$ext_entry")
+            local full_name="external/${ext_name}"
+
+            # Get expected symlink target for this profile (accounting for subpath)
+            local subpath
+            subpath=$(get_profile_subpath "$ext_entry")
+            local expected_target="$full_name"
+            if [[ -n "$subpath" ]]; then
+                expected_target="${full_name}/${subpath}"
+            fi
+
+            if [[ "$target" == "$expected_target" ]]; then
+                echo "$full_name"
+                return 0
+            fi
+        done
+    fi
+
+    # Fallback: return the symlink target as-is (shouldn't happen normally)
+    echo "$target"
 }
 
 # Count files recursively in a directory
@@ -97,7 +154,7 @@ has_directory() {
 }
 
 # Get profile statistics
-# Returns: "agents docs commands" (space-separated counts)
+# Returns: "agents docs skills commands" (space-separated counts)
 get_profile_stats() {
     local profile_path="$1"
     local claude_dir
@@ -105,6 +162,7 @@ get_profile_stats() {
 
     local agents=0
     local docs=0
+    local skills=0
     local commands=0
 
     # Count agents
@@ -117,12 +175,17 @@ get_profile_stats() {
         docs=$(count_files "$claude_dir/docs")
     fi
 
+    # Count skills (some profiles use skills/ instead of docs/)
+    if [[ -d "$claude_dir/skills" ]]; then
+        skills=$(find "$claude_dir/skills" -type f -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+    fi
+
     # Count commands
     if [[ -d "$claude_dir/commands" ]]; then
         commands=$(count_files "$claude_dir/commands")
     fi
 
-    echo "$agents $docs $commands"
+    echo "$agents $docs $skills $commands"
 }
 
 # Print a single profile entry
@@ -147,7 +210,7 @@ print_profile_entry() {
     # Get stats
     local stats
     stats=$(get_profile_stats "$path")
-    read -r agents docs commands <<< "$stats"
+    read -r agents docs skills commands <<< "$stats"
 
     # Print profile name with active marker and subpath indicator
     if [[ "$is_active" == "true" ]]; then
@@ -156,8 +219,19 @@ print_profile_entry() {
         echo "    ${name}${subpath_indicator}"
     fi
 
-    # Print stats line
-    echo "      ${agents} agents, ${docs} docs, ${commands} commands"
+    # Build stats line dynamically (only show non-zero counts)
+    local stats_line=""
+    [[ $agents -gt 0 ]] && stats_line+="${agents} agents"
+    [[ $docs -gt 0 ]] && stats_line+="${stats_line:+, }${docs} docs"
+    [[ $skills -gt 0 ]] && stats_line+="${stats_line:+, }${skills} skills"
+    [[ $commands -gt 0 ]] && stats_line+="${stats_line:+, }${commands} commands"
+
+    # Print stats line (show "empty" if nothing found)
+    if [[ -n "$stats_line" ]]; then
+        echo "      ${stats_line}"
+    else
+        echo "      (empty profile)"
+    fi
     echo ""
 }
 
