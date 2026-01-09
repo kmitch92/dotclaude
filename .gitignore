@@ -62,6 +62,9 @@
 # =============================================================================
 # These are explicitly ignored even if parent directories are allowed
 
+# Git worktrees (local development)
+/worktrees/
+
 # Claude runtime directories
 claude/.claude/debug/
 claude/.claude/debug/**
