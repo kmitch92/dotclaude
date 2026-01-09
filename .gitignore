@@ -58,6 +58,63 @@
 !profiles/*/.claude/commands/
 !profiles/*/.claude/commands/**
 
+# Profile config file (root level)
+!profiles/*/.profile-config
+
+# =============================================================================
+# EXTERNAL PROFILES (SUBMODULES) - TWO LEVELS DEEP
+# =============================================================================
+# External profiles live at profiles/external/*/
+!profiles/external/
+!profiles/external/*/
+!profiles/external/*/.profile-config
+!profiles/external/*/.claude/
+
+# External profile configuration files - ALLOW
+!profiles/external/*/.claude/CLAUDE.md
+!profiles/external/*/.claude/CHANGELOG_TEMPLATE.md
+!profiles/external/*/.claude/settings.json
+
+# External profile agents - ALLOW ALL
+!profiles/external/*/.claude/agents/
+!profiles/external/*/.claude/agents/**
+
+# External profile docs - ALLOW ALL
+!profiles/external/*/.claude/docs/
+!profiles/external/*/.claude/docs/**
+
+# External profile plugins - ALLOW ALL
+!profiles/external/*/.claude/plugins/
+!profiles/external/*/.claude/plugins/**
+
+# External profile scripts - ALLOW ALL
+!profiles/external/*/.claude/scripts/
+!profiles/external/*/.claude/scripts/**
+
+# External profile commands - ALLOW ALL
+!profiles/external/*/.claude/commands/
+!profiles/external/*/.claude/commands/**
+
+# =============================================================================
+# EXTERNAL PROFILES WITH SUBPATH (e.g., profiles/external/name/subdir/.claude/)
+# =============================================================================
+# Some external profiles may have .claude nested in a subdirectory
+!profiles/external/*/*/
+!profiles/external/*/*/.claude/
+!profiles/external/*/*/.claude/CLAUDE.md
+!profiles/external/*/*/.claude/CHANGELOG_TEMPLATE.md
+!profiles/external/*/*/.claude/settings.json
+!profiles/external/*/*/.claude/agents/
+!profiles/external/*/*/.claude/agents/**
+!profiles/external/*/*/.claude/docs/
+!profiles/external/*/*/.claude/docs/**
+!profiles/external/*/*/.claude/plugins/
+!profiles/external/*/*/.claude/plugins/**
+!profiles/external/*/*/.claude/scripts/
+!profiles/external/*/*/.claude/scripts/**
+!profiles/external/*/*/.claude/commands/
+!profiles/external/*/*/.claude/commands/**
+
 # =============================================================================
 # LEGACY CLAUDE DIRECTORY - KEEP FOR BACKWARD COMPATIBILITY
 # =============================================================================
@@ -113,6 +170,44 @@ profiles/*/.claude/session-env/**
 profiles/*/.claude/ide/
 profiles/*/.claude/ide/**
 
+# External profile runtime directories
+profiles/external/*/.claude/debug/
+profiles/external/*/.claude/debug/**
+profiles/external/*/.claude/history.jsonl
+profiles/external/*/.claude/shell-snapshots/
+profiles/external/*/.claude/shell-snapshots/**
+profiles/external/*/.claude/statsig/
+profiles/external/*/.claude/statsig/**
+profiles/external/*/.claude/todos/
+profiles/external/*/.claude/todos/**
+profiles/external/*/.claude/projects/
+profiles/external/*/.claude/projects/**
+profiles/external/*/.claude/file-history/
+profiles/external/*/.claude/file-history/**
+profiles/external/*/.claude/session-env/
+profiles/external/*/.claude/session-env/**
+profiles/external/*/.claude/ide/
+profiles/external/*/.claude/ide/**
+
+# External profile with subpath runtime directories
+profiles/external/*/*/.claude/debug/
+profiles/external/*/*/.claude/debug/**
+profiles/external/*/*/.claude/history.jsonl
+profiles/external/*/*/.claude/shell-snapshots/
+profiles/external/*/*/.claude/shell-snapshots/**
+profiles/external/*/*/.claude/statsig/
+profiles/external/*/*/.claude/statsig/**
+profiles/external/*/*/.claude/todos/
+profiles/external/*/*/.claude/todos/**
+profiles/external/*/*/.claude/projects/
+profiles/external/*/*/.claude/projects/**
+profiles/external/*/*/.claude/file-history/
+profiles/external/*/*/.claude/file-history/**
+profiles/external/*/*/.claude/session-env/
+profiles/external/*/*/.claude/session-env/**
+profiles/external/*/*/.claude/ide/
+profiles/external/*/*/.claude/ide/**
+
 # Claude runtime directories (legacy)
 claude/.claude/debug/
 claude/.claude/debug/**
@@ -134,10 +229,14 @@ claude/.claude/ide/**
 
 # Log files (all locations)
 profiles/*/.claude/*.log
+profiles/external/*/.claude/*.log
+profiles/external/*/*/.claude/*.log
 claude/.claude/*.log
 
 # Local settings and secrets
 profiles/*/.claude/settings.local.json
+profiles/external/*/.claude/settings.local.json
+profiles/external/*/*/.claude/settings.local.json
 claude/.claude/settings.local.json
 .env.mcp.local
 **/*.local

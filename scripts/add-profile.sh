@@ -206,9 +206,9 @@ add_profile() {
   # Ensure profiles/external directory exists
   ensure_directory "$EXTERNAL_PROFILES_DIR"
 
-  # Add submodule
+  # Add submodule (-f to force past whitelist gitignore)
   print_info "Adding profile '$name' from $git_url..."
-  if ! git -C "$REPO_ROOT" submodule add "$git_url" "profiles/external/$name" 2>&1; then
+  if ! git -C "$REPO_ROOT" submodule add -f "$git_url" "profiles/external/$name" 2>&1; then
     print_error "Failed to add git submodule"
     cleanup_submodule "$name"
     return 1
