@@ -688,18 +688,27 @@ main() {
     backup_existing_config
   fi
 
-  # Install Claude configuration
-  install_claude_config
-
-  # Install Claude Code CLI
-  install_claude_code
-
   # Install CodeRAG (optional) - MUST come before MCP config
   install_coderag
 
   # Deploy MCP configuration
   # This must come AFTER CodeRAG setup so passwords are configured
+  # And BEFORE stow so the template is generated before symlink creation
   deploy_mcp_config
+
+  # Create project-level .mcp.json symlink for when working in dotclaude directory
+  # Claude Code's project-level config takes precedence over user-level config
+  if [ ! -e "$SCRIPT_DIR/.mcp.json" ] || [ -L "$SCRIPT_DIR/.mcp.json" ]; then
+    ln -sf "claude/.mcp.json" "$SCRIPT_DIR/.mcp.json"
+    print_success "Created project-level .mcp.json symlink"
+  fi
+
+  # Install Claude configuration (stow creates symlinks)
+  # This must come AFTER deploy_mcp_config so ~/.mcp.json symlink works
+  install_claude_config
+
+  # Install Claude Code CLI
+  install_claude_code
 
   # Validate installation
   validate_installation

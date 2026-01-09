@@ -89,6 +89,9 @@ claude/.claude/settings.local.json
 .env.mcp.local
 **/*.local
 
+# MCP config symlink (generated, points to claude/.mcp.json which contains secrets)
+.mcp.json
+
 # System files
 .DS_Store
 **/.DS_Store

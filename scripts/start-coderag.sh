@@ -77,7 +77,7 @@ wait_for_neo4j() {
 
     local i
     for i in $(seq 1 "$HEALTH_CHECK_TIMEOUT"); do
-        if docker exec coderag-neo4j curl -sf http://localhost:7474 >/dev/null 2>&1; then
+        if docker exec coderag-neo4j wget -q --spider http://localhost:7474 2>&1; then
             log_info "Neo4j is healthy"
             return 0
         fi

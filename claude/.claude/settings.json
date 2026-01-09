@@ -93,5 +93,6 @@
   "enabledPlugins": {
     "dotfiles-commands@dotfiles-marketplace": true
   },
-  "forceLoginMethod": "claudeai"
+  "forceLoginMethod": "claudeai",
+  "model": "sonnet"
 }

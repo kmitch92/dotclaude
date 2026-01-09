@@ -144,19 +144,27 @@ fi
 # Generate .mcp.json from template
 # =============================================================================
 
-print_info "Generating ~/.mcp.json from template..."
+# Output path: stow package directory (stow handles symlink to ~/.mcp.json)
+MCP_OUTPUT_PATH="$DOTFILES_DIR/claude/.mcp.json"
 
-# Remove existing symlink if present (should be a generated file, not a symlink)
-if [ -L "$HOME/.mcp.json" ]; then
-    print_warning "Found symlink at ~/.mcp.json, removing..."
+print_info "Generating MCP config at $MCP_OUTPUT_PATH..."
+
+# Handle existing ~/.mcp.json that is NOT a symlink
+# This needs to be removed so stow can create the symlink
+if [ -e "$HOME/.mcp.json" ] && [ ! -L "$HOME/.mcp.json" ]; then
+    print_warning "Found regular file at ~/.mcp.json (not symlink)"
+    print_info "Backing up to ~/.mcp.json.bak before removal..."
+    cp "$HOME/.mcp.json" "$HOME/.mcp.json.bak"
     rm "$HOME/.mcp.json"
-    print_info "Symlink removed (will generate proper file)"
+    print_success "Backed up and removed ~/.mcp.json"
+    print_info "After this script, run 'stow -R claude' from $DOTFILES_DIR"
+    print_info "  or re-run install.sh to create the symlink"
 fi
 
 # Check if envsubst is available
 if ! command -v envsubst &> /dev/null; then
     print_warning "envsubst not found, attempting to install gettext..."
-    
+
     if is_macos; then
         brew install gettext
         # Add gettext to PATH for this session
@@ -177,9 +185,18 @@ fi
 
 # First resolve DOTFILES_DIR path, then substitute env vars
 # DOTFILES_DIR is a shell variable, not an env var - resolve it before envsubst
-sed "s|\${DOTFILES_DIR}|$DOTFILES_DIR|g" "$DOTFILES_DIR/mcp/mcp.json.template" | envsubst > "$HOME/.mcp.json"
+sed "s|\${DOTFILES_DIR}|$DOTFILES_DIR|g" "$DOTFILES_DIR/mcp/mcp.json.template" | envsubst > "$MCP_OUTPUT_PATH"
 
-print_success "MCP configuration deployed to ~/.mcp.json"
+print_success "MCP configuration generated at $MCP_OUTPUT_PATH"
+print_info "Note: GNU Stow handles symlink from ~/.mcp.json"
+
+# Create project-level symlink for dotclaude directory
+# This ensures Claude Code finds .mcp.json when working in the dotclaude project
+PROJECT_MCP_SYMLINK="$DOTFILES_DIR/.mcp.json"
+if [ ! -e "$PROJECT_MCP_SYMLINK" ] || [ -L "$PROJECT_MCP_SYMLINK" ]; then
+    ln -sf "claude/.mcp.json" "$PROJECT_MCP_SYMLINK"
+    print_success "Created project-level .mcp.json symlink"
+fi
 
 # =============================================================================
 # Verify configuration
@@ -187,27 +204,27 @@ print_success "MCP configuration deployed to ~/.mcp.json"
 
 print_info "Verifying configuration..."
 
-if [ -f "$HOME/.mcp.json" ]; then
+if [ -f "$MCP_OUTPUT_PATH" ]; then
     # Check that env vars were substituted (no ${VAR} patterns remaining)
-    if grep -q '${' "$HOME/.mcp.json"; then
+    if grep -q '${' "$MCP_OUTPUT_PATH"; then
         print_warning "Some environment variables may not have been substituted"
-        print_info "Please check $HOME/.mcp.json for any remaining \${VAR} patterns"
+        print_info "Please check $MCP_OUTPUT_PATH for any remaining \${VAR} patterns"
     else
         print_success "All environment variables substituted successfully"
     fi
-    
+
     # Show configured servers
     echo ""
     print_info "Configured MCP servers:"
     if command -v jq &> /dev/null; then
-        jq -r '.mcpServers | keys[]' "$HOME/.mcp.json" | while read server; do
+        jq -r '.mcpServers | keys[]' "$MCP_OUTPUT_PATH" | while read server; do
             echo "  - $server"
         done
     else
-        grep '"' "$HOME/.mcp.json" | grep ':' | head -10 | sed 's/.*"\(.*\)".*/  - \1/'
+        grep '"' "$MCP_OUTPUT_PATH" | grep ':' | head -10 | sed 's/.*"\(.*\)".*/  - \1/'
     fi
 else
-    print_error "Failed to create ~/.mcp.json"
+    print_error "Failed to create $MCP_OUTPUT_PATH"
     exit 1
 fi
 
