@@ -398,6 +398,90 @@ activate_default_profile() {
 }
 
 # =============================================================================
+# CLI Installation
+# =============================================================================
+
+install_cli() {
+  print_header "Installing dotclaude CLI"
+
+  local bin_script="$SCRIPT_DIR/bin/dotclaude"
+  local install_path="/usr/local/bin/dotclaude"
+
+  # Check if bin/dotclaude exists
+  if [[ ! -f "$bin_script" ]]; then
+    print_warning "CLI script not found: $bin_script"
+    print_info "Skipping CLI installation"
+    return 0
+  fi
+
+  # Ensure script is executable
+  if [[ ! -x "$bin_script" ]]; then
+    chmod +x "$bin_script"
+    print_info "Made $bin_script executable"
+  fi
+
+  # Check if /usr/local/bin exists
+  if [[ ! -d "/usr/local/bin" ]]; then
+    print_warning "/usr/local/bin does not exist"
+    if confirm "Create /usr/local/bin directory?"; then
+      sudo mkdir -p /usr/local/bin
+    else
+      print_warning "Skipping CLI installation"
+      print_info "You can add $bin_script to your PATH manually"
+      return 0
+    fi
+  fi
+
+  # Handle existing symlink or file
+  if [[ -L "$install_path" ]]; then
+    local existing_target
+    existing_target=$(readlink "$install_path")
+
+    if [[ "$existing_target" == "$bin_script" ]]; then
+      print_success "CLI already installed at $install_path"
+      return 0
+    else
+      print_warning "Existing symlink points to: $existing_target"
+      if confirm "Replace with new installation?"; then
+        if [[ -w "/usr/local/bin" ]]; then
+          rm "$install_path"
+        else
+          sudo rm "$install_path"
+        fi
+      else
+        print_warning "Keeping existing symlink"
+        return 0
+      fi
+    fi
+  elif [[ -e "$install_path" ]]; then
+    print_warning "File exists at $install_path (not a symlink)"
+    if confirm "Replace with dotclaude CLI?"; then
+      if [[ -w "/usr/local/bin" ]]; then
+        rm "$install_path"
+      else
+        sudo rm "$install_path"
+      fi
+    else
+      print_warning "Skipping CLI installation"
+      return 0
+    fi
+  fi
+
+  # Create symlink (may need sudo for /usr/local/bin)
+  print_info "Creating symlink at $install_path..."
+
+  if [[ -w "/usr/local/bin" ]]; then
+    ln -s "$bin_script" "$install_path"
+  else
+    print_info "Elevated permissions required for /usr/local/bin"
+    sudo ln -s "$bin_script" "$install_path"
+  fi
+
+  print_success "CLI installed: $install_path -> $bin_script"
+  print_info "Run 'dotclaude help' to get started"
+}
+
+# =============================================================================
 # Claude Code Installation
 # =============================================================================
 
@@ -578,9 +662,8 @@ ${GREEN}✓${NC} Claude Code configuration installed successfully!
 ${BLUE}Next steps:${NC}
 
 ${YELLOW}1. Configure API keys (optional):${NC}
-   ${BLUE}cd $SCRIPT_DIR${NC}
-   ${BLUE}# Edit .env.mcp.local with your actual API keys${NC}
-   ${BLUE}# Then run: ./scripts/setup-mcp.sh${NC}
+   ${BLUE}dotclaude mcp edit${NC}
+   ${BLUE}dotclaude mcp setup${NC}
 
    Note: 4 of 6 MCP servers work without API keys!
 
@@ -588,15 +671,19 @@ ${YELLOW}2. Test Claude Code:${NC}
    ${BLUE}claude --version${NC}
 
 ${YELLOW}3. Verify MCP servers:${NC}
-   ${BLUE}./scripts/list-mcp-tools.sh${NC}
+   ${BLUE}dotclaude mcp tools${NC}
 
 ${YELLOW}4. Start using Claude Code:${NC}
    ${BLUE}claude${NC}
 
+${YELLOW}5. Manage profiles:${NC}
+   ${BLUE}dotclaude profile list${NC}
+   ${BLUE}dotclaude help${NC}
+
 ${BLUE}For more information:${NC}
    • Documentation: ~/.claude/docs/
    • MCP servers: ~/.mcp.json
-   • Add API keys: .env.mcp.local
+   • CLI help: dotclaude help
 
 ${GREEN}Happy coding with Claude!${NC}
 
@@ -615,16 +702,20 @@ ${YELLOW}1. Test Claude Code:${NC}
    ${BLUE}claude --version${NC}
 
 ${YELLOW}2. Verify MCP servers:${NC}
-   ${BLUE}./scripts/list-mcp-tools.sh${NC}
+   ${BLUE}dotclaude mcp tools${NC}
    ${BLUE}# Or in Claude Code: /mcp${NC}
 
 ${YELLOW}3. Start using Claude Code:${NC}
    ${BLUE}claude${NC}
 
+${YELLOW}4. Manage profiles:${NC}
+   ${BLUE}dotclaude profile list${NC}
+   ${BLUE}dotclaude help${NC}
+
 ${BLUE}Configuration:${NC}
    • Claude config: ~/.claude/
    • MCP config: ~/.mcp.json
-   • API keys: $SCRIPT_DIR/.env.mcp.local
+   • CLI help: dotclaude help
 
 ${GREEN}Happy coding with Claude!${NC}
 
@@ -680,6 +771,9 @@ main() {
 
   # Activate default profile if none active
   activate_default_profile
+
+  # Install dotclaude CLI
+  install_cli
 
   # Install Claude Code CLI
   install_claude_code
