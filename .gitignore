@@ -33,45 +33,16 @@
 !scripts/**
 
 # =============================================================================
-# PROFILES DIRECTORY - SELECTIVE ALLOW
+# PROFILES DIRECTORY - ALLOW ALL
 # =============================================================================
 !profiles/
-!profiles/default/
-!profiles/default/.claude/
-!profiles/external/
+!profiles/**
 
-# Profiles root configuration files - ALLOW
-!profiles/default/.claude/CLAUDE.md
-!profiles/default/.claude/settings.json
-
-# Profiles agents - ALLOW ALL
-!profiles/default/.claude/agents/
-!profiles/default/.claude/agents/**
-
-# Profiles docs - ALLOW ALL
-!profiles/default/.claude/docs/
-!profiles/default/.claude/docs/**
-
-# Profiles plugins - ALLOW SELECTIVELY
-!profiles/default/.claude/plugins/
-!profiles/default/.claude/plugins/.gitkeep
-# Exclude marketplace downloads and cache
-profiles/default/.claude/plugins/cache/
-profiles/default/.claude/plugins/cache/**
-profiles/default/.claude/plugins/marketplaces/
-profiles/default/.claude/plugins/marketplaces/**
-
-# Profiles scripts - ALLOW ALL
-!profiles/default/.claude/scripts/
-!profiles/default/.claude/scripts/**
-
-# Profiles commands - ALLOW ALL
-!profiles/default/.claude/commands/
-!profiles/default/.claude/commands/**
-
-# Profiles skills - ALLOW ALL
-!profiles/default/.claude/skills/
-!profiles/default/.claude/skills/**
+# Exclude plugin marketplace downloads and cache (for all profiles)
+profiles/*/.claude/plugins/cache/
+profiles/*/.claude/plugins/cache/**
+profiles/*/.claude/plugins/marketplaces/
+profiles/*/.claude/plugins/marketplaces/**
 
 # =============================================================================
 # CLAUDE DIRECTORY (LEGACY) - SELECTIVE ALLOW
