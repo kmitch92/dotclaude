@@ -1,1 +1,1 @@
-/Users/kiel.mitchell/dotclaude/worktrees/feat-dotclaude-profiles/profiles/active/.claude/CLAUDE.md
+/Users/kiel.mitchell/dotclaude/profiles/active/.claude/CLAUDE.md
