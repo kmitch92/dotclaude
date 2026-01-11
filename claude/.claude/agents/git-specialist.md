@@ -237,7 +237,40 @@ fix: fixed the thing           // Vague description
 
 ## Atomic Commits
 
-**One logical change per commit.**
+**ONE logical change per commit. Granularity > working intermediate states.**
+
+Non-working intermediate commits are acceptable when they enable granular history.
+
+**Splitting heuristics:**
+- Each file serving distinct purpose = separate commit
+- If message needs "and", "also", commas = TOO BIG, split it
+- Config change = own commit
+- Documentation = own commit
+- Refactor = separate from feature work
+- Feature + tests = acceptable together
+
+**Prohibited:**
+- ❌ "Add X, Y, and Z" commits
+- ❌ "Various improvements" or "Multiple fixes"
+- ❌ Bundling docs/config with unrelated code
+
+**Required process:**
+1. Analyze ALL changes (git status, git diff)
+2. Create commit plan BEFORE executing
+3. If >5 commits: present plan, wait for confirmation
+4. Execute one at a time
+5. Report completion with all SHAs
+
+**Partial staging:**
+```bash
+git add -p <file>  # Interactive hunk selection
+```
+
+**If bundling unavoidable:**
+1. STOP - explain what changes exist
+2. Why physical separation impossible (not "won't work")
+3. What staging techniques attempted
+4. Request user guidance
 
 **Good - Atomic:**
 ```
@@ -291,7 +324,6 @@ Commit 1: feat(auth): add registration, fix login bug, update docs, refactor dat
 - ✓ After each completed task in multi-task features
 
 **When NOT to commit:**
-- ✗ Mid-implementation (code doesn't compile)
 - ✗ Tests failing
 - ✗ Refactoring incomplete
 - ✗ Breaking existing functionality
