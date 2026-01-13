@@ -44,28 +44,6 @@ Main Agent then decides next steps and invokes appropriate agents.
 
 ---
 
-## Relevant Documentation
-
-**Read docs proactively when you need guidance. You have access to:**
-
-**Workflows:**
-- `/home/kiel/.claude/docs/workflows/tdd-cycle.md` - TDD process
-- `/home/kiel/.claude/docs/workflows/collaboration-patterns.md` - Agent invocation patterns
-- `/home/kiel/.claude/docs/workflows/collaboration-workflows.md` - Standard workflows
-- `/home/kiel/.claude/docs/workflows/code-review-process.md` - Review procedures
-
-**References:**
-- `/home/kiel/.claude/docs/references/agent-quick-ref.md` - Agent selection
-- `/home/kiel/.claude/docs/references/standards-checklist.md` - Quality gates
-
-**How to access:**
-```
-[Read tool]
-file_path: /home/kiel/.claude/docs/workflows/collaboration-patterns.md
-```
-
-**Full documentation tree available in main CLAUDE.md**
-
 ## Core Responsibility
 
 Break down complex features into **small, testable tasks** following TDD. Each task must have clear acceptance criteria and be implementable through Red-Green-Refactor cycles.

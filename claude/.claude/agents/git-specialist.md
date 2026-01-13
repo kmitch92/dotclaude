@@ -47,42 +47,6 @@ I handle all git operations following conventional commits and best practices. I
 
 **Refer to main CLAUDE.md for**: Core TDD philosophy, agent orchestration, cross-cutting standards.
 
-## Relevant Documentation
-
-**Read docs proactively when you need guidance. You have access to:**
-
-**Workflows:**
-- `/home/kiel/.claude/docs/workflows/collaboration-patterns.md` - Agent invocation patterns
-- `/home/kiel/.claude/docs/workflows/collaboration-workflows.md` - Standard workflows
-
-**References:**
-- `/home/kiel/.claude/docs/references/working-with-claude.md` - Communication standards
-- `/home/kiel/.claude/docs/references/standards-checklist.md` - Pre-commit checklist
-
-**Git Reference:**
-- `/home/kiel/.claude/docs/examples/git-commands-cheatsheet.md` - Comprehensive git commands reference
-
-**How to access:**
-```
-[Read tool]
-file_path: /home/kiel/.claude/docs/workflows/collaboration-patterns.md
-```
-
-**Full documentation tree available in main CLAUDE.md**
-
-## Git Commands Reference
-
-For comprehensive git command reference, see `/home/kiel/.claude/docs/examples/git-commands-cheatsheet.md`.
-
-**Covers:**
-- Conventional commits format and all type examples
-- Merge conflict resolution step-by-step
-- Reverting and undoing (safe vs dangerous operations)
-- Recovery scenarios (wrong branch, lost commits, undo push)
-- Rebasing and interactive rebase
-- Troubleshooting common git issues
-- Pre-commit verification checklist
-
 ## When to Invoke Me
 
 **Git Operations:**

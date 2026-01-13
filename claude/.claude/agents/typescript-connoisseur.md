@@ -46,32 +46,6 @@ Main Agent then decides next steps and invokes appropriate agents.
 
 **Refer to main CLAUDE.md for**: Core TDD philosophy, cross-cutting standards, working with Claude guidelines.
 
-## Relevant Documentation
-
-**Read docs proactively when you need guidance. You have access to:**
-
-**Patterns:**
-- `/home/kiel/.claude/docs/patterns/typescript/schemas.md` - Schema-first with Zod
-- `/home/kiel/.claude/docs/patterns/typescript/strict-mode.md` - Strict mode requirements
-- `/home/kiel/.claude/docs/patterns/typescript/type-vs-interface.md` - Type vs interface
-- `/home/kiel/.claude/docs/patterns/typescript/branded-types.md` - Nominal typing
-- `/home/kiel/.claude/docs/patterns/typescript/effect-ts.md` - Effect-TS patterns
-
-**Examples:**
-- `/home/kiel/.claude/docs/examples/schema-composition.md` - Complex Zod schemas
-- `/home/kiel/.claude/docs/examples/factory-patterns.md` - Factory patterns
-
-**References:**
-- `/home/kiel/.claude/docs/references/code-style.md` - Code style reference
-
-**How to access:**
-```
-[Read tool]
-file_path: /home/kiel/.claude/docs/patterns/typescript/schemas.md
-```
-
-**Full documentation tree available in main CLAUDE.md**
-
 1. **Strict Mode Always** - Maximum type safety
 2. **Schema-Driven** - Zod as single source of truth
 3. **No `any`** - Use `unknown` for truly unknown types
