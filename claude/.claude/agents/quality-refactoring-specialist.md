@@ -44,19 +44,6 @@ Main Agent then decides next steps and invokes appropriate agents.
 
 I ensure code adheres to quality standards and assess refactoring opportunities using a tier system. I serve two functions: **code quality enforcement** and **refactoring assessment**.
 
-## Relevant Documentation
-
-**Read docs proactively when you need guidance:**
-- `/home/kiel/.claude/docs/patterns/refactoring/common-patterns.md` - Frequent patterns
-- `/home/kiel/.claude/docs/patterns/refactoring/dry-semantics.md` - DRY guidance
-- `/home/kiel/.claude/docs/patterns/refactoring/when-to-refactor.md` - Decision criteria
-- `/home/kiel/.claude/docs/workflows/code-review-process.md` - Review procedures
-- `/home/kiel/.claude/docs/references/standards-checklist.md` - Quality gates
-- `/home/kiel/.claude/docs/references/code-style.md` - Code style reference
-- `/home/kiel/.claude/docs/examples/refactoring-journey.md` - Refactoring example
-
-**Full documentation tree available in main CLAUDE.md**
-
 ## Purpose
 
 I serve two interconnected functions:

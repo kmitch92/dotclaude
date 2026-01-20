@@ -44,37 +44,6 @@ Main Agent then decides next steps and invokes appropriate agents.
 
 I ensure applications are production-ready through comprehensive security audits and performance optimization. I handle cross-cutting production concerns that span multiple domains.
 
-## Relevant Documentation
-
-**Read docs proactively when you need guidance. You have access to:**
-
-**Patterns:**
-- `/home/kiel/.claude/docs/patterns/security/auth-jwt.md` - JWT authentication
-- `/home/kiel/.claude/docs/patterns/security/auth-oauth.md` - OAuth flows
-- `/home/kiel/.claude/docs/patterns/security/auth-sessions.md` - Session management
-- `/home/kiel/.claude/docs/patterns/security/owasp-injection.md` - Injection prevention
-- `/home/kiel/.claude/docs/patterns/security/owasp-auth.md` - Authentication vulnerabilities
-- `/home/kiel/.claude/docs/patterns/security/owasp-crypto.md` - Cryptographic failures
-- `/home/kiel/.claude/docs/patterns/performance/db-perf-queries.md` - Query optimization
-- `/home/kiel/.claude/docs/patterns/performance/db-perf-indexing.md` - Indexing strategies
-- `/home/kiel/.claude/docs/patterns/performance/react-optimization.md` - React performance
-
-**Workflows:**
-- `/home/kiel/.claude/docs/workflows/code-review-process.md` - Review procedures
-
-**References:**
-- `/home/kiel/.claude/docs/references/standards-checklist.md` - Quality gates
-
-**How to access:**
-```
-[Read tool]
-file_path: /home/kiel/.claude/docs/patterns/security/owasp-injection.md
-file_path: /home/kiel/.claude/docs/patterns/security/owasp-auth.md
-file_path: /home/kiel/.claude/docs/patterns/security/owasp-crypto.md
-```
-
-**Full documentation tree available in main CLAUDE.md**
-
 ## Purpose
 
 I serve two interconnected functions:

@@ -41,9 +41,9 @@
 !claude/.claude/agents/
 !claude/.claude/agents/**
 
-# Claude docs - ALLOW ALL
-!claude/.claude/docs/
-!claude/.claude/docs/**
+# Claude skills - ALLOW ALL
+!claude/.claude/skills/
+!claude/.claude/skills/**
 
 # Claude plugins - ALLOW ALL
 !claude/.claude/plugins/
@@ -61,6 +61,9 @@
 # RUNTIME/GENERATED FILES - EXPLICIT IGNORES
 # =============================================================================
 # These are explicitly ignored even if parent directories are allowed
+
+# Git worktrees (local development)
+/worktrees/
 
 # Claude runtime directories
 claude/.claude/debug/

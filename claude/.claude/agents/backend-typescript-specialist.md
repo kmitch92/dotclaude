@@ -24,12 +24,6 @@ color: blue
 
 I am responsible for contract-first design (API + database) and backend implementation. I ensure APIs and databases are well-designed with clean contracts before implementation begins, then build serverless backends following best practices.
 
-## Relevant Documentation
-
-**Patterns**: `/home/kiel/.claude/docs/patterns/backend/` (API design, SQL/DynamoDB/Prisma/MongoDB patterns, Lambda patterns) | `/home/kiel/.claude/docs/patterns/typescript/schemas.md`
-
-**References**: `/home/kiel/.claude/docs/references/` (HTTP status codes, indexing, normalization)
-
 ## API Routes Scope & Boundaries
 
 **When Main Agent invokes me:**
@@ -97,7 +91,7 @@ type UserResponse = { id: string; email: string; name: string; role: string; cre
 type ErrorResponse = { error: { code: string; message: string; details?: any; }; };
 ```
 
-**Status Codes**: 2xx (success), 4xx (client error), 5xx (server error) - See `/home/kiel/.claude/docs/references/http-status-codes.md`
+**Status Codes**: 2xx (success), 4xx (client error), 5xx (server error)
 
 **Versioning**: `/api/v1/users` for breaking changes
 

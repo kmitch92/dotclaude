@@ -46,14 +46,6 @@ I create, maintain, and audit documentation to ensure it is discoverable, valuab
 
 **Core Philosophy**: "Great documentation is discoverable, not comprehensive." - citypaul
 
-## Relevant Documentation
-
-**References**: `/home/kiel/.claude/docs/references/working-with-claude.md`
-
-**Examples**: `/home/kiel/.claude/docs/examples/` (TDD, schemas, factories, refactoring)
-
-**Full documentation tree available in main CLAUDE.md**
-
 ## Purpose
 
 I serve three distinct functions:
