@@ -1,5 +1,5 @@
 ---
-description: Full TypeScript error and test suite sweep with incremental fixes
+description: Progressive sweep demanding improvement in TypeScript errors, test failures, and coverage until targets are met
 allowed-tools: Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Bash(tsc:*), Read, Write, Edit, MultiEdit, Grep, Glob
 ---
 
@@ -40,10 +40,24 @@ Capture ALL test failures. Parse each failure to extract:
 - Failure reason
 - Stack trace
 
-### 1.4 Build Task List
+### 1.4 Run Coverage Check
+Execute test coverage measurement:
+```bash
+<pkg-manager> test -- --coverage
+```
+
+Capture coverage metrics:
+- Statement coverage %
+- Branch coverage %
+- Function coverage %
+- Line coverage %
+- Uncovered files list
+
+### 1.5 Build Task List
 Use TodoWrite to create task list of all issues:
 - Group TypeScript errors by file
 - Group test failures by file
+- List coverage gaps (uncovered files/functions)
 - TypeScript errors MUST be listed before test failures (priority order)
 
 ## Phase 2: TypeScript Fixes (PRIORITIZED FIRST)
@@ -109,6 +123,32 @@ For EACH failing test:
 
 6. **Proceed to next failure**
 
+## Phase 3.5: Coverage Improvement
+
+After ALL test failures are resolved, improve test coverage.
+
+### Target: 100% Coverage
+
+For EACH uncovered file/function:
+
+1. **Read uncovered code** - Understand what behavior needs testing
+
+2. **Write missing tests following TDD principles**:
+   - Test behavior through public APIs
+   - Cover happy paths and edge cases
+   - Test error conditions
+   - Use realistic test data
+
+3. **Verify coverage improvement**:
+   ```bash
+   <pkg-manager> test -- --coverage
+   ```
+   Confirm coverage increased for that file/function
+
+4. **Update task list** - Mark coverage gap as resolved
+
+5. **Proceed to next uncovered area**
+
 ## Phase 4: Verification
 
 ### 4.1 Full TypeScript Check
@@ -123,12 +163,29 @@ Confirm: **0 errors**
 ```
 Confirm: **All tests pass**
 
-### 4.3 Report Summary
+### 4.3 Measure Improvement
+
+Calculate deltas from start of execution:
+- TypeScript errors: start → end (must decrease or reach 0)
+- Test failures: start → end (must decrease or reach 0)
+- Coverage: start% → end% (must increase or reach 100%)
+
+### 4.4 Exit Criteria (MANDATORY)
+
+**You may ONLY finish if AT LEAST ONE of:**
+- TypeScript errors decreased (or already 0)
+- Test failures decreased (or already 0)
+- Coverage increased (or already 100%)
+
+**If all metrics unchanged**: You have NOT completed the task. Return to Phase 2/3/3.5 and make more progress.
+
+### 4.5 Report Summary
 Provide final status:
-- Total TypeScript errors found → fixed
-- Total test failures found → fixed
-- Any issues that could not be resolved (with explanation)
+- TypeScript errors: X → Y (delta: -N)
+- Test failures: X → Y (delta: -N)
+- Coverage: X% → Y% (delta: +N%)
 - Files modified
+- Next priority items for subsequent invocation (if not at 0/0/100%)
 
 ## Critical Rules
 
@@ -144,10 +201,23 @@ Provide final status:
 
 6. **Strict mode compliance**: All fixes must satisfy TypeScript strict mode.
 
-7. **If blocked**: Document the issue, move to next item, return to blocked items after completing others.
+7. **If blocked on one issue**: Move to next item. You MUST make progress somewhere. Return to blocked items. If truly stuck on ALL items, fix something else - add a test, improve coverage, fix a different error.
 
-8. **Ask for clarification**: If fix approach is unclear or multiple valid approaches exist, ask user before proceeding.
+8. **Ask only when necessary**: If fix approach is unclear, try the most conservative fix first. Only ask user if you've attempted fixes and failed. Default to action, not questions.
 
 9. **Behavioral testing**: When fixing tests, ensure tests verify behavior through public APIs, not implementation details.
 
 10. **Minimum changes**: Apply smallest fix that resolves the issue. Do not refactor unrelated code.
+
+11. **NO "pre-existing" excuses**: Every error, every failure, every coverage gap is YOUR responsibility. "This existed before my task" is NEVER acceptable. Fix it.
+
+12. **Progressive improvement required**: Each invocation MUST improve at least one metric. If you cannot fix a specific issue, fix a different one.
+
+13. **Coverage is mandatory**: Uncovered code is a defect. Write tests for it.
+
+14. **Repeated invocation guarantee**: If this command is called enough times, the codebase WILL reach:
+    - 0 TypeScript compilation errors
+    - 0 failing tests
+    - 100% test coverage
+
+This is not aspirational. This is a guarantee the command must fulfill through progressive improvement.
