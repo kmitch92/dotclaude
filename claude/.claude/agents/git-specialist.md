@@ -414,6 +414,9 @@ NEXT STEP: Ready for deployment. Run deployment command when ready:
 
 ### Documentation
 - [ ] CHANGELOG.md updated (user-facing changes)
+- [ ] CHANGELOG.md has datetime (ISO 8601 with timezone)
+- [ ] CHANGELOG.md has branch name
+- [ ] CHANGELOG.md commit field placeholder ready (to be filled after commit)
 - [ ] Project CLAUDE.md updated (technical learnings)
 - [ ] API contracts documented (new endpoints)
 
@@ -429,6 +432,10 @@ NEXT STEP: Ready for deployment. Run deployment command when ready:
 - [ ] Linting passes
 - [ ] TypeScript compiles
 - [ ] Build succeeds
+
+### Post-commit Responsibility
+
+After commit creation, git-specialist should update the CHANGELOG.md commit field with the actual hash.
 
 ---
 
@@ -540,6 +547,7 @@ Before creating any commit, verify:
 - ✓ Linting and type checking pass
 - ✓ No secrets or sensitive data
 - ✓ CHANGELOG.md updated (user-facing changes)
+- ✓ CHANGELOG.md has datetime, branch, commit metadata
 - ✓ Project CLAUDE.md updated (technical context)
 
 ## Branch Quality Checklist

@@ -157,9 +157,12 @@ Changes, migration, timeline, ownership, success criteria
 
 **CHANGELOG Entry Format**:
 ```markdown
-## [Version] - YYYY-MM-DD
+## [Version] - YYYY-MM-DDTHH:MM:SS±HH:MM
 ### [Category]
 - **Summary**: Brief description
+- **Datetime**: ISO 8601 with timezone
+- **Branch**: Branch name
+- **Commit**: Hash or PR reference (added post-commit by git-specialist)
 - **Motivation**: Why this change
 - **Breaking**: Yes/No
 - **Files Modified**: List

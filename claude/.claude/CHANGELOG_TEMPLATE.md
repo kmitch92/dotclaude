@@ -9,10 +9,13 @@ This template provides guidance for creating consistent CHANGELOG entries follow
 ### Entry Structure
 
 ```markdown
-## [Version] - YYYY-MM-DD
+## [Version] - YYYY-MM-DDTHH:MM:SS±HH:MM
 
 ### [Category]
 - **Summary**: Brief description of the change
+- **Datetime**: ISO 8601 with timezone (e.g., 2025-11-03T14:32:00+00:00)
+- **Branch**: Branch where change was made (e.g., feature/user-auth, main)
+- **Commit**: PR merge commit or regular commit hash (e.g., abc1234, PR #42 merge: def5678)
 - **Motivation**: Why this change was made
 - **Breaking**: Yes/No
 - **Files Modified**: List of changed files (relative paths)
@@ -31,8 +34,11 @@ This template provides guidance for creating consistent CHANGELOG entries follow
 ## Entry Requirements
 
 ### Required Fields
-- **Date format**: YYYY-MM-DD (e.g., 2025-11-03)
+- **Date format**: YYYY-MM-DDTHH:MM:SS±HH:MM (ISO 8601 with timezone, e.g., 2025-11-03T14:32:00+00:00)
 - **Summary**: Brief description of what changed
+- **Datetime**: ISO 8601 with timezone
+- **Branch**: Branch name at time of change
+- **Commit**: Commit hash or PR merge reference
 - **Motivation**: Why this change was made
 - **Breaking**: Yes/No flag
 - **Files Modified**: List of changed files
@@ -78,10 +84,13 @@ Then move to versioned section when ready.
 ### Example 1: New Feature (Non-Breaking)
 
 ```markdown
-## [2.1.0] - 2025-11-03
+## [2.1.0] - 2025-11-03T09:15:00+00:00
 
 ### Added
 - **Summary**: CHANGELOG documentation procedure with Keep A Changelog format
+- **Datetime**: 2025-11-03T09:15:00+00:00
+- **Branch**: feature/changelog-docs
+- **Commit**: a1b2c3d
 - **Motivation**: Prevent ad-hoc markdown file creation that clutters codebase; establish single source of truth for change history
 - **Breaking**: No
 - **Files Modified**: `~/.claude/agents/documentation-agent.md`, `~/.claude/CLAUDE.md`, `~/.claude/CHANGELOG_TEMPLATE.md`
@@ -90,10 +99,13 @@ Then move to versioned section when ready.
 ### Example 2: Bug Fix
 
 ```markdown
-## [2.0.1] - 2025-10-28
+## [2.0.1] - 2025-10-28T16:42:00+00:00
 
 ### Fixed
 - **Summary**: Neovim AppImage download URL pointing to dev build
+- **Datetime**: 2025-10-28T16:42:00+00:00
+- **Branch**: bugfix/neovim-download
+- **Commit**: e4f5g6h
 - **Motivation**: Latest tag was pointing to v0.12.0-dev which had broken Lua loader
 - **Breaking**: No
 - **Root Cause**: Using `/releases/latest/` instead of specific version tag
@@ -104,10 +116,13 @@ Then move to versioned section when ready.
 ### Example 3: Breaking Change
 
 ```markdown
-## [3.0.0] - 2025-12-01
+## [3.0.0] - 2025-12-01T11:30:00+00:00
 
 ### Changed
 - **Summary**: Authentication API now requires JWT tokens instead of session cookies
+- **Datetime**: 2025-12-01T11:30:00+00:00
+- **Branch**: feature/jwt-auth
+- **Commit**: i7j8k9l
 - **Motivation**: Improve security and enable stateless architecture for horizontal scaling
 - **Breaking**: Yes
 - **Migration**:
@@ -120,10 +135,13 @@ Then move to versioned section when ready.
 ### Example 4: Security Fix
 
 ```markdown
-## [2.0.2] - 2025-11-01
+## [2.0.2] - 2025-11-01T08:00:00+00:00
 
 ### Security
 - **Summary**: Fixed SQL injection vulnerability in user search endpoint
+- **Datetime**: 2025-11-01T08:00:00+00:00
+- **Branch**: hotfix/sql-injection
+- **Commit**: m0n1o2p
 - **Motivation**: User-provided search terms were concatenated directly into SQL query
 - **Breaking**: No
 - **Root Cause**: Missing parameterized query for search functionality
@@ -134,16 +152,22 @@ Then move to versioned section when ready.
 ### Example 5: Multiple Changes in One Version
 
 ```markdown
-## [2.2.0] - 2025-11-05
+## [2.2.0] - 2025-11-05T14:00:00+00:00
 
 ### Added
 - **Summary**: Dark mode support for admin dashboard
+- **Datetime**: 2025-11-05T14:00:00+00:00
+- **Branch**: feature/dashboard-updates
+- **Commit**: q3r4s5t
 - **Motivation**: User feedback requested dark mode for reduced eye strain
 - **Breaking**: No
 - **Files Modified**: `src/components/Dashboard.tsx`, `src/styles/theme.ts`
 
 ### Fixed
 - **Summary**: Race condition in concurrent file uploads
+- **Datetime**: 2025-11-05T14:00:00+00:00
+- **Branch**: feature/dashboard-updates
+- **Commit**: q3r4s5t
 - **Motivation**: Multiple simultaneous uploads could corrupt file metadata
 - **Breaking**: No
 - **Root Cause**: Shared upload state without proper locking
@@ -152,6 +176,9 @@ Then move to versioned section when ready.
 
 ### Deprecated
 - **Summary**: Legacy v1 API endpoints marked for removal
+- **Datetime**: 2025-11-05T14:00:00+00:00
+- **Branch**: feature/dashboard-updates
+- **Commit**: q3r4s5t
 - **Motivation**: Consolidate on v2 API with improved error handling and performance
 - **Breaking**: No (removal scheduled for v3.0.0)
 - **Migration**: Update client code to use `/api/v2/` endpoints instead of `/api/v1/`
@@ -166,7 +193,10 @@ Then move to versioned section when ready.
 - ✓ Explain WHY changes were made (motivation)
 - ✓ Flag breaking changes clearly
 - ✓ Provide migration steps for breaking changes
-- ✓ Use consistent date format (YYYY-MM-DD)
+- ✓ Use consistent datetime format (ISO 8601 with timezone)
+- ✓ Include datetime with timezone (not just date)
+- ✓ Include branch name for traceability
+- ✓ Include commit hash after committing
 - ✓ Group related changes under same version
 
 ### DON'T
@@ -176,6 +206,7 @@ Then move to versioned section when ready.
 - ✗ Skip motivation/reasoning
 - ✗ Create separate documentation files instead (use CHANGELOG)
 - ✗ Use inconsistent date formats
+- ✗ Skip datetime/branch/commit metadata
 - ✗ Mix unrelated changes in same entry
 
 ## Integration with Workflow
@@ -185,6 +216,7 @@ Then move to versioned section when ready.
 2. Update CHANGELOG.md (this file)
 3. Update project CLAUDE.md if technical context discovered
 4. Commit with both documentation updates
+5. git-specialist will populate the commit hash after commit creation
 
 **NEVER:**
 - Document after commit
