@@ -4,10 +4,10 @@
     "frontend-design@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/home/kiel/.claude/plugins/cache/claude-plugins-official/frontend-design/unknown",
-        "version": "unknown",
+        "installPath": "/Users/kiel.mitchell/.claude/plugins/cache/claude-plugins-official/frontend-design/205b6e0b3036",
+        "version": "205b6e0b3036",
         "installedAt": "2026-01-19T17:03:03.899Z",
-        "lastUpdated": "2026-01-19T17:03:03.899Z"
+        "lastUpdated": "2026-03-06T13:25:11.067Z"
       }
     ],
     "typescript-lsp@claude-plugins-official": [
@@ -22,10 +22,10 @@
     "ralph-loop@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/home/kiel/.claude/plugins/cache/claude-plugins-official/ralph-loop/unknown",
-        "version": "unknown",
+        "installPath": "/Users/kiel.mitchell/.claude/plugins/cache/claude-plugins-official/ralph-loop/205b6e0b3036",
+        "version": "205b6e0b3036",
         "installedAt": "2026-01-19T17:03:03.899Z",
-        "lastUpdated": "2026-01-19T17:03:03.899Z"
+        "lastUpdated": "2026-03-06T13:25:11.069Z"
       }
     ]
   }
