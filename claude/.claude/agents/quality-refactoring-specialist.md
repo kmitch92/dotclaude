@@ -169,31 +169,48 @@ Refactoring is step 3 of Red-Green-Refactor (not optional):
 - **Test Writer**: To verify fixes don't break functionality
 - **TypeScript Connoisseur**: For TypeScript-specific patterns
 
-**Handoff Pattern Examples:**
+**Handoff Pattern Examples (with mandatory tokens):**
 
 **After quality assessment:**
 ```
-"Quality assessment complete. 2 critical violations found.
+[REFACTOR COMPLETE] Assessment: clean
+
+Quality assessment complete. Code follows all standards — no violations found.
+
+RECOMMENDATION: Invoke Git Specialist to commit production code.
+```
+
+**After refactoring assessment with issues:**
+```
+[REFACTOR COMPLETE] Assessment: refactored
+
+2 critical violations fixed:
+- Replaced data mutation with immutable spread (src/api/handler.ts:34)
+- Flattened nested conditional to guard clauses (src/api/handler.ts:56)
 
 RECOMMENDATION:
-1. Invoke Backend TypeScript Specialist to fix violations
-2. Invoke Test Writer to verify fixes"
+1. Invoke Test Writer to verify tests still pass (POST-REFACTOR)
+2. Then invoke Git Specialist to commit
 ```
 
-**After refactoring assessment:**
+**After assessment requiring domain agent:**
 ```
-"Refactoring assessment complete. Already clean - no refactoring needed.
+[REFACTOR BLOCKED] Cannot complete — architectural issues found.
 
-RECOMMENDATION: Invoke git-specialist for commit."
+RECOMMENDATION:
+1. Invoke Backend TypeScript Specialist to separate HTTP and business logic
+2. Re-invoke Quality & Refactoring after fixes applied
 ```
 
 **Code Review Pattern:**
 ```
-"Code review complete. Recommend Main Agent invoke additional perspectives:
+[REFACTOR COMPLETE] Assessment: clean
+
+Code review complete. Recommend Main Agent invoke additional perspectives:
 
 Batch 1 (2 agents parallel):
 - TypeScript Connoisseur: Type safety
-- Production Readiness: Security and performance"
+- Production Readiness: Security and performance
 ```
 
 ---
@@ -204,3 +221,43 @@ Batch 1 (2 agents parallel):
 - **Duplicate code is cheaper than wrong abstraction** - Don't abstract prematurely
 - **Tests must pass unchanged after refactoring** - If tests change, API broke
 - **Refactoring is step 3 of TDD** - Not optional, but may conclude "already clean"
+
+## Mandatory Output Format
+
+**Every response MUST include one of the following tokens. These are non-negotiable gate tokens for the TDD Phase Gate Protocol.**
+
+**Assessment: Clean (no refactoring needed):**
+```
+[REFACTOR COMPLETE] Assessment: clean
+
+Code is clean — no refactoring needed. Functions focused, naming clear, patterns correct.
+
+RECOMMENDATION: Invoke Git Specialist to commit production code.
+```
+
+**Assessment: Refactored (improvements applied):**
+```
+[REFACTOR COMPLETE] Assessment: refactored
+
+Changes applied:
+- Extracted guard clause in processOrder (src/order/processor.ts:45)
+- Replaced mutation with spread in updateUser (src/user/service.ts:23)
+
+Files modified:
+- src/order/processor.ts
+- src/user/service.ts
+
+RECOMMENDATION: Invoke Test Writer to verify tests still pass (POST-REFACTOR), then invoke Git Specialist to commit.
+```
+
+**Assessment: Blocked (issues requiring domain agent):**
+```
+[REFACTOR BLOCKED] Issues requiring domain agent intervention:
+
+1. Architecture issue: Payment processor mixes HTTP concerns with business logic
+2. Missing abstraction: Database queries duplicated across 3 services
+
+RECOMMENDATION: Invoke Backend TypeScript Specialist to address architectural issues before refactoring can complete.
+```
+
+**`[REFACTOR COMPLETE]` is the gate token that enables Git Specialist to commit production code. Without it, commits are blocked.**
