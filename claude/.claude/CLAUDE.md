@@ -53,6 +53,60 @@ All work follows the **Red-Green-Refactor** cycle:
 - **Green**: Minimum code to pass
 - **Refactor**: Assess and improve (see Code quality-refactoring-specialist agent)
 
+## I-A. TDD Phase Gate Protocol (MANDATORY)
+
+**⚠️ HARD RULES — same severity as "Main Agent never writes code" and "max 3 parallel agents" ⚠️**
+
+### Phase Token Chain
+
+| Phase | Agent | Output Token | Gates (blocks until present) |
+|-------|-------|-------------|------------------------------|
+| RED | Test Writer | `[RED COMPLETE]` | Domain agent implementation |
+| GREEN | Domain Agent | `[GREEN COMPLETE]` | Test Writer verification |
+| VERIFY | Test Writer | `[GREEN VERIFIED]` | Quality & Refactoring |
+| REFACTOR | Quality & Refactoring | `[REFACTOR COMPLETE]` | Git Specialist commit |
+
+### Rules
+
+**RULE 1**: FORBIDDEN to invoke any domain agent (Backend, React, Shell) for implementation without a preceding `[RED COMPLETE]` token from Test Writer in the current task chain. No exceptions.
+
+**RULE 2**: FORBIDDEN to commit production code via Git Specialist without a preceding `[REFACTOR COMPLETE]` token from Quality & Refactoring in the current task chain.
+
+**RULE 3**: The RGR sequence is ALWAYS sequential, NEVER parallel between phases. RED must complete before GREEN starts. GREEN must complete before VERIFY. VERIFY must complete before REFACTOR.
+
+**RULE 4**: Phase tokens are mandatory agent output format. Every agent listed in the token chain MUST include the corresponding token in their response. Absence = protocol violation.
+
+**RULE 5**: Exempt task types that do NOT require the RGR cycle:
+- Documentation-only changes
+- Configuration changes (no production logic)
+- Schema-only design work (TypeScript Connoisseur pre-RED)
+- Git operations (branch, push — commit gate still applies)
+- Design/planning (Technical Architect)
+- Production Readiness audits (no implementation)
+
+For exempt tasks, Main Agent tags: `[RGR EXEMPT: <reason>]`
+
+### Exempt Agents (No TDD Gate Required)
+
+These agents operate outside the RGR cycle by nature of their work:
+- **Technical Architect** — planning, no code
+- **TypeScript Connoisseur** — pre-RED schema design
+- **Documentation Specialist** — docs only
+- **Git Specialist** — git ops (has commit gate instead)
+- **Production Readiness** — audits, no implementation
+
+### Main Agent Self-Check (Before Every Domain Agent Invocation for Implementation)
+
+Before invoking Backend TypeScript, React TypeScript, or Shell Specialist for **implementation work**:
+
+1. ✅ Do I have a `[RED COMPLETE]` token from Test Writer for this task?
+2. ✅ Does the prompt to the domain agent reference the failing tests?
+3. ✅ Am I requesting GREEN phase work (implement to pass tests)?
+
+If ANY answer is NO → STOP. Invoke Test Writer first.
+
+**Skipping this protocol = RULE VIOLATION equivalent to Main Agent writing code directly.**
+
 ## II. Main Agent Role: Orchestration Only
 
 **CRITICAL: The main agent (you) is an ORCHESTRATOR, not an IMPLEMENTER.**
