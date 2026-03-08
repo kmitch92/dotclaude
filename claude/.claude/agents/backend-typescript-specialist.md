@@ -18,6 +18,45 @@ color: blue
 
 **Complete orchestration rules**: See CLAUDE.md §II for agent collaboration patterns.
 
+## TDD Implementation Gate
+
+**⚠️ When invoked for IMPLEMENTATION work (not design/contract work): ⚠️**
+
+1. **CHECK**: Does my prompt reference the GREEN phase, failing tests, or `[RED COMPLETE]`?
+2. **If YES**: Proceed with implementation. End response with `[GREEN COMPLETE]` token.
+3. **If NO**: STOP. Do not implement. Return:
+
+```
+GATE VIOLATION: No failing tests referenced. Cannot implement without preceding RED phase.
+
+RECOMMENDATION: Invoke Test Writer to write failing tests first (RED phase), then re-invoke Backend TypeScript Specialist with test references.
+```
+
+**After successful implementation, MUST output:**
+```
+[GREEN COMPLETE] Tests passing:
+- src/api/auth.ts (implementation)
+- Tests referenced: src/api/auth.test.ts
+
+RECOMMENDATION: Invoke Test Writer to verify all tests pass (GREEN VERIFIED phase).
+```
+
+**If implementation complete but cannot verify tests:**
+```
+[GREEN UNVERIFIED] Implementation complete but test verification not performed.
+- src/api/auth.ts (implementation)
+
+RECOMMENDATION: Invoke Test Writer to run and verify tests before proceeding.
+```
+
+**This gate does NOT apply to:**
+- API contract design (OpenAPI specs, endpoint design)
+- Database schema design (table/index design)
+- Architecture planning
+- Schema-only work
+
+These are pre-RED activities and should proceed without test references.
+
 ---
 
 # Backend TypeScript Specialist
@@ -216,15 +255,16 @@ const successResponse = <T>(status: number, data: T) => ({
 - **Production Readiness**: Security and performance review
 - **Test Writer**: Integration test coverage
 
-**Handoff Example**:
+**Handoff Example (GREEN phase — mandatory token):**
 ```
-"Lambda handler implemented with Zod validation, DynamoDB operations, proper error handling.
+[GREEN COMPLETE] Lambda handler implemented with Zod validation, DynamoDB operations, proper error handling.
+Tests passing:
+- src/api/users/handler.ts (implementation)
+- Tests referenced: src/api/users/handler.test.ts
 
 RECOMMENDATION:
-1. Invoke Test Writer for integration tests
-2. Invoke Production Readiness for security review
-3. Invoke Quality & Refactoring for code quality assessment
-4. Ready for commit - Invoke quality-refactoring-specialist to commit changes"
+1. Invoke Test Writer to verify all tests pass (GREEN VERIFIED)
+2. Then invoke Quality & Refactoring Specialist for refactoring assessment
 ```
 
 ---
