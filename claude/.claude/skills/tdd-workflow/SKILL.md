@@ -533,19 +533,29 @@ After multiple similar patterns emerge → THEN consider abstraction in refactor
 
 ## Agent Collaboration in TDD Cycle
 
-### Sequential Flow (Standard Pattern)
+### Sequential Flow (ENFORCED — Token-Gated)
 
 ```
 Main Agent
   → Test Writer (RED: write failing test)
+      ↳ outputs [RED COMPLETE] — gates Domain Agent
   → Domain Agent (GREEN: implement to pass test)
+      ↳ checks for [RED COMPLETE] in prompt, outputs [GREEN COMPLETE]
   → Test Writer (verify coverage, tests pass)
-  → quality-refactoring-specialist (REFACTOR: assess opportunities)
+      ↳ outputs [GREEN VERIFIED] — gates Quality & Refactoring
+  → Quality & Refactoring (REFACTOR: assess opportunities)
+      ↳ outputs [REFACTOR COMPLETE] — gates Git Specialist commit
   → Domain Agent (implement refactoring if needed)
+      ↳ outputs [GREEN COMPLETE]
   → Test Writer (verify tests still pass)
-  → quality-refactoring-specialist (commit)
-  → documentation-specialist (capture learnings)
+      ↳ outputs [POST-REFACTOR VERIFIED]
+  → Git Specialist (commit — checks for [REFACTOR COMPLETE])
+  → Documentation Specialist (capture learnings)
 ```
+
+**Skipping any step = RULE VIOLATION equivalent to Main Agent writing code directly.**
+
+Each arrow represents a mandatory sequential handoff. Tokens at each step form an evidence chain. Domain agents REFUSE implementation if their prompt lacks test references or `[RED COMPLETE]`.
 
 ### Key Agent Responsibilities
 

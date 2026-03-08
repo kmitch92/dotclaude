@@ -155,6 +155,31 @@ Technical Architect breaks feature into tasks
 → quality-refactoring-specialist commits changes
 ```
 
+### Phase Gate Enforcement (TDD Sequence)
+
+**Every implementation task follows the token-gated TDD sequence. This is MANDATORY, not advisory.**
+
+| Step | Agent | Output Token | Gates Next Step |
+|------|-------|-------------|-----------------|
+| 1. RED | Test Writer | `[RED COMPLETE]` | Domain Agent implementation |
+| 2. GREEN | Domain Agent | `[GREEN COMPLETE]` | Test Writer verification |
+| 3. VERIFY | Test Writer | `[GREEN VERIFIED]` | Quality & Refactoring |
+| 4. REFACTOR | Quality & Refactoring | `[REFACTOR COMPLETE]` | Git Specialist commit |
+| 5. POST-REFACTOR | Test Writer | `[POST-REFACTOR VERIFIED]` | Final commit |
+
+**Main Agent Checklist (before each domain agent invocation for implementation):**
+1. ✅ `[RED COMPLETE]` token present from Test Writer?
+2. ✅ Prompt to domain agent references failing tests?
+3. ✅ Requesting GREEN phase work?
+
+If ANY answer is NO → invoke Test Writer first.
+
+**Exempt tasks** (tag with `[RGR EXEMPT: <reason>]`):
+- Documentation, configuration, schema design, git operations, planning, audits
+
+**Domain Agent Self-Guard:**
+Domain agents (Backend, React, Shell) check their prompt for test references or `[RED COMPLETE]`. If absent, they return `GATE VIOLATION` and refuse implementation.
+
 ### Pattern 2: Parallel Consultation
 
 **Use when**: Multiple independent perspectives needed (max 3 parallel)
