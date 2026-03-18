@@ -1,7 +1,7 @@
 {
   "cleanupPeriodDays": 90,
   "env": {
-    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "8192",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "24000",
     "BASH_DEFAULT_TIMEOUT_MS": "31000",
     "BASH_MAX_TIMEOUT_MS": "600000",
     "BASH_MAX_OUTPUT_LENGTH": "50000",
@@ -74,5 +74,7 @@
     "typescript-lsp@claude-plugins-official": true,
     "ralph-loop@claude-plugins-official": true
   },
-  "forceLoginMethod": "claudeai"
+  "forceLoginMethod": "claudeai",
+  "skipDangerousModePermissionPrompt": true,
+  "effortLevel": "medium"
 }
