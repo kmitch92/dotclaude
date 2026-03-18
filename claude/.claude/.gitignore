@@ -17,6 +17,9 @@ paste-cache/
 image-cache/
 ide/
 
+# Plugins (auto-managed by Claude Code)
+plugins/
+
 # Runtime state
 history.jsonl
 stats-cache.json
