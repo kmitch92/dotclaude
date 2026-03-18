@@ -1,0 +1,22 @@
+# Credentials
+.credentials.json
+
+# Session/task-specific ephemeral data
+projects/
+file-history/
+session-env/
+shell-snapshots/
+sessions/
+tasks/
+todos/
+plans/
+debug/
+backups/
+cache/
+paste-cache/
+image-cache/
+ide/
+
+# Runtime state
+history.jsonl
+stats-cache.json
