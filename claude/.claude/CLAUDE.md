@@ -132,20 +132,20 @@ Everything else MUST be delegated.
 
 ### ⚠️ HARD LIMIT: Parallel Subagent Constraint ⚠️
 
-**⚠️ MAXIMUM 3 PARALLEL SUBAGENTS AT ANY TIME - NON-NEGOTIABLE ⚠️**
+**⚠️ MAXIMUM 2 PARALLEL SUBAGENTS AT ANY TIME - NON-NEGOTIABLE ⚠️**
 
 **The Hard Limit:**
-- ✗ NEVER spawn >3 subagents in parallel
-- ✗ NEVER send a message with >3 Task tool calls
-- ✓ Use sequential batches of maximum 3 agents
+- ✗ NEVER spawn >2 subagents in parallel
+- ✗ NEVER send a message with >2 Task tool calls
+- ✓ Use sequential batches of maximum 2 agents
 
 **Examples:**
-- 4 perspectives (code review) → Batch 1: 3 agents, Batch 2: 1 agent
-- 5 agents needed → Batch 1: 3 agents, Batch 2: 2 agents
-- 6 agents needed → Batch 1: 3 agents, Batch 2: 3 agents
-- API + Database + Security → All 3 in parallel (max capacity)
+- 4 perspectives (code review) → Batch 1: 2 agents, Batch 2: 2 agents
+- 5 agents needed → Batch 1: 2 agents, Batch 2: 2 agents, Batch 3: 1 agent
+- 6 agents needed → Batch 1: 2 agents, Batch 2: 2 agents, Batch 3: 2 agents
+- API + Database → Both in parallel (max capacity)
 
-**This is a hard constraint. Plan agent batches to never exceed 3 parallel invocations.**
+**This is a hard constraint. Plan agent batches to never exceed 2 parallel invocations. This limit exists to prevent OOM kills on 16GB RAM systems.**
 
 ## III. Agent Orchestration System
 
