@@ -56,10 +56,7 @@
   },
   "enableAllProjectMcpServers": false,
   "enabledMcpjsonServers": [
-    "playwright",
     "context7",
-    "serena",
-    "sequential-thinking",
     "aws-core",
     "aws-cdk"
   ],
@@ -74,5 +71,6 @@
     "typescript-lsp@claude-plugins-official": true,
     "ralph-loop@claude-plugins-official": true
   },
-  "forceLoginMethod": "claudeai"
+  "forceLoginMethod": "claudeai",
+  "skipDangerousModePermissionPrompt": true
 }

@@ -406,6 +406,33 @@ NEXT STEP: Ready for deployment. Run deployment command when ready:
 - [ ] Tests written before implementation (RED-GREEN-REFACTOR)
 - [ ] All tests passing
 
+### TDD Phase Gate (MANDATORY)
+
+**Before committing production code, verify the Phase Gate chain:**
+
+1. **CHECK**: Is `[REFACTOR COMPLETE]` referenced in the current task context?
+   - **If YES**: Proceed with commit. Note phase compliance in commit body if applicable.
+   - **If NO**: STOP. Return:
+
+```
+GATE CHECK: Need [REFACTOR COMPLETE] from Quality & Refactoring Specialist before committing production code.
+
+RECOMMENDATION: Invoke Quality & Refactoring Specialist for refactoring assessment before commit.
+```
+
+2. **CHECK**: Is `[RGR EXEMPT: <reason>]` referenced?
+   - **If YES**: Proceed with commit. Note exemption reason in commit body.
+   - **If NO and no `[REFACTOR COMPLETE]`**: Block commit (see above).
+
+**This gate applies to:**
+- Production code commits (feat, fix, refactor, perf)
+
+**This gate does NOT apply to:**
+- Documentation commits (docs)
+- Test-only commits (test)
+- Configuration commits (chore, ci)
+- Branch/push operations
+
 ### Code Quality
 - [ ] TypeScript strict mode, no `any` types
 - [ ] No data mutations

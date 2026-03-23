@@ -53,6 +53,17 @@ All work follows the **Red-Green-Refactor** cycle:
 - **Green**: Minimum code to pass
 - **Refactor**: Assess and improve (see Code quality-refactoring-specialist agent)
 
+### ⚠️ Test Execution: Targeted Runs Only ⚠️
+
+**Running full test suites is expensive** — jest/vitest workers can consume ~1GB each, and a full CDK snapshot suite easily spawns 5+ workers totaling 4-5GB RSS. This routinely triggers memory pressure and kills planbot executions.
+
+**HARD RULES:**
+- **ALWAYS** run only the specific test file(s) you changed or that cover the code you changed
+- **NEVER** run the full test suite (`npx vitest run`, `npx jest`, `npm test`) unless explicitly asked by the user
+- **Pattern**: `npx vitest run path/to/specific.test.ts` or `npx jest path/to/specific.test.ts`
+- **Multiple files**: List them explicitly, e.g., `npx vitest run src/foo.test.ts src/bar.test.ts`
+- Full suite runs are the **user's responsibility** (CI, pre-push hooks, manual runs)
+
 ## I-A. TDD Phase Gate Protocol (MANDATORY)
 
 **⚠️ HARD RULES — same severity as "Main Agent never writes code" and "max 3 parallel agents" ⚠️**
