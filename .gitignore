@@ -12,7 +12,6 @@
 !.gitignore
 !README.md
 !install.sh
-!.env.mcp
 
 # =============================================================================
 # MCP DIRECTORY - ALLOW ALL
@@ -88,6 +87,7 @@ claude/.claude/ide/**
 claude/.claude/*.log
 
 # Local settings and secrets
+.env.mcp
 claude/.claude/settings.local.json
 .env.mcp.local
 **/*.local
@@ -103,4 +103,4 @@ claude/.claude/settings.local.json
 # 1. Only explicitly allowed files/directories are tracked
 # 2. New files/directories are ignored by default (safe by default)
 # 3. Runtime and generated files never leak into version control
-# 4. Clear separation between template (.env.mcp) and local secrets (.env.mcp.local)
+# 4. .env.mcp and .env.mcp.local are both ignored (contain secrets)
