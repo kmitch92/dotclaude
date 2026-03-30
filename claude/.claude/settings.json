@@ -41,7 +41,11 @@
       "Bash(gh:*)",
       "Bash(ls:*)",
       "Bash(tmux display-message \"[A-Za-z0-9\\s\\-_.:!?,]+\")",
-      "mcp__playwright"
+      "mcp__playwright",
+      "Bash(npm install:*)",
+      "Bash(npx vitest:*)",
+      "Bash(head -5 vitest.config.* vite.config.*)",
+      "Bash(grep -r \"globals\" vitest.config.* vite.config.*)"
     ],
     "deny": [
       "Bash(git push:main)",
