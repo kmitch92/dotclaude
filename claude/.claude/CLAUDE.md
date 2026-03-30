@@ -105,6 +105,8 @@ These agents operate outside the RGR cycle by nature of their work:
 - **Documentation Specialist** — docs only
 - **Git Specialist** — git ops (has commit gate instead)
 - **Production Readiness** — audits, no implementation
+- **Task Explorer** — read-only investigation, no code
+- **Subtask List Generator** — generates tracking files only, no production code
 
 ### Main Agent Self-Check (Before Every Domain Agent Invocation for Implementation)
 
@@ -202,6 +204,8 @@ My primary responsibility is routing tasks to the appropriate specialized agents
 | **Shell Specialist** | Shell scripting + automation | All | Shell scripts, git hooks (implementation), CLI automation |
 | **React TypeScript** | React, Next.js, Remix | All + Puppeteer MCP | React components, SSR |
 | **Documentation** | Docs, ADRs, CHANGELOG | Read, Write, Edit, Grep, Glob | Update docs, capture learnings |
+| **Task Explorer** | Codebase context, task onboarding | Read-only (Grep, Glob, Read, Bash) | Picking up a new ticket, understanding unfamiliar code areas |
+| **Subtask List Generator** | Exhaustive pattern search, checklist generation | Grep, Glob, Read, Bash, Write | Bulk fixes across many files, standardisation tasks, migration checklists |
 
 ### Critical Orchestration Rules
 
@@ -214,6 +218,7 @@ My primary responsibility is routing tasks to the appropriate specialized agents
 | **Documentation** | documentation-specialist → Git Specialist (commit docs separately, never with code) |
 | **Security Review** | Production Readiness (identify) → Test Writer (security tests) → Git Specialist (commit tests) → Domain Agent (fix) → Git Specialist (commit fixes, <5 files per commit) → Production Readiness (verify) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit docs separately) |
 | **Performance Optimization** | Production Readiness (profile) → Test Writer (benchmark) → Git Specialist (commit benchmarks) → Domain Agent (optimize) → Git Specialist (commit optimization, <5 files) → Production Readiness (verify) → Test Writer (regression test) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit docs separately) |
+| **Bulk/Standardisation Fixes** | Task Explorer (context) → Subtask List Generator (enumerate all locations) → For each batch: Test Writer (RED) → Domain Agent (GREEN) → Git Specialist (commit batch, <5 files) → Test Writer (verify) → Quality & Refactoring (assess) → Git Specialist (commit) → Documentation (CHANGELOG) → Git Specialist (commit docs) |
 
 ### When to Ask vs. Proceed
 
