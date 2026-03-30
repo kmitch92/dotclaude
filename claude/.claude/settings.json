@@ -60,10 +60,7 @@
   },
   "enableAllProjectMcpServers": false,
   "enabledMcpjsonServers": [
-    "playwright",
     "context7",
-    "serena",
-    "sequential-thinking",
     "aws-core",
     "aws-cdk"
   ],
