@@ -11,7 +11,8 @@
     "DISABLE_TELEMETRY": "1",
     "MCP_TIMEOUT": "30000",
     "MCP_TOOL_TIMEOUT": "60000",
-    "MAX_MCP_OUTPUT_TOKENS": "40000"
+    "MAX_MCP_OUTPUT_TOKENS": "40000",
+    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "1"
   },
   "includeCoAuthoredBy": false,
   "permissions": {
@@ -45,7 +46,8 @@
       "Bash(npm install:*)",
       "Bash(npx vitest:*)",
       "Bash(head -5 vitest.config.* vite.config.*)",
-      "Bash(grep -r \"globals\" vitest.config.* vite.config.*)"
+      "Bash(grep -r \"globals\" vitest.config.* vite.config.*)",
+      "Bash(node -e ':*)"
     ],
     "deny": [
       "Bash(git push:main)",
@@ -76,6 +78,6 @@
     "ralph-loop@claude-plugins-official": true
   },
   "forceLoginMethod": "claudeai",
-  "skipDangerousModePermissionPrompt": true,
-  "effortLevel": "medium"
+  "effortLevel": "high",
+  "skipDangerousModePermissionPrompt": true
 }
