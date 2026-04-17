@@ -411,26 +411,41 @@ install_claude_code() {
     print_success "Claude Code already installed: $claude_version"
 
     if confirm "Update Claude Code to latest version?"; then
-      if is_macos; then
-        brew upgrade claude || print_warning "Failed to update (may already be latest)"
-      elif is_linux; then
-        # Check if package is installed in system directory (requires sudo)
-        local pkg_path
-        pkg_path=$(npm root -g 2>/dev/null)/@anthropic-ai/claude-code
+      # Detect install method and derive the correct update command
+      local claude_bin install_method current_os update_cmd
+      claude_bin="$(command -v claude)"
+      install_method="$(detect_claude_install_method "$claude_bin")"
+      current_os="$(detect_os)"
+      print_info "Detected install method: $install_method"
 
-        if [[ -d "$pkg_path" ]] && [[ ! -w "$pkg_path" ]]; then
-          print_warning "Claude Code is installed globally and requires elevated permissions"
-          if confirm "Use sudo to update?"; then
-            sudo npm install -g @anthropic-ai/claude-code@latest
+      if update_cmd="$(get_claude_update_command "$install_method" "$current_os")"; then
+        # For npm updates, check if system directory requires sudo
+        if [[ "$install_method" == "npm" ]]; then
+          local pkg_path
+          pkg_path=$(npm root -g 2>/dev/null)/@anthropic-ai/claude-code
+
+          if [[ -d "$pkg_path" ]] && [[ ! -w "$pkg_path" ]]; then
+            print_warning "Claude Code is installed globally and requires elevated permissions"
+            if confirm "Use sudo to update?"; then
+              sudo $update_cmd
+            else
+              print_warning "Skipping update"
+              return 0
+            fi
           else
-            print_warning "Skipping update"
-            return 0
+            eval "$update_cmd"
           fi
         else
-          npm install -g @anthropic-ai/claude-code@latest
+          eval "$update_cmd" || print_warning "Failed to update (may already be latest)"
         fi
+        print_success "Claude Code updated"
+      else
+        # get_claude_update_command returns 2 for "unknown" method
+        print_warning "Could not determine how Claude Code was installed"
+        print_info "Binary path: $claude_bin"
+        print_info "Please update manually using the method you originally used to install"
+        print_warning "Skipping update"
       fi
-      print_success "Claude Code updated"
     fi
     return 0
   fi
@@ -441,38 +456,60 @@ install_claude_code() {
 
   if ! confirm "Install Claude Code?"; then
     print_warning "Skipping Claude Code installation"
-    print_info "You can install later with: scripts/install-claude-code.sh"
+    print_info "You can install later with: curl -fsSL https://claude.ai/install.sh | sh"
     return 0
   fi
 
-  if is_macos; then
-    print_info "Installing Claude Code via Homebrew..."
+  local installed=false
 
-    if ! command_exists brew; then
-      print_error "Homebrew not found. Please install Homebrew first:"
-      print_info "Visit: https://brew.sh"
-      return 1
+  # Primary option: native installer (cross-platform)
+  print_info "Option 1 (recommended): Native installer from claude.ai"
+  if confirm "Install via native installer?"; then
+    curl -fsSL https://claude.ai/install.sh | sh
+    installed=true
+    print_success "Claude Code installed via native installer"
+  fi
+
+  # Secondary option: platform-specific package manager
+  if [[ "$installed" == "false" ]]; then
+    if is_macos; then
+      print_info "Option 2: Install via Homebrew"
+      if confirm "Install via Homebrew?"; then
+        if ! command_exists brew; then
+          print_error "Homebrew not found. Please install Homebrew first:"
+          print_info "Visit: https://brew.sh"
+          return 1
+        fi
+
+        # Add Anthropic tap if not already added
+        if ! brew tap | grep -q "anthropics/claude"; then
+          brew tap anthropics/claude
+        fi
+
+        brew install claude
+        installed=true
+        print_success "Claude Code installed via Homebrew"
+      fi
+    elif is_linux; then
+      print_info "Option 2: Install via npm"
+      if confirm "Install via npm?"; then
+        if ! command_exists npm; then
+          print_error "npm is required to install Claude Code"
+          print_info "Please install Node.js/npm first"
+          return 1
+        fi
+
+        npm install -g @anthropic-ai/claude-code
+        installed=true
+        print_success "Claude Code installed via npm"
+      fi
     fi
+  fi
 
-    # Add Anthropic tap if not already added
-    if ! brew tap | grep -q "anthropics/claude"; then
-      brew tap anthropics/claude
-    fi
-
-    brew install claude
-    print_success "Claude Code installed"
-
-  elif is_linux; then
-    print_info "Installing Claude Code via npm..."
-
-    if ! command_exists npm; then
-      print_error "npm is required to install Claude Code"
-      print_info "Please install Node.js/npm first"
-      return 1
-    fi
-
-    npm install -g @anthropic-ai/claude-code
-    print_success "Claude Code installed"
+  if [[ "$installed" == "false" ]]; then
+    print_warning "Claude Code was not installed"
+    print_info "You can install later with: curl -fsSL https://claude.ai/install.sh | sh"
+    return 0
   fi
 
   # Prompt for authentication
