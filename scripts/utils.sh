@@ -64,6 +64,118 @@ detect_os() {
 }
 
 # =============================================================================
+# Claude Install Method Detection
+# =============================================================================
+# Classify how the given `claude` binary was installed.
+# Echoes exactly one of: native | brew | npm | unknown
+# Returns 0 on successful classification, 1 on usage/arg errors.
+# Bash 3.2 compatible (macOS default).
+
+_resolve_symlink_chain() {
+  # Resolve a symlink chain without `readlink -f` (bash 3.2 / macOS safe).
+  local path="$1"
+  local target
+  local max_hops=40
+  local hops=0
+
+  while [ -L "$path" ]; do
+    hops=$((hops + 1))
+    if [ "$hops" -gt "$max_hops" ]; then
+      break
+    fi
+    target="$(readlink "$path")"
+    case "$target" in
+      /*) path="$target" ;;
+      *)  path="$(dirname "$path")/$target" ;;
+    esac
+  done
+  echo "$path"
+}
+
+detect_claude_install_method() {
+  local binary="${1:-}"
+
+  if [ -z "$binary" ]; then
+    return 1
+  fi
+  if [ ! -e "$binary" ]; then
+    return 1
+  fi
+  if [ ! -x "$binary" ]; then
+    return 1
+  fi
+
+  local resolved
+  resolved="$(_resolve_symlink_chain "$binary")"
+
+  # 1. native — under */share/claude/versions/* OR $HOME/.local/share/claude/*
+  case "$resolved" in
+    */share/claude/versions/*)
+      echo "native"
+      return 0
+      ;;
+  esac
+  if [ -n "${HOME:-}" ]; then
+    case "$resolved" in
+      "${HOME}/.local/share/claude/"*)
+        echo "native"
+        return 0
+        ;;
+    esac
+  fi
+
+  # 2. npm — path contains node_modules/@anthropic-ai/claude-code/
+  #          OR path is under `npm root -g` global prefix.
+  case "$resolved" in
+    *"/node_modules/@anthropic-ai/claude-code/"*)
+      echo "npm"
+      return 0
+      ;;
+  esac
+  if command -v npm >/dev/null 2>&1; then
+    local npm_root npm_prefix
+    npm_root="$(npm root -g 2>/dev/null)"
+    if [ -n "$npm_root" ]; then
+      # Strip trailing /lib/node_modules (or /node_modules) to get npm global prefix.
+      npm_prefix="${npm_root%/lib/node_modules}"
+      if [ "$npm_prefix" = "$npm_root" ]; then
+        npm_prefix="${npm_root%/node_modules}"
+      fi
+      case "$resolved" in
+        "${npm_root}/"*)
+          echo "npm"
+          return 0
+          ;;
+        "${npm_prefix}/"*)
+          echo "npm"
+          return 0
+          ;;
+      esac
+    fi
+  fi
+
+  # 3. brew — resolved path under brew prefix (honours BREW_PREFIX_OVERRIDE).
+  local brew_prefix=""
+  if [ -n "${BREW_PREFIX_OVERRIDE:-}" ]; then
+    brew_prefix="$BREW_PREFIX_OVERRIDE"
+  elif command -v brew >/dev/null 2>&1; then
+    brew_prefix="$(brew --prefix 2>/dev/null)"
+  fi
+  if [ -n "$brew_prefix" ]; then
+    case "$resolved" in
+      "${brew_prefix}/"*)
+        echo "brew"
+        return 0
+        ;;
+    esac
+  fi
+
+  # 4. fall-through
+  echo "unknown"
+  return 0
+}
+
+# =============================================================================
 # Command Checks
 # =============================================================================
 
