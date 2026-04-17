@@ -176,6 +176,62 @@ detect_claude_install_method() {
 }
 
 # =============================================================================
+# Claude Update Command Resolution
+# =============================================================================
+# Pure function: (method, os) -> update-command string on stdout.
+#
+# Returns:
+#   0 — valid (method, os); stdout is the command to eval.
+#   1 — arg-validation error (missing/empty/invalid method or os); no stdout.
+#   2 — method is the literal "unknown" sentinel; stdout is "UNKNOWN".
+#
+# Bash 3.2 compatible (macOS default). Case-sensitive by design — both
+# arguments must match detect_claude_install_method / detect_os output.
+
+get_claude_update_command() {
+  # Require exactly two non-empty args. Use ${x:-} to tolerate `set -u`
+  # in callers; parameter count check via $# catches missing args.
+  if [ "$#" -lt 2 ]; then
+    return 1
+  fi
+  local method="${1:-}"
+  local os="${2:-}"
+
+  if [ -z "$method" ] || [ -z "$os" ]; then
+    return 1
+  fi
+
+  # Validate os first — "unknown" from detect_os is rejected regardless of
+  # method, because callers cannot update on an unrecognised platform.
+  case "$os" in
+    macos|linux) ;;
+    *) return 1 ;;
+  esac
+
+  case "$method" in
+    native)
+      echo "claude update"
+      return 0
+      ;;
+    brew)
+      echo "brew upgrade claude"
+      return 0
+      ;;
+    npm)
+      echo "npm install -g @anthropic-ai/claude-code@latest"
+      return 0
+      ;;
+    unknown)
+      echo "UNKNOWN"
+      return 2
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+# =============================================================================
 # Command Checks
 # =============================================================================
 
