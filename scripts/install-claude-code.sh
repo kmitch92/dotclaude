@@ -129,19 +129,5 @@ else
     fi
 fi
 
-# Optional: Check for Claude Code extensions
-if command_exists claude; then
-    echo ""
-    if confirm "Install recommended Claude Code extensions?"; then
-        print_info "Installing recommended extensions..."
-        
-        # MCP servers and tools
-        claude install mcp-server-filesystem
-        claude install mcp-server-git
-        
-        print_success "Extensions installed"
-    fi
-fi
-
 echo ""
 print_success "Claude Code setup complete"
