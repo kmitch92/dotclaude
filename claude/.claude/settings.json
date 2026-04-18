@@ -78,6 +78,5 @@
     "ralph-loop@claude-plugins-official": true
   },
   "forceLoginMethod": "claudeai",
-  "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true
 }
