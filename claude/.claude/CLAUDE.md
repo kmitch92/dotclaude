@@ -44,6 +44,9 @@ Claude auto-discovers skills from `~/.claude/skills/` based on task context. 22 
 1. **Test-First Always**: Write failing tests BEFORE production code exists
 2. **Behavior Over Implementation**: Tests verify user-observable behaviors through public APIs rather than implementation details/ internals
 3. **Schema-First Development**: Define Zod schemas first, derive types from them. Define in ONE place to create a secure API contract, use at function boundaries to parse and validate types at runtime. Use schemas to validate form elements in UI.
+   - **If the project has a `src/common/schemas/` directory, all entity Zod schemas live there, period.** Never redefine in services, web components, or repositories.
+   - **Never write `interface X extends z.infer<Schema>` — silently drops fields when the schema has mapped/branded shape. Use `type X = Y & {...}` intersection.**
+   - Look for `AGENTS.md` in the schemas directory for project-specific rules; respect it before suggesting any schema-layer change.
 4. **Immutability**: No data mutation - use immutable data structures
 5. **Pure Functions**: Same input = same output, no side effects where possible
 6. **Small, Incremental Changes**: Maintain working state throughout development
