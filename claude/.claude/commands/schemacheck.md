@@ -2,6 +2,94 @@
 
 Automated workflow to detect and fix GraphQL schema drift across all 15 Build Queue services.
 
+See `src/common/schemas/AGENTS.md` for the full ruleset. This doc surfaces the
+patterns that cause schema drift and how `/schemacheck` detects them.
+
+## Forbidden Patterns
+
+The following patterns are the most common causes of the class of schema bugs
+this command exists to prevent. Each one is enforced automatically by
+`scripts/check-schema-hygiene.sh` — regressions fail the hygiene script before
+they can reach production.
+
+### `z` import path
+```ts
+// ❌ Creates a second Zod instance. `.extend is not a function` at runtime.
+import { z } from 'zod';
+
+// ✅
+import { z } from '@common/gqloom-generator';
+```
+
+### `interface X extends z.infer<>`
+```ts
+// ❌ Silently drops every field from Material when Material's schema has
+//    any ZodBranded / mapped shape. Fails with phantom "Property does not
+//    exist on type 'MaterialEntity'" at assignment sites.
+interface MaterialEntity extends Material {
+  PK: string;
+  SK: string;
+}
+
+// ✅ Intersection preserves all fields from the Zod-inferred type.
+type MaterialEntity = Material & {
+  PK: string;
+  SK: string;
+};
+```
+
+Reference fix: `src/services/order-service/src/utils/order-line-item-repository.ts:40`.
+
+### `ZodBranded` on entity fields
+```ts
+// ❌ GQLoom rejects at schema generation: `zod type ZodBranded is not supported`.
+companyId: CompanyIdSchema,
+
+// ✅ Plain strings. Multi-tenant security is enforced at the resolver level
+//    via JWT claims, not via nominal typing.
+companyId: z.string().min(1),
+```
+
+### Schemas defined outside `src/common/schemas/`
+```ts
+// ❌ In src/services/foo-service/src/utils/whatever.ts
+const LocalThingSchema = z.object({ name: z.string() });
+
+// ✅ In src/common/schemas/foo-service/types.ts
+export const ThingSchema = z.object({ name: z.string() });
+
+// Then import from src/services/foo-service/... via `@common/schemas/foo-service/types`
+```
+
+### `.omit()` / `.pick()` in service code
+Allowed only in `src/common/schemas/**/gqloom.ts`, `src/common/schemas/**/events.ts`,
+and `src/common/schemas/forms/**`. Anywhere else, schema transformation means
+the consumer is redefining the schema — the exact drift risk `/schemacheck`
+exists to prevent.
+
+## Automated Enforcement
+
+Every commit runs `scripts/check-schema-hygiene.sh`, which performs six checks:
+
+| # | Check | Level |
+|---|---|---|
+| 1 | `.omit()` / `.pick()` outside allowed locations | WARNING |
+| 2 | `z.object()` in service directories | WARNING |
+| 3 | Zod imports from `'zod'` instead of `@common/gqloom-generator` | ERROR |
+| 4 | Component-level schema declarations in web | WARNING |
+| 5 | `interface X extends Y` where Y is Zod-inferred | ERROR |
+| 6 | `ZodBranded` (`.brand<>`, `CompanyIdSchema`, `UserIdSchema`) outside `common.ts` | ERROR |
+
+The contract test at `src/common/schemas/__tests__/gqloom-bridge-contract.test.ts`
+further asserts that every field in each `types.ts` base schema survives into
+its `gqloom.ts` bridge (prevents silent field drop between the two layers).
+
+Run locally:
+```bash
+./scripts/check-schema-hygiene.sh
+cd src/common && npx vitest run schemas/__tests__/gqloom-bridge-contract.test.ts
+```
+
 ## What This Does
 
 1. Backs up current schema.graphql files to schema_old.graphql
