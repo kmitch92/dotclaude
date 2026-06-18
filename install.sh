@@ -154,7 +154,7 @@ install_nodejs() {
   print_warning "Node.js/npm not found"
   print_info "Node.js is needed for:"
   print_info "  - Claude Code installation"
-  print_info "  - MCP servers (context7, sequential-thinking, playwright)"
+  print_info "  - MCP servers (context7, sequential-thinking, puppeteer, browser-tools, aws-cdk)"
 
   if ! confirm "Install Node.js?"; then
     print_warning "Skipping Node.js installation"
