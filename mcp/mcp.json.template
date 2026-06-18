@@ -4,32 +4,21 @@
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp", "--api-key", "${CONTEXT7_API_KEY}"]
     },
-    "taskmaster": {
-      "command": "npx",
-      "args": ["-y", "--package=task-master-ai", "task-master-ai"],
-      "env": {
-        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
-      }
-    },
     "sequential-thinking": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
     },
-    "playwright": {
+    "puppeteer": {
       "command": "npx",
-      "args": ["-y", "@hisma/server-puppeteer"]
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
     },
-    "aws-core": {
-      "command": "uvx",
-      "args": ["awslabs.core-mcp-server@latest"],
-      "env": {
-        "AWS_REGION": "eu-west-2",
-        "FASTMCP_LOG_LEVEL": "ERROR"
-      }
+    "browser-tools": {
+      "command": "npx",
+      "args": ["-y", "@agentdeskai/browser-tools-mcp"]
     },
     "aws-cdk": {
       "command": "uvx",
-      "args": ["awslabs.cdk-mcp-server@latest"],
+      "args": ["awslabs.aws-iac-mcp-server@latest"],
       "env": {
         "AWS_REGION": "eu-west-2",
         "FASTMCP_LOG_LEVEL": "ERROR"
