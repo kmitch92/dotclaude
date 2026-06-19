@@ -1,0 +1,7 @@
+{
+  "CLAUDE_MEM_RUNTIME": "worker",
+  "CLAUDE_MEM_PROVIDER": "claude",
+  "CLAUDE_MEM_CLAUDE_AUTH_METHOD": "subscription",
+  "CLAUDE_MEM_MODEL": "claude-haiku-4-5-20251001",
+  "CLAUDE_MEM_FOLDER_CLAUDEMD_ENABLED": "false"
+}
