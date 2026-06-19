@@ -563,6 +563,26 @@ setup_headroom_proxy() {
 }
 
 # =============================================================================
+# claude-mem Setup (optional)
+# =============================================================================
+
+setup_claude_mem() {
+  print_header "Setting Up claude-mem"
+
+  # Optional step: skip gracefully if the script is not present.
+  if [[ ! -f "$SCRIPT_DIR/scripts/install-claude-mem.sh" ]]; then
+    print_info "claude-mem setup script not found, skipping: scripts/install-claude-mem.sh"
+    return 0
+  fi
+
+  # Run claude-mem setup script (it is idempotent and self-guards on the claude CLI).
+  print_info "Running claude-mem setup script..."
+  bash "$SCRIPT_DIR/scripts/install-claude-mem.sh"
+
+  print_success "claude-mem setup complete"
+}
+
+# =============================================================================
 # Validation
 # =============================================================================
 
@@ -747,6 +767,9 @@ main() {
 
   # Set up Headroom proxy (optional; self-guards on prerequisites)
   setup_headroom_proxy
+
+  # Set up claude-mem (optional; self-guards on the claude CLI)
+  setup_claude_mem
 
   # Validate installation
   validate_installation
