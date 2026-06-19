@@ -543,6 +543,26 @@ deploy_mcp_config() {
 }
 
 # =============================================================================
+# Headroom Proxy Setup (optional)
+# =============================================================================
+
+setup_headroom_proxy() {
+  print_header "Setting Up Headroom Proxy"
+
+  # Optional step: skip gracefully if the script is not present.
+  if [[ ! -f "$SCRIPT_DIR/scripts/install-headroom.sh" ]]; then
+    print_info "Headroom setup script not found, skipping: scripts/install-headroom.sh"
+    return 0
+  fi
+
+  # Run Headroom setup script (it is idempotent and self-guards on uv/headroom).
+  print_info "Running Headroom setup script..."
+  bash "$SCRIPT_DIR/scripts/install-headroom.sh"
+
+  print_success "Headroom proxy setup complete"
+}
+
+# =============================================================================
 # Validation
 # =============================================================================
 
@@ -724,6 +744,9 @@ main() {
   # Deploy MCP configuration
   # Always deploy MCP config (works even without API keys for some servers)
   deploy_mcp_config
+
+  # Set up Headroom proxy (optional; self-guards on prerequisites)
+  setup_headroom_proxy
 
   # Validate installation
   validate_installation
