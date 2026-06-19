@@ -207,6 +207,20 @@ My primary responsibility is routing tasks to the appropriate specialized agents
 | **Task Explorer** | Codebase context, task onboarding | Read-only (Grep, Glob, Read, Bash) | Picking up a new ticket, understanding unfamiliar code areas |
 | **Subtask List Generator** | Exhaustive pattern search, checklist generation | Grep, Glob, Read, Bash, Write | Bulk fixes across many files, standardisation tasks, migration checklists |
 
+## Serena MCP (semantic code tools)
+
+Serena provides IDE-grade, symbol-level code tools via LSP (`find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `find_implementations`, `replace_symbol_body`, `insert_after_symbol`/`insert_before_symbol`, `rename`, `inline`). It is registered globally with no baked project path.
+
+**Session start**: activate the project once — e.g. "activate the Serena project in the current directory". On first activation Serena onboards and writes `.serena/memories/` (gitignored).
+
+**Tool boundaries (MUST follow — same severity as the orchestrator rules):**
+- **Main agent / Task Explorer / Technical Architect**: MAY use Serena's READ-ONLY retrieval tools (`find_symbol`, `find_referencing_symbols`, `get_symbols_overview`, etc.) — they count as read-only investigation. This is the preferred, token-cheap way to map code.
+- **Domain agents (Backend, React, Shell)**: MAY use Serena's symbolic EDIT tools (`replace_symbol_body`, `insert_after_symbol`, `rename`) during GREEN/REFACTOR. Editing remains domain-agent-only; the main agent NEVER uses Serena edit tools.
+- **Quality & Refactoring**: prefer `find_referencing_symbols` + `rename`/`inline` for safe, behaviour-preserving refactors.
+- **FORBIDDEN**: No agent may use Serena's `execute_shell_command`. Run tests via Bash with TARGETED test files only (never the full suite) per the test-execution rules above.
+
+Serena does not change the RED→GREEN→REFACTOR phase gates; it is a sharper tool for the same phases.
+
 ### Critical Orchestration Rules
 
 | Task Type | Pattern |
