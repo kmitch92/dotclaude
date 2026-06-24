@@ -48,7 +48,8 @@
       "Bash(npx vitest:*)",
       "Bash(head -5 vitest.config.* vite.config.*)",
       "Bash(grep -r \"globals\" vitest.config.* vite.config.*)",
-      "Bash(node -e ':*)"
+      "Bash(node -e ':*)",
+      "Bash(node --test cli/test/deployment-contract-v2.test.js)"
     ],
     "deny": [
       "Bash(git push:main)",
@@ -61,6 +62,7 @@
       "//"
     ]
   },
+  "model": "opus[1m]",
   "enableAllProjectMcpServers": false,
   "enabledMcpjsonServers": [
     "context7",
