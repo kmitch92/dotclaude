@@ -29,6 +29,12 @@ source "$DOTFILES_DIR/scripts/utils.sh"
 readonly HEADROOM_PORT="${HEADROOM_PORT:-8787}"
 readonly HEADROOM_HEALTH_URL="http://127.0.0.1:${HEADROOM_PORT}/health"
 
+# Gitignored Claude settings override (takes precedence over settings.json).
+# Used by the routing fail-safe below to force Claude Code direct to Anthropic
+# when the proxy is unhealthy, then clear that override once it recovers.
+readonly SETTINGS_LOCAL="$DOTFILES_DIR/claude/.claude/settings.local.json"
+readonly ANTHROPIC_DIRECT_URL="https://api.anthropic.com"
+
 print_header "Setting up Headroom Proxy"
 
 # =============================================================================
@@ -84,11 +90,51 @@ else
 fi
 
 # =============================================================================
+# Work around a launchctl bootout/bootstrap race in `headroom install apply`
+# =============================================================================
+# On macOS, `headroom install apply` runs `launchctl bootout <domain>` (async,
+# unchecked) immediately followed by `launchctl bootstrap`. bootout returns
+# before the kernel finishes unloading the job, so bootstrap finds the old job
+# still registered and exits 5 (EIO). We cannot patch the vendored python (it is
+# overwritten on every `uv tool install`), so we tear the job down ourselves and
+# wait for it to fully disappear BEFORE calling apply — making apply's own
+# bootout a no-op and removing the race.
+
+teardown_launchd_and_wait() {
+  local domain="gui/$(id -u)/com.headroom.default"
+
+  # Unload the job if present. It may not be loaded — that is fine, so we ignore
+  # the exit status entirely.
+  launchctl bootout "$domain" >/dev/null 2>&1 || true
+
+  # Poll until the job is fully gone (print returns non-zero) or we time out.
+  # ~10s budget: 20 iterations of 0.5s.
+  local i
+  for i in $(seq 1 20); do
+    if ! launchctl print "$domain" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 0.5
+  done
+
+  print_info "launchd job '$domain' still present after teardown wait; continuing"
+  return 0
+}
+
+# =============================================================================
 # Ensure the persistent proxy is running
 # =============================================================================
 
 is_proxy_running() {
-  headroom install status 2>/dev/null | grep -qiE '^Status:[[:space:]]+running'
+  # Require BOTH running AND healthy. A loaded-but-unhealthy proxy must NOT be
+  # treated as fine — returning 1 here lets it fall through to the safe
+  # teardown -> apply recovery path. Capture status once and check both lines.
+  local status
+  status="$(headroom install status 2>/dev/null || true)"
+
+  printf '%s\n' "$status" | grep -qiE '^Status:[[:space:]]+running' || return 1
+  printf '%s\n' "$status" | grep -qiE '^Healthy:[[:space:]]+yes' || return 1
+  return 0
 }
 
 if is_proxy_running; then
@@ -99,7 +145,24 @@ else
   if [ -n "$NO_SHELL_FLAG" ]; then
     apply_cmd+=("$NO_SHELL_FLAG")
   fi
-  "${apply_cmd[@]}"
+
+  # Pre-empt the launchctl race: tear down any existing job and wait for it to
+  # fully unload so apply's internal bootout is a no-op and its bootstrap can't
+  # collide with a still-registered job.
+  teardown_launchd_and_wait
+
+  # Resilient apply: `set -e` is suppressed inside `if` conditions, so a single
+  # failure no longer aborts the whole install. On failure we do a full teardown
+  # and retry once; if it still fails the proxy is optional, so we skip cleanly.
+  if ! "${apply_cmd[@]}"; then
+    print_warning "Headroom apply failed (likely a launchctl bootstrap race); retrying after full teardown..."
+    teardown_launchd_and_wait
+    if ! "${apply_cmd[@]}"; then
+      print_warning "Headroom proxy could not be installed; skipping (proxy is optional)."
+      print_info "Re-run later with: bash scripts/install-headroom.sh"
+      exit 0
+    fi
+  fi
   print_success "Headroom proxy service applied"
 fi
 
@@ -172,6 +235,109 @@ if [ -z "$NO_SHELL_FLAG" ]; then
 fi
 
 # =============================================================================
+# Routing fail-safe: keep Claude Code working when the proxy is down
+# =============================================================================
+# settings.local.json (gitignored) overrides settings.json. When the proxy is
+# healthy we clear any override so the proxy URL from settings.json wins; when
+# it is unhealthy we write ANTHROPIC_BASE_URL pointing direct at Anthropic so
+# Claude Code keeps working instead of routing into a dead proxy.
+#
+# Both helpers are best-effort: if neither jq nor python3 is available they warn
+# and return 0 (never fail the install). All writes go via a temp file + atomic
+# mv, back up an existing file first, and only write back when content changed.
+
+# Read current settings.local.json content, defaulting to "{}" when absent.
+_read_settings_local() {
+  if [ -f "$SETTINGS_LOCAL" ]; then
+    cat "$SETTINGS_LOCAL"
+  else
+    printf '%s' '{}'
+  fi
+}
+
+# Atomically write $1 to settings.local.json, but only if it differs from the
+# current content. Backs up an existing file first. Returns 0 on no-op too.
+_write_settings_local_if_changed() {
+  local new_content="$1"
+  local tmp
+  tmp="$(mktemp)"
+  printf '%s\n' "$new_content" > "$tmp"
+
+  if [ -f "$SETTINGS_LOCAL" ] && cmp -s "$SETTINGS_LOCAL" "$tmp"; then
+    rm -f "$tmp"
+    return 1  # unchanged
+  fi
+
+  [ -f "$SETTINGS_LOCAL" ] && backup_file "$SETTINGS_LOCAL" >/dev/null
+  mkdir -p "$(dirname "$SETTINGS_LOCAL")"
+  mv "$tmp" "$SETTINGS_LOCAL"
+  return 0  # changed
+}
+
+# Proxy IS healthy: remove any fail-safe override so settings.json wins.
+enable_proxy_routing() {
+  local current new
+  current="$(_read_settings_local)"
+
+  if command_exists jq; then
+    # NOTE: use `(.env|type) == "object"` rather than `(.env|objects)` as the
+    # `if` condition: `.env|objects` yields an *empty stream* when .env is
+    # absent, and `if <empty> then..` emits nothing (would blank the file).
+    # `type` always yields a value, so the env-absent case correctly no-ops.
+    new="$(printf '%s' "$current" | jq 'if ((.env|type) == "object") then .env |= del(.ANTHROPIC_BASE_URL) else . end | if (.env == {}) then del(.env) else . end')"
+  elif command_exists python3; then
+    new="$(printf '%s' "$current" | python3 -c '
+import json, sys
+data = json.load(sys.stdin)
+env = data.get("env")
+if isinstance(env, dict):
+    env.pop("ANTHROPIC_BASE_URL", None)
+    if env == {}:
+        data.pop("env", None)
+print(json.dumps(data, indent=2))
+')"
+  else
+    print_warning "Neither jq nor python3 available; skipping proxy-routing cleanup"
+    return 0
+  fi
+
+  if _write_settings_local_if_changed "$new"; then
+    print_info "Cleared proxy-routing fail-safe override from settings.local.json"
+  fi
+}
+
+# Proxy is NOT healthy: write an override routing Claude Code direct to
+# Anthropic, merging into (not clobbering) any existing keys.
+disable_proxy_routing() {
+  local current new
+  current="$(_read_settings_local)"
+
+  if command_exists jq; then
+    new="$(printf '%s' "$current" | jq --arg url "$ANTHROPIC_DIRECT_URL" '.env = ((.env // {}) + {ANTHROPIC_BASE_URL: $url})')"
+  elif command_exists python3; then
+    new="$(printf '%s' "$current" | ANTHROPIC_DIRECT_URL="$ANTHROPIC_DIRECT_URL" python3 -c '
+import json, os, sys
+data = json.load(sys.stdin)
+env = data.get("env")
+if not isinstance(env, dict):
+    env = {}
+env["ANTHROPIC_BASE_URL"] = os.environ["ANTHROPIC_DIRECT_URL"]
+data["env"] = env
+print(json.dumps(data, indent=2))
+')"
+  else
+    print_warning "Neither jq nor python3 available; cannot write proxy-routing fail-safe"
+    return 0
+  fi
+
+  if _write_settings_local_if_changed "$new"; then
+    print_warning "Proxy unhealthy — wrote ANTHROPIC_BASE_URL=$ANTHROPIC_DIRECT_URL into settings.local.json"
+    print_info "Claude Code will route direct to Anthropic so it keeps working"
+    print_info "Re-run this script once the proxy is fixed to restore proxy routing"
+  fi
+}
+
+# =============================================================================
 # Verify the proxy health endpoint
 # =============================================================================
 
@@ -180,10 +346,12 @@ print_info "Checking proxy health: $HEADROOM_HEALTH_URL"
 if curl -sf -m 2 "$HEADROOM_HEALTH_URL" >/dev/null 2>&1; then
   print_success "Headroom proxy is healthy on port $HEADROOM_PORT"
   print_info "Claude Code routes through it via ANTHROPIC_BASE_URL in settings.json"
+  enable_proxy_routing
 else
   print_warning "Headroom proxy health check failed at $HEADROOM_HEALTH_URL"
   print_info "Check status with: headroom install status"
   print_info "Check logs / restart with: headroom install restart"
+  disable_proxy_routing
 fi
 
 echo ""
