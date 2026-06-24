@@ -57,6 +57,14 @@
 !claude/.claude/commands/**
 
 # =============================================================================
+# SERENA DIRECTORY - ALLOW CONFIG ONLY
+# =============================================================================
+# Tracks the deployable config (symlinked to ~/.serena by install.sh).
+# Serena's runtime drops (logs, memories, caches) stay ignored by default.
+!serena/
+!serena/serena_config.yml
+
+# =============================================================================
 # RUNTIME/GENERATED FILES - EXPLICIT IGNORES
 # =============================================================================
 # These are explicitly ignored even if parent directories are allowed
