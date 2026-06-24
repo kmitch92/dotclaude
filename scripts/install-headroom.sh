@@ -137,11 +137,13 @@ is_proxy_running() {
   return 0
 }
 
-if is_proxy_running; then
-  print_success "Headroom proxy already running (persistent service)"
-else
-  print_info "Installing persistent Headroom proxy service..."
-  apply_cmd=(headroom install apply --preset persistent-service --providers auto)
+# Tear down any existing launchd job, then apply the persistent-service preset
+# with a single retry-after-full-teardown. Used both for the initial install and
+# as the repair step before the direct-routing fallback. Returns 1 on terminal
+# failure so callers decide what to do (the caller, not this function, owns the
+# exit/skip/fallback policy).
+establish_proxy() {
+  local apply_cmd=(headroom install apply --preset persistent-service --providers auto)
   if [ -n "$NO_SHELL_FLAG" ]; then
     apply_cmd+=("$NO_SHELL_FLAG")
   fi
@@ -153,17 +155,27 @@ else
 
   # Resilient apply: `set -e` is suppressed inside `if` conditions, so a single
   # failure no longer aborts the whole install. On failure we do a full teardown
-  # and retry once; if it still fails the proxy is optional, so we skip cleanly.
+  # and retry once; if it still fails we return 1 and let the caller decide.
   if ! "${apply_cmd[@]}"; then
     print_warning "Headroom apply failed (likely a launchctl bootstrap race); retrying after full teardown..."
     teardown_launchd_and_wait
     if ! "${apply_cmd[@]}"; then
-      print_warning "Headroom proxy could not be installed; skipping (proxy is optional)."
-      print_info "Re-run later with: bash scripts/install-headroom.sh"
-      exit 0
+      return 1
     fi
   fi
   print_success "Headroom proxy service applied"
+  return 0
+}
+
+if is_proxy_running; then
+  print_success "Headroom proxy already running (persistent service)"
+else
+  print_info "Installing persistent Headroom proxy service..."
+  if ! establish_proxy; then
+    print_warning "Headroom proxy could not be installed; skipping (proxy is optional)."
+    print_info "Re-run later with: bash scripts/install-headroom.sh"
+    exit 0
+  fi
 fi
 
 # =============================================================================
@@ -341,17 +353,35 @@ print(json.dumps(data, indent=2))
 # Verify the proxy health endpoint
 # =============================================================================
 
+# Single source of truth for the health probe so the initial check and the
+# post-repair re-check stay identical.
+proxy_health_ok() {
+  curl -sf -m 2 "$HEADROOM_HEALTH_URL" >/dev/null 2>&1
+}
+
 print_info "Checking proxy health: $HEADROOM_HEALTH_URL"
 
-if curl -sf -m 2 "$HEADROOM_HEALTH_URL" >/dev/null 2>&1; then
+if proxy_health_ok; then
   print_success "Headroom proxy is healthy on port $HEADROOM_PORT"
   print_info "Claude Code routes through it via ANTHROPIC_BASE_URL in settings.json"
   enable_proxy_routing
 else
   print_warning "Headroom proxy health check failed at $HEADROOM_HEALTH_URL"
-  print_info "Check status with: headroom install status"
-  print_info "Check logs / restart with: headroom install restart"
-  disable_proxy_routing
+  print_info "Attempting teardown and re-establish before falling back to direct routing..."
+
+  # Repair runs AT MOST ONCE: a single establish_proxy attempt (itself limited to
+  # two apply tries) followed by one re-check. No loop — if it is still unhealthy
+  # we fall back to direct routing so Claude Code keeps working.
+  if establish_proxy && proxy_health_ok; then
+    print_success "Headroom proxy re-established and healthy on port $HEADROOM_PORT"
+    print_info "Claude Code routes through it via ANTHROPIC_BASE_URL in settings.json"
+    enable_proxy_routing
+  else
+    print_warning "Proxy still unhealthy after re-establish; falling back to direct routing"
+    print_info "Check status with: headroom install status"
+    print_info "Check logs / restart with: headroom install restart"
+    disable_proxy_routing
+  fi
 fi
 
 echo ""
