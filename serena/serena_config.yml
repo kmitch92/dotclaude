@@ -1,0 +1,28 @@
+gui_log_window: false
+web_dashboard: true
+web_dashboard_open_on_launch: true
+log_level: 20
+trace_lsp_communication: false
+ls_specific_settings: {}
+tool_timeout: 240
+excluded_tools:
+- initial_instructions
+- onboarding
+included_optional_tools: []
+default_max_tool_answer_chars: 60000
+token_count_estimator: CHAR_COUNT
+projects: []
+default_modes:
+base_modes:
+- editing
+fixed_tools: []
+symbol_info_budget: 10.0
+read_only_memory_patterns: []
+ignored_memory_patterns: []
+web_dashboard_interface:
+web_dashboard_listen_address: 127.0.0.1
+jetbrains_plugin_server_address: 127.0.0.1
+ignored_paths: []
+project_serena_folder_location: $projectDir/.serena
+language_backend: LSP
+line_ending: native

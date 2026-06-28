@@ -154,7 +154,7 @@ install_nodejs() {
   print_warning "Node.js/npm not found"
   print_info "Node.js is needed for:"
   print_info "  - Claude Code installation"
-  print_info "  - MCP servers (context7, sequential-thinking, playwright)"
+  print_info "  - MCP servers (context7, sequential-thinking, puppeteer, browser-tools, aws-cdk)"
 
   if ! confirm "Install Node.js?"; then
     print_warning "Skipping Node.js installation"
@@ -426,6 +426,81 @@ deploy_mcp_config() {
 }
 
 # =============================================================================
+# Headroom Proxy Setup (optional)
+# =============================================================================
+
+setup_headroom_proxy() {
+  print_header "Setting Up Headroom Proxy"
+
+  # Optional step: skip gracefully if the script is not present.
+  if [[ ! -f "$SCRIPT_DIR/scripts/install-headroom.sh" ]]; then
+    print_info "Headroom setup script not found, skipping: scripts/install-headroom.sh"
+    return 0
+  fi
+
+  # Run Headroom setup script (it is idempotent and self-guards on uv/headroom).
+  print_info "Running Headroom setup script..."
+  bash "$SCRIPT_DIR/scripts/install-headroom.sh"
+
+  print_success "Headroom proxy setup complete"
+}
+
+# =============================================================================
+# claude-mem Setup (optional)
+# =============================================================================
+
+setup_claude_mem() {
+  print_header "Setting Up claude-mem"
+
+  # Optional step: skip gracefully if the script is not present.
+  if [[ ! -f "$SCRIPT_DIR/scripts/install-claude-mem.sh" ]]; then
+    print_info "claude-mem setup script not found, skipping: scripts/install-claude-mem.sh"
+    return 0
+  fi
+
+  # Run claude-mem setup script (it is idempotent and self-guards on the claude CLI).
+  print_info "Running claude-mem setup script..."
+  bash "$SCRIPT_DIR/scripts/install-claude-mem.sh"
+
+  print_success "claude-mem setup complete"
+}
+
+# =============================================================================
+# Serena Config Deployment (optional)
+# =============================================================================
+
+setup_serena() {
+  print_header "Setting Up Serena Configuration"
+
+  local serena_dir="$HOME/.serena"
+  local serena_config="$serena_dir/serena_config.yml"
+  local config_source="$SCRIPT_DIR/serena/serena_config.yml"
+
+  if [[ ! -f "$config_source" ]]; then
+    print_info "Serena config source not found, skipping: serena/serena_config.yml"
+    return 0
+  fi
+
+  mkdir -p "$serena_dir"
+
+  # Back up and remove any existing non-symlink config
+  if [[ -f "$serena_config" ]] && [[ ! -L "$serena_config" ]]; then
+    local backup_path
+    backup_path=$(backup_file "$serena_config")
+    print_info "Backed up existing serena_config.yml"
+    rm -f "$serena_config"
+  fi
+
+  # Create or re-point symlink
+  if [[ -L "$serena_config" ]]; then
+    rm "$serena_config"
+  fi
+
+  ln -s "$config_source" "$serena_config"
+  print_success "Serena config symlinked: ~/.serena/serena_config.yml → $config_source"
+}
+
+# =============================================================================
 # Validation
 # =============================================================================
 
@@ -607,6 +682,15 @@ main() {
   # Deploy MCP configuration
   # Always deploy MCP config (works even without API keys for some servers)
   deploy_mcp_config
+
+  # Set up Headroom proxy (optional; self-guards on prerequisites)
+  setup_headroom_proxy
+
+  # Set up claude-mem (optional; self-guards on the claude CLI)
+  setup_claude_mem
+
+  # Set up Serena config
+  setup_serena
 
   # Validate installation
   validate_installation

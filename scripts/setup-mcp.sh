@@ -47,10 +47,10 @@ if [ ${#MISSING_TOOLS[@]} -gt 0 ]; then
     echo ""
     print_info "Affected MCP servers:"
     if [[ " ${MISSING_TOOLS[@]} " =~ "npx" ]]; then
-        echo "  - context7, sequential-thinking, playwright (require npx)"
+        echo "  - context7, sequential-thinking, puppeteer, browser-tools (require npx)"
     fi
     if [[ " ${MISSING_TOOLS[@]} " =~ "uvx" ]]; then
-        echo "  - aws-core, aws-cdk (require uvx)"
+        echo "  - aws-cdk (requires uvx)"
     fi
     echo ""
     print_info "Config will be deployed but these servers won't work until tools are installed"
@@ -98,22 +98,13 @@ if [ "$CONTEXT7_API_KEY" = "your_api_key_here" ] || [ -z "$CONTEXT7_API_KEY" ]; 
     export CONTEXT7_API_KEY=""
 fi
 
-# Check ANTHROPIC_API_KEY
-if [ "$ANTHROPIC_API_KEY" = "your_anthropic_api_key_here" ] || [ -z "$ANTHROPIC_API_KEY" ]; then
-    print_warning "ANTHROPIC_API_KEY not configured - taskmaster server will not be available"
-    print_info "To enable taskmaster later: Add ANTHROPIC_API_KEY to .env.mcp.local and re-run setup-mcp.sh"
-    MISSING_KEYS+=("ANTHROPIC_API_KEY")
-    # Set empty value so envsubst doesn't fail
-    export ANTHROPIC_API_KEY=""
-fi
-
 # Show what will work without API keys
 if [ ${#MISSING_KEYS[@]} -gt 0 ]; then
     echo ""
     print_info "The following MCP servers will be available without API keys:"
     echo "  ✓ sequential-thinking (no key required)"
-    echo "  ✓ playwright (no key required)"
-    echo "  ✓ aws-core (uses AWS credentials)"
+    echo "  ✓ puppeteer (no key required)"
+    echo "  ✓ browser-tools (no key required)"
     echo "  ✓ aws-cdk (uses AWS credentials)"
     echo ""
 fi
