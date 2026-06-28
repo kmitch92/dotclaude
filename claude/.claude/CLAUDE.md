@@ -327,6 +327,15 @@ Main Agent role: Orchestrate this workflow. NEVER implement any step directly.
 
 **Preserving existing functionality > solving immediate problems**
 
+### Diagnostic-First Debugging (Complex Features)
+
+For complex features — especially distributed / cloud-spanning ones — **proactively propose a CLI/API-driven diagnostic approach** rather than debugging through UIs. The diagnostic power of chaining CLI APIs together is easy to forget, and product-UI and cloud-console roundtrips are slow and obscure the real signal.
+
+- When a feature spans services/infra and UI-based debugging is slow, **offer to build or extend a read-only diagnostic script** (e.g. a `*-diag.sh`) that goes straight to the source — tail logs, query state, describe infra (CloudWatch logs tail, DynamoDB, ECS/ECR/SSM/Cognito describe, API Gateway access logs) — collapsing many calls into one fast readout.
+- **Aim to use UIs as little as possible** — both the product UI and the tooling/console. Go straight to the source for information.
+- Where safe, also **drive the behavior under test via API mutations** (the changes that prompt the behavior we're verifying) instead of clicking through the product, so the feedback loop is fully scriptable, reliable, and quick.
+- **Pair diagnostics with rich structured logging at the key code seams** so the relevant signals (target URLs, auth outcomes, status codes, received values) actually surface in those logs and the readout is conclusive.
+
 ### Documentation Hierarchy & CHANGELOG Policy
 
 **Three-Tier System:**
