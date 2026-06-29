@@ -24,6 +24,9 @@ Claude auto-discovers skills from `~/.claude/skills/` by task context — no exp
 1. **Test-First Always**: failing tests BEFORE production code exists
 2. **Behavior Over Implementation**: test user-observable behavior through public APIs, not internals
 3. **Schema-First**: define Zod schemas first, derive types from them; define once as a secure API contract, parse/validate at function boundaries and in UI forms
+   - If the project has a `src/common/schemas/` directory, all entity Zod schemas live there, period. Never redefine in services, web components, or repositories.
+   - Never write `interface X extends z.infer<Schema>` — silently drops fields when the schema has mapped/branded shape. Use `type X = Y & {...}` intersection.
+   - Look for `AGENTS.md` in the schemas directory for project-specific rules; respect it before suggesting any schema-layer change.
 4. **Immutability**: no data mutation — use immutable structures
 5. **Pure Functions**: same input = same output, no side effects where possible
 6. **Small, Incremental Changes**: maintain a working state throughout
@@ -138,6 +141,15 @@ Commits should compile/pass tests where possible; if a split needs a temporary b
 ## Development Impasses
 
 **NEVER modify core build files** (package.json, tsconfig.json, Tailwind, Vite config). When blocked: STOP, summarize the issue, wait for direction. Preserving existing functionality > solving the immediate problem.
+
+## Diagnostic-First Debugging (Complex Features)
+
+For complex features — especially distributed / cloud-spanning ones — **proactively propose a CLI/API-driven diagnostic approach** rather than debugging through UIs. The diagnostic power of chaining CLI APIs together is easy to forget, and product-UI and cloud-console roundtrips are slow and obscure the real signal.
+
+- When a feature spans services/infra and UI-based debugging is slow, **offer to build or extend a read-only diagnostic script** (e.g. a `*-diag.sh`) that goes straight to the source — tail logs, query state, describe infra (CloudWatch logs tail, DynamoDB, ECS/ECR/SSM/Cognito describe, API Gateway access logs) — collapsing many calls into one fast readout.
+- **Aim to use UIs as little as possible** — both the product UI and the tooling/console. Go straight to the source for information.
+- Where safe, also **drive the behavior under test via API mutations** (the changes that prompt the behavior we're verifying) instead of clicking through the product, so the feedback loop is fully scriptable, reliable, and quick.
+- **Pair diagnostics with rich structured logging at the key code seams** so the relevant signals (target URLs, auth outcomes, status codes, received values) actually surface in those logs and the readout is conclusive.
 
 ## Documentation Hierarchy
 

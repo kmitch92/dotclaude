@@ -78,7 +78,6 @@
     "dotfiles-commands@dotfiles-marketplace": true,
     "frontend-design@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
-    "ralph-loop@claude-plugins-official": true,
     "claude-mem@thedotmack": true
   },
   "forceLoginMethod": "claudeai",

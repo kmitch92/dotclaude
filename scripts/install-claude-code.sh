@@ -36,7 +36,10 @@ if command_exists claude; then
                 if [[ -d "$_pkg_path" ]] && [[ ! -w "$_pkg_path" ]]; then
                     print_warning "Claude Code is installed globally and requires elevated permissions"
                     if confirm "Use sudo to update?"; then
-                        sudo $_update_cmd
+                        # Resolve absolute path to npm so sudo (especially
+                        # sudo-rs) can find it outside the user's PATH.
+                        _npm_abs="$(command -v npm)"
+                        sudo "$_npm_abs" install -g @anthropic-ai/claude-code@latest
                     else
                         print_warning "Skipping update"
                         _update_cmd=""
@@ -123,20 +126,6 @@ else
                 print_warning "Remember to run 'claude auth' before using Claude Code"
             fi
         fi
-    fi
-fi
-
-# Optional: Check for Claude Code extensions
-if command_exists claude; then
-    echo ""
-    if confirm "Install recommended Claude Code extensions?"; then
-        print_info "Installing recommended extensions..."
-        
-        # MCP servers and tools
-        claude install mcp-server-filesystem
-        claude install mcp-server-git
-        
-        print_success "Extensions installed"
     fi
 fi
 
