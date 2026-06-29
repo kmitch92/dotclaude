@@ -327,3 +327,34 @@ ensure_directory() {
     print_info "Created directory: $dir"
   fi
 }
+
+# Idempotently ensure <rc_file> contains a marker-delimited, self-guarding block
+# that puts ~/.local/bin on PATH at shell startup. The PATH line is written as
+# the LITERAL string (quoted heredoc) so $HOME/$PATH evaluate per-user at startup,
+# not at install time. No-op if the start marker is already present (file left
+# byte-for-byte unchanged). Creates the file if missing; preserves prior content.
+# Bash 3.2 compatible. Returns 0 on success.
+ensure_path_in_rc() {
+  local rc_file="$1"
+  local start_marker='# >>> dotclaude (claude config) PATH >>>'
+
+  # Structure with `if` so grep's non-zero exit (marker absent) does not abort
+  # under `set -e`.
+  if [[ -f "$rc_file" ]] && grep -qF "$start_marker" "$rc_file"; then
+    return 0
+  fi
+
+  # Leading newline so the block does not glue onto a prior unterminated line.
+  cat >> "$rc_file" <<'EOF'
+
+# >>> dotclaude (claude config) PATH >>>
+# Ensure ~/.local/bin (claude-bare, uv, uvx) is on PATH.
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
+# <<< dotclaude (claude config) PATH <<<
+EOF
+
+  return 0
+}
