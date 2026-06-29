@@ -38,7 +38,7 @@ readonly ANTHROPIC_DIRECT_URL="https://api.anthropic.com"
 print_header "Setting up Headroom Proxy"
 
 # =============================================================================
-# Prerequisite: uv (handled elsewhere)
+# Prerequisite: uv (installed by install.sh install_uv)
 # =============================================================================
 
 if ! command_exists uv; then

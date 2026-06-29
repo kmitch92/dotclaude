@@ -255,6 +255,43 @@ install_bun() {
   fi
 }
 
+# =============================================================================
+# uv (Astral) Installation
+# =============================================================================
+
+install_uv() {
+  print_info "Checking for uv..."
+
+  if command_exists uv; then
+    print_success "uv already installed: $(uv --version)"
+    return 0
+  fi
+
+  print_warning "uv not found"
+  print_info "uv is needed for:"
+  print_info "  - Headroom proxy (installed via 'uv tool install')"
+  print_info "  - aws-cdk MCP server (run via uvx, which ships with uv)"
+
+  if ! confirm "Install uv?"; then
+    print_warning "Skipping uv installation"
+    print_info "Note: Headroom and the aws-cdk MCP server will not be available without uv"
+    return 0
+  fi
+
+  # The official installer is cross-platform (macOS + Linux) and installs to
+  # ~/.local/bin; uv is not reliably packaged in distro repos, so use it for all OSes.
+  print_info "Installing uv via official installer..."
+  if curl -LsSf https://astral.sh/uv/install.sh | sh; then
+    # Add uv to PATH for the remainder of the current install run.
+    # uv installs to ~/.local/bin; older versions used ~/.cargo/bin.
+    export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+    print_success "uv installed"
+  else
+    print_warning "uv installation failed"
+    print_info "Note: Headroom and the aws-cdk MCP server will not be available without uv"
+  fi
+}
+
 check_dependencies() {
   print_header "Checking Dependencies"
 
@@ -292,6 +329,13 @@ check_dependencies() {
     print_success "Bun installed: $(bun --version)"
   fi
 
+  # Check uv (optional but recommended for Headroom and aws-cdk MCP via uvx)
+  if ! command_exists uv; then
+    print_warning "uv not installed (needed for Headroom and aws-cdk MCP server via uvx)"
+  else
+    print_success "uv installed: $(uv --version)"
+  fi
+
   if [[ "$deps_ok" == "false" ]]; then
     print_error "Missing required dependencies"
     return 1
@@ -307,6 +351,7 @@ install_dependencies() {
   install_gettext
   install_nodejs
   install_bun
+  install_uv
 
   print_success "All dependencies installed"
 }
