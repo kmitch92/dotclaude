@@ -281,6 +281,44 @@ backup_file() {
   fi
 }
 
+# Recursively back up a directory while EXCLUDING top-level entries whose name
+# matches one of the given patterns (exact names like `debug`/`history.jsonl`
+# or globs like `*.log`). Mirrors backup_file's naming/return convention:
+# creates "<source_dir>.backup.<timestamp>" and echoes that path on success.
+# Missing source is a no-op (echoes nothing, returns success).
+backup_dir_excluding() {
+  local source_dir="$1"
+  shift
+  local timestamp
+  timestamp=$(date +%Y%m%d-%H%M%S)
+  local backup="${source_dir}.backup.${timestamp}"
+
+  if [[ ! -e "$source_dir" ]]; then
+    return 0
+  fi
+
+  local pattern
+  if command -v rsync >/dev/null 2>&1; then
+    # Anchor each pattern to the top level (leading slash) so only the
+    # root-level entry is excluded, not nested matches.
+    local exclude_args=()
+    for pattern in "$@"; do
+      exclude_args+=("--exclude=/${pattern}")
+    done
+    mkdir -p "$backup"
+    rsync -a "${exclude_args[@]}" "${source_dir}/" "${backup}/"
+  else
+    # Fallback: copy everything, then remove excluded top-level entries.
+    cp -r "$source_dir" "$backup"
+    for pattern in "$@"; do
+      rm -rf "${backup}/"$pattern
+    done
+  fi
+
+  print_success "Backed up: $source_dir → $backup" >&2
+  echo "$backup"
+}
+
 ensure_directory() {
   local dir="$1"
 
