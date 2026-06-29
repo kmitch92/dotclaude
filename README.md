@@ -118,7 +118,9 @@ claude
 
 **None.** The installation script handles all dependencies automatically:
 - GNU stow (for symlink management)
+- gettext / envsubst (for MCP config templating)
 - Node.js & npm (for MCP servers)
+- Bun (for the claude-mem memory worker)
 - Claude Code CLI
 
 ### Full Installation Process
