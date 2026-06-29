@@ -76,7 +76,7 @@ Task tool fields: **subagent_type** (agent name), **description** (3–5 words),
 | **Test Writer** | TDD, behavioral testing | All | Writing tests, coverage verification |
 | **TypeScript Connoisseur** | TypeScript, Zod schemas | All | Type definitions, schema design |
 | **Quality & Refactoring** | Code review + refactoring | All | Post-green assessment, refactoring opportunities |
-| **Git Specialist** | Git operations, commits, branches | Bash(git:*), Read, Grep, Glob | Commits, branches, push to remote (user creates PRs in browser) |
+| **Git Specialist** | Git operations, commits, branches | Bash(git:*), Read, Grep, Glob | Commits, branches, history ops — **NEVER pushes to remote or creates PRs; the user does both** |
 | **Production Readiness** | Security + performance | All + Browser Tools MCP | Security audits, performance profiling |
 | **Backend TypeScript** | API/DB design + implementation | All | API contracts, database schemas, Lambda |
 | **Shell Specialist** | Shell scripting + automation | All | Shell scripts, git hooks (implementation), CLI automation |
@@ -84,6 +84,10 @@ Task tool fields: **subagent_type** (agent name), **description** (3–5 words),
 | **Documentation** | Docs, ADRs, CHANGELOG | Read, Write, Edit, Grep, Glob | Update docs, capture learnings |
 | **Task Explorer** | Codebase context, task onboarding | Read-only (Grep, Glob, Read, Bash) | Picking up a new ticket, understanding unfamiliar code areas |
 | **Subtask List Generator** | Exhaustive pattern search, checklist generation | Grep, Glob, Read, Bash, Write | Bulk fixes across many files, standardisation tasks, migration checklists |
+
+## ⚠️ NEVER PUSH TO REMOTE — NON-NEGOTIABLE
+
+The user performs ALL pushes themselves. No agent — including Git Specialist — may run `git push` (with or without `-u`/upstream), set a remote tracking branch, or open/create a PR. Commit locally and STOP; report the commit hash and that it is local-only. Generating PR/compare URLs proactively is also forbidden. Only act on a remote if the user explicitly types "push" in that same request.
 
 ## Serena MCP (semantic code tools)
 
