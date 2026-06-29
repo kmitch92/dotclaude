@@ -82,5 +82,10 @@
     "claude-mem@thedotmack": true
   },
   "forceLoginMethod": "claudeai",
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "voiceEnabled": true,
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  }
 }
