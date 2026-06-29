@@ -539,6 +539,31 @@ cat ~/.claude/docs/workflows/tdd-cycle.md
 cat ~/.mcp.json
 ```
 
+### Fallback Launcher: `claude-bare`
+
+Runs Claude Code with an isolated config dir so your normal `~/.claude` is never touched — useful when your config is broken or you want a clean-room debug session.
+
+```bash
+# Run Claude Code against an isolated config (default: ~/.claude-bare)
+claude-bare
+
+# Forward any args you'd normally pass to claude
+claude-bare "Explain this error" --model claude-opus-4-5
+
+# Use a custom config dir for this run only
+CLAUDE_BARE_DIR=~/claude-test claude-bare
+```
+
+**How it works**: `claude-bare` calls `exec env CLAUDE_CONFIG_DIR=~/.claude-bare claude [args...]`. The env var applies only to that process; your next plain `claude` call uses your normal `~/.claude` as usual. Nothing is written to your shell rc.
+
+**Persistent bare dir**: `~/.claude-bare` is reused across runs, so you authenticate once and the fallback keeps working. First run will prompt you to log in.
+
+**Install**: shipped at `bin/claude-bare` in this repo and symlinked to `~/.local/bin/claude-bare` by `install.sh`. Because it's a symlink, edits to `bin/claude-bare` take effect immediately — no shell restart needed. Requires `~/.local/bin` on `$PATH`.
+
+**Use cases**:
+- **Config recovery**: your `~/.claude` edits broke something — run `claude-bare` to get a working Claude while you debug
+- **Clean-room debugging**: check whether a problem is caused by your customizations vs. Claude Code itself; complement with `claude --safe-mode` (disables CLAUDE.md/agents/skills/hooks/MCP while keeping auth)
+
 ---
 
 ## 🎨 Customization
