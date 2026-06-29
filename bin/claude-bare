@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# =============================================================================
+# claude-bare — launch Claude Code against an isolated config directory
+# =============================================================================
+# Runs Claude Code with CLAUDE_CONFIG_DIR pointed at a separate, persistent
+# config dir (default: ~/.claude-bare, override with CLAUDE_BARE_DIR), leaving
+# the normal ~/.claude untouched.
+#
+# `exec env VAR=val` scopes the var to the claude child process only and
+# replaces this shell, so the calling shell's environment is never mutated —
+# the next plain `claude` uses the normal config. Claude Code creates the
+# config dir itself, so no mkdir is needed here.
+#
+# Usage: claude-bare [claude args ...]
+# =============================================================================
+
+set -euo pipefail
+
+exec env CLAUDE_CONFIG_DIR="${CLAUDE_BARE_DIR:-$HOME/.claude-bare}" claude "$@"
