@@ -36,7 +36,6 @@ source "$SCRIPT_DIR/scripts/utils.sh"
 
 readonly CLAUDE_CONFIG_DIR="$HOME/.claude"
 readonly MCP_CONFIG_FILE="$HOME/.mcp.json"
-readonly PROFILES_DIR="$SCRIPT_DIR/profiles"
 
 # Option flags
 SKIP_DEPS=false
@@ -364,37 +363,6 @@ install_claude_config() {
     print_error "Failed to create ~/.claude"
     exit 1
   fi
-}
-
-# =============================================================================
-# Profile Activation
-# =============================================================================
-
-activate_default_profile() {
-  print_header "Activating Default Profile"
-
-  local active_link="$PROFILES_DIR/active"
-  local default_profile="$PROFILES_DIR/default"
-
-  # Check if a profile is already active
-  if [[ -L "$active_link" ]]; then
-    local current
-    current=$(readlink "$active_link")
-    print_info "Profile already active: $current"
-    return 0
-  fi
-
-  # Check if default profile exists
-  if [[ ! -d "$default_profile" ]]; then
-    print_warning "Default profile not found: $default_profile"
-    print_info "Create a default profile or activate one manually"
-    return 0
-  fi
-
-  # Activate default profile
-  print_info "No active profile found, activating 'default'..."
-  ln -s "default" "$active_link"
-  print_success "Activated profile: default"
 }
 
 # =============================================================================
@@ -828,9 +796,6 @@ main() {
 
   # Install Claude configuration
   install_claude_config
-
-  # Activate default profile if none active
-  activate_default_profile
 
   # Install Claude Code CLI
   install_claude_code
