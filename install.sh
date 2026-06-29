@@ -284,7 +284,11 @@ backup_existing_config() {
   # Backup ~/.claude
   if [[ -e "$CLAUDE_CONFIG_DIR" ]]; then
     local backup_path
-    backup_path=$(backup_file "$CLAUDE_CONFIG_DIR")
+    # Exclude runtime/cache state so the backup stays fast and small.
+    backup_path=$(backup_dir_excluding "$CLAUDE_CONFIG_DIR" \
+      backups cache debug file-history ide paste-cache projects \
+      session-env sessions shell-snapshots statsig tasks todos \
+      history.jsonl stats-cache.json mcp-needs-auth-cache.json '*.log')
     print_success "Backed up ~/.claude"
     # Remove original after backup (unless it's already a symlink, handled later)
     if [[ ! -L "$CLAUDE_CONFIG_DIR" ]]; then
