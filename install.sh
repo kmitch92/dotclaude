@@ -618,6 +618,45 @@ setup_serena() {
 }
 
 # =============================================================================
+# claude-bare Launcher Deployment (optional)
+# =============================================================================
+
+setup_claude_bare() {
+  print_header "Setting Up claude-bare Launcher"
+
+  local launcher_source="$SCRIPT_DIR/bin/claude-bare"
+  local local_bin="$HOME/.local/bin"
+  local launcher_target="$local_bin/claude-bare"
+
+  if [[ ! -f "$launcher_source" ]]; then
+    print_info "claude-bare source not found, skipping: bin/claude-bare"
+    return 0
+  fi
+
+  mkdir -p "$local_bin"
+
+  # Ensure the launcher is executable
+  chmod +x "$launcher_source"
+
+  # Back up and remove any existing non-symlink launcher
+  if [[ -f "$launcher_target" ]] && [[ ! -L "$launcher_target" ]]; then
+    local backup_path
+    backup_path=$(backup_file "$launcher_target")
+    print_info "Backed up existing claude-bare"
+    rm -f "$launcher_target"
+  fi
+
+  # Create or re-point symlink
+  if [[ -L "$launcher_target" ]]; then
+    rm "$launcher_target"
+  fi
+
+  ln -s "$launcher_source" "$launcher_target"
+  print_success "claude-bare symlinked: ~/.local/bin/claude-bare → $launcher_source"
+  print_info "Ensure ~/.local/bin is on your PATH to use 'claude-bare'"
+}
+
+# =============================================================================
 # Validation
 # =============================================================================
 
@@ -808,6 +847,9 @@ main() {
 
   # Set up Serena config
   setup_serena
+
+  # Set up claude-bare launcher (optional; self-guards on source presence)
+  setup_claude_bare
 
   # Validate installation
   validate_installation
