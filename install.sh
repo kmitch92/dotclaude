@@ -344,8 +344,40 @@ check_dependencies() {
   return 0
 }
 
+# Ensure ~/.local/bin is on PATH for the current run and persisted in the user's
+# shell rc file(s). Run early so tools that install into ~/.local/bin (uv/uvx)
+# and the claude-bare launcher are usable immediately. Non-fatal.
+ensure_local_bin_on_path() {
+  # Current run.
+  case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) export PATH="$HOME/.local/bin:$PATH" ;;
+  esac
+  mkdir -p "$HOME/.local/bin"
+
+  # Persist to the user's real shell rc file(s). Target .zshrc/.bashrc if they
+  # exist; otherwise fall back to .profile.
+  local targeted=0
+  if [[ -f "$HOME/.zshrc" ]]; then
+    ensure_path_in_rc "$HOME/.zshrc"
+    print_success "Ensured ~/.local/bin on PATH in ~/.zshrc"
+    targeted=1
+  fi
+  if [[ -f "$HOME/.bashrc" ]]; then
+    ensure_path_in_rc "$HOME/.bashrc"
+    print_success "Ensured ~/.local/bin on PATH in ~/.bashrc"
+    targeted=1
+  fi
+  if [[ "$targeted" -eq 0 ]]; then
+    ensure_path_in_rc "$HOME/.profile"
+    print_success "Ensured ~/.local/bin on PATH in ~/.profile"
+  fi
+}
+
 install_dependencies() {
   print_header "Installing Dependencies"
+
+  ensure_local_bin_on_path
 
   install_stow
   install_gettext
@@ -592,7 +624,7 @@ setup_claude_bare() {
 
   ln -s "$launcher_source" "$launcher_target"
   print_success "claude-bare symlinked: ~/.local/bin/claude-bare → $launcher_source"
-  print_info "Ensure ~/.local/bin is on your PATH to use 'claude-bare'"
+  print_info "~/.local/bin is ensured on PATH by ensure_local_bin_on_path"
 }
 
 # =============================================================================
