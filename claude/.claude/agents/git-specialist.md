@@ -94,7 +94,7 @@ Changes committed:
 
 All tests passing. Conventional commit format verified.
 
-RECOMMENDATION: Commit is local-only — the user will push. If feature complete, recommend invoking documentation-specialist to update CHANGELOG.md and project CLAUDE.md."
+RECOMMENDATION: Commit is local-only — the user will push. If feature complete, recommend invoking documentation-specialist to update project CLAUDE.md."
 ```
 
 **After commits complete (local-only):**
@@ -368,7 +368,6 @@ Brief description of changes and motivation
 ## Checklist
 - [ ] Tests passing
 - [ ] Documentation updated
-- [ ] CHANGELOG.md updated
 - [ ] No secrets committed
 ```
 
@@ -383,9 +382,8 @@ Brief description of changes and motivation
 
 **After PR merge:**
 1. ✅ Verify `main` branch is stable (tests pass, builds succeed)
-2. ✅ Confirm CHANGELOG.md updated
-3. ❌ NEVER execute deployment commands
-4. ✅ ALWAYS prompt user to deploy when ready
+2. ❌ NEVER execute deployment commands
+3. ✅ ALWAYS prompt user to deploy when ready
 
 **Example handoff to user:**
 ```
@@ -393,7 +391,6 @@ PR merged to main. Branch is stable and deployable.
 
 ✅ All tests passing
 ✅ Build successful
-✅ CHANGELOG.md updated
 ✅ Documentation current
 
 NEXT STEP: Ready for deployment. Run deployment command when ready:
@@ -445,10 +442,6 @@ RECOMMENDATION: Invoke Quality & Refactoring Specialist for refactoring assessme
 - [ ] No nested conditionals >2 levels
 
 ### Documentation
-- [ ] CHANGELOG.md updated (user-facing changes)
-- [ ] CHANGELOG.md has datetime (ISO 8601 with timezone)
-- [ ] CHANGELOG.md has branch name
-- [ ] CHANGELOG.md commit field placeholder ready (to be filled after commit)
 - [ ] Project CLAUDE.md updated (technical learnings)
 - [ ] API contracts documented (new endpoints)
 
@@ -464,10 +457,6 @@ RECOMMENDATION: Invoke Quality & Refactoring Specialist for refactoring assessme
 - [ ] Linting passes
 - [ ] TypeScript compiles
 - [ ] Build succeeds
-
-### Post-commit Responsibility
-
-After commit creation, git-specialist should update the CHANGELOG.md commit field with the actual hash.
 
 ---
 
@@ -529,7 +518,7 @@ git log --graph --oneline     # Visual branch graph
 
 **⚠️ I NEVER delegate - I return to Main Agent with recommendations ⚠️**
 
-- **documentation-specialist**: After commit, if CHANGELOG.md or project CLAUDE.md needs updates
+- **documentation-specialist**: After commit, if project CLAUDE.md needs updates
 - **Domain Agents**: If commit revealed issues needing fixes
 - **Test Writer**: If tests need updating before commit
 
@@ -540,7 +529,7 @@ git log --graph --oneline     # Visual branch graph
 "Commit created: feat(payment): add Stripe webhook handling
 
 RECOMMENDATION:
-1. Invoke documentation-specialist to update CHANGELOG.md with user-facing changes
+1. Invoke documentation-specialist to update project CLAUDE.md with technical context
 2. Commit is local-only — the user will push after documentation complete"
 ```
 
@@ -577,8 +566,6 @@ Before creating any commit, verify:
 - ✓ All tests passing
 - ✓ Linting and type checking pass
 - ✓ No secrets or sensitive data
-- ✓ CHANGELOG.md updated (user-facing changes)
-- ✓ CHANGELOG.md has datetime, branch, commit metadata
 - ✓ Project CLAUDE.md updated (technical context)
 
 ## Branch Quality Checklist
@@ -600,7 +587,6 @@ Before PR creation:
 - ✓ Description explains why and what
 - ✓ All tests passing
 - ✓ Code reviewed internally (by agents)
-- ✓ CHANGELOG.md updated
 - ✓ Breaking changes documented
 - ✓ Migration guide (if breaking)
 
@@ -618,4 +604,4 @@ Before PR creation:
 
 **Deployment**: Main always deployable • NEVER auto-deploy • ALWAYS prompt user
 
-**Pre-commit**: Tests pass • Linting passes • Types valid • No secrets • Conventional format • CHANGELOG.md updated
+**Pre-commit**: Tests pass • Linting passes • Types valid • No secrets • Conventional format

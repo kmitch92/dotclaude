@@ -84,7 +84,7 @@ Task tool fields: **subagent_type** (agent name), **description** (3–5 words),
 | **Backend TypeScript** | API/DB design + implementation | All | API contracts, database schemas, Lambda |
 | **Shell Specialist** | Shell scripting + automation | All | Shell scripts, git hooks (implementation), CLI automation |
 | **React TypeScript** | React, Next.js, Remix | All + Puppeteer MCP | React components, SSR |
-| **Documentation** | Docs, ADRs, CHANGELOG | Read, Write, Edit, Grep, Glob | Update docs, capture learnings |
+| **Documentation** | Docs, ADRs | Read, Write, Edit, Grep, Glob | Update docs, capture learnings |
 | **Task Explorer** | Codebase context, task onboarding | Read-only (Grep, Glob, Read, Bash) | Picking up a new ticket, understanding unfamiliar code areas |
 | **Subtask List Generator** | Exhaustive pattern search, checklist generation | Grep, Glob, Read, Bash, Write | Bulk fixes across many files, standardisation tasks, migration checklists |
 
@@ -108,14 +108,14 @@ Serena doesn't change the RGR phase gates — it's a sharper tool for the same p
 
 | Task Type | Pattern |
 |-----------|---------|
-| **New Features** | Architect → Design (API/DB) → For each task: Test Writer (RED) → Git Specialist (commit test if >3 files away from target) → Domain Agent (GREEN) → Git Specialist (commit implementation, <5 files) → Test Writer (verify) → Production Readiness (if needed) → Quality & Refactoring (assess) → Domain Agent (refactor if needed) → Git Specialist (commit refactor by module) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit docs separately) |
-| **Bug Fixes** | Test Writer (failing test) → Git Specialist (commit test) → Domain Agent (fix) → Git Specialist (commit fix, <5 files) → Test Writer (verify + edge cases) → Quality & Refactoring (assess) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit docs separately) |
-| **Refactoring** | Quality & Refactoring (assess) → Test Writer (100% coverage check) → Domain Agent (refactor maintaining API, commit per module) → Git Specialist (commit batches of 3-5 files per module) → Test Writer (tests pass without changes) → Quality & Refactoring (review) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit docs separately) |
+| **New Features** | Architect → Design (API/DB) → For each task: Test Writer (RED) → Git Specialist (commit test if >3 files away from target) → Domain Agent (GREEN) → Git Specialist (commit implementation, <5 files) → Test Writer (verify) → Production Readiness (if needed) → Quality & Refactoring (assess) → Domain Agent (refactor if needed) → Git Specialist (commit refactor by module) → Documentation (CLAUDE.md) → Git Specialist (commit docs separately) |
+| **Bug Fixes** | Test Writer (failing test) → Git Specialist (commit test) → Domain Agent (fix) → Git Specialist (commit fix, <5 files) → Test Writer (verify + edge cases) → Quality & Refactoring (assess) → Documentation (CLAUDE.md) → Git Specialist (commit docs separately) |
+| **Refactoring** | Quality & Refactoring (assess) → Test Writer (100% coverage check) → Domain Agent (refactor maintaining API, commit per module) → Git Specialist (commit batches of 3-5 files per module) → Test Writer (tests pass without changes) → Quality & Refactoring (review) → Documentation (CLAUDE.md) → Git Specialist (commit docs separately) |
 | **Code Review** | Batch 1: Quality & Refactoring + Test Writer (2 parallel) → Batch 2: TypeScript Connoisseur + Production Readiness if security-critical (2 parallel). NEVER run >2 in parallel. Synthesize feedback. |
 | **Documentation** | documentation-specialist → Git Specialist (commit docs separately, never with code) |
-| **Security Review** | Production Readiness (identify) → Test Writer (security tests) → Git Specialist (commit tests) → Domain Agent (fix) → Git Specialist (commit fixes, <5 files per commit) → Production Readiness (verify) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit docs separately) |
-| **Performance Optimization** | Production Readiness (profile) → Test Writer (benchmark) → Git Specialist (commit benchmarks) → Domain Agent (optimize) → Git Specialist (commit optimization, <5 files) → Production Readiness (verify) → Test Writer (regression test) → Documentation (CHANGELOG + CLAUDE.md) → Git Specialist (commit docs separately) |
-| **Bulk/Standardisation Fixes** | Task Explorer (context) → Subtask List Generator (enumerate all locations) → For each batch: Test Writer (RED) → Domain Agent (GREEN) → Git Specialist (commit batch, <5 files) → Test Writer (verify) → Quality & Refactoring (assess) → Git Specialist (commit) → Documentation (CHANGELOG) → Git Specialist (commit docs) |
+| **Security Review** | Production Readiness (identify) → Test Writer (security tests) → Git Specialist (commit tests) → Domain Agent (fix) → Git Specialist (commit fixes, <5 files per commit) → Production Readiness (verify) → Documentation (CLAUDE.md) → Git Specialist (commit docs separately) |
+| **Performance Optimization** | Production Readiness (profile) → Test Writer (benchmark) → Git Specialist (commit benchmarks) → Domain Agent (optimize) → Git Specialist (commit optimization, <5 files) → Production Readiness (verify) → Test Writer (regression test) → Documentation (CLAUDE.md) → Git Specialist (commit docs separately) |
+| **Bulk/Standardisation Fixes** | Task Explorer (context) → Subtask List Generator (enumerate all locations) → For each batch: Test Writer (RED) → Domain Agent (GREEN) → Git Specialist (commit batch, <5 files) → Test Writer (verify) → Quality & Refactoring (assess) → Git Specialist (commit) → Documentation (CLAUDE.md) → Git Specialist (commit docs) |
 
 ## When to Ask vs Proceed
 
@@ -128,7 +128,7 @@ File count matters more than "stable states". Priorities: granularity > stabilit
 
 **Limits (enforced)**: 1–3 files ideal · 5 = soft cap (justify in commit body) · 10 = hard cap (needs user approval) · never >10 without splitting.
 
-**Commit during development, not at "feature complete".** Separate commits for: schema; tests (RED — alone, or with impl if <3 files total); implementation (GREEN); refactor (batched by module); config (always separate); docs/CHANGELOG/CLAUDE.md (always separate); type definitions. If accumulated >5 files, STOP and commit. Multi-file refactors: batch by module (30 files → 6–10 commits of 3–5).
+**Commit during development, not at "feature complete".** Separate commits for: schema; tests (RED — alone, or with impl if <3 files total); implementation (GREEN); refactor (batched by module); config (always separate); docs/CLAUDE.md (always separate); type definitions. If accumulated >5 files, STOP and commit. Multi-file refactors: batch by module (30 files → 6–10 commits of 3–5).
 
 **Reject**: mega-commits ("initial implementation" with 50 files); bundling unrelated changes; waiting for feature-complete; committing generated files with source; mixing config/docs/tests/impl.
 
@@ -153,4 +153,4 @@ For complex features — especially distributed / cloud-spanning ones — **proa
 
 ## Documentation Hierarchy
 
-Three tiers: **CHANGELOG.md** (primary output for ALL changes, Keep A Changelog format, required) · **project CLAUDE.md** (technical context for agents) · **README.md** (overview for humans). **NEVER create new .md files without explicit user approval.**
+Two tiers: **project CLAUDE.md** (technical context for agents, primary output for changes) · **README.md** (overview for humans). **NEVER create new .md files without explicit user approval.**

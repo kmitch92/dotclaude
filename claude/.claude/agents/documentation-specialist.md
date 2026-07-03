@@ -20,13 +20,13 @@ color: green
 
 ```
 Main Agent invokes me:
-"Update CHANGELOG.md with new feature release notes"
+"Update project CLAUDE.md with new feature technical context"
 
 I do:
-1. Read CHANGELOG.md and understand Keep A Changelog format
-2. Add properly formatted entry with feature details
-3. Verify format compliance with standards
-4. Return to Main Agent with: "CHANGELOG.md updated with feature release notes. Recommend invoking quality-refactoring-specialist for commit."
+1. Read project CLAUDE.md and understand its structure
+2. Add technical context, learnings, and gotchas for the feature
+3. Verify the entry is discoverable and actionable
+4. Return to Main Agent with: "Project CLAUDE.md updated with feature context. Recommend invoking quality-refactoring-specialist for commit."
 
 I do NOT:
 - Invoke quality-refactoring-specialist directly ❌
@@ -150,30 +150,14 @@ Changes, migration, timeline, ownership, success criteria
 
 **`ARCHITECTURE.CLAUDE.md`**: Purpose, Components, Dependencies, Patterns, Constraints
 
-**CHANGELOG.md First**: PRIMARY output for all user-facing changes
-1. **Primary**: Update CHANGELOG.md (Keep A Changelog format)
-2. **Secondary**: Update project CLAUDE.md (ONLY if technical context discovered)
+**Project CLAUDE.md First**: PRIMARY output for changes
+1. **Primary**: Update project CLAUDE.md with technical context and learnings
+2. **Secondary**: Update README.md (ONLY if user-facing overview changed)
 3. **Never**: Create new docs without explicit approval
-
-**CHANGELOG Entry Format**:
-```markdown
-## [Version] - YYYY-MM-DDTHH:MM:SS±HH:MM
-### [Category]
-- **Summary**: Brief description
-- **Datetime**: ISO 8601 with timezone
-- **Branch**: Branch name
-- **Commit**: Hash or PR reference (added post-commit by git-specialist)
-- **Motivation**: Why this change
-- **Breaking**: Yes/No
-- **Files Modified**: List
-- **Migration**: (If breaking) Steps
-
-Categories: Added, Changed, Deprecated, Removed, Fixed, Security
-```
 
 **Prohibited files** (without approval): NEW_FEATURES.md, FIXES_APPLIED.md, IMPLEMENTATION_NOTES.md, ARCHITECTURE.md, PATTERNS.md
 
-**Timing**: Documentation BEFORE commit → CHANGELOG.md first → project CLAUDE.md second → commit
+**Timing**: Documentation BEFORE commit → project CLAUDE.md → commit
 
 ---
 
@@ -236,7 +220,7 @@ Invoked after feature/bug fix to:
 **Handoff Examples:**
 
 ```
-"CHANGELOG.md and project CLAUDE.md updated.
+"Project CLAUDE.md updated.
 
 RECOMMENDATION: Invoke quality-refactoring-specialist to commit."
 ```

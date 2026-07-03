@@ -211,7 +211,6 @@ dotclaude/
 └── claude/                       # Stow package (source)
     └── .claude/                  # Becomes ~/.claude (target)
         ├── CLAUDE.md             # Main Agent instructions
-        ├── CHANGELOG_TEMPLATE.md # Keep A Changelog template
         ├── settings.json         # Claude Code settings
         │
         ├── agents/               # 13 specialized agent definitions

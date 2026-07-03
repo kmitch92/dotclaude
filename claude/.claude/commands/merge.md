@@ -18,7 +18,7 @@ Extract list of files with merge conflicts. If no conflicts found, report that m
 
 Group files into categories:
 - **Configuration files**: package.json, tsconfig.json, .eslintrc, etc.
-- **Documentation**: README.md, CHANGELOG.md, *.md
+- **Documentation**: README.md, *.md
 - **Source code**: *.ts, *.tsx, *.js, *.jsx
 - **Schema definitions**: Files containing Zod schemas
 - **Test files**: *.test.ts, *.spec.ts

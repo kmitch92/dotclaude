@@ -485,7 +485,7 @@ Step 7: Main Agent - Coordinate additional fixes if needed
 
 FINALIZATION
 Step 8: quality-refactoring-specialist - Commit security fixes
-Step 9: documentation-specialist - Document vulnerabilities and fixes in CHANGELOG
+Step 9: documentation-specialist - Document vulnerabilities and fixes in project CLAUDE.md
 ```
 
 ### Workflow: Performance Optimization
@@ -508,7 +508,7 @@ Step 7: Test Writer - Run full test suite (regression check)
 
 FINALIZATION
 Step 8: quality-refactoring-specialist - Commit optimizations
-Step 9: documentation-specialist - Document performance improvements in CHANGELOG
+Step 9: documentation-specialist - Document performance improvements in project CLAUDE.md
 ```
 
 ### Workflow: Pre-Production Review
