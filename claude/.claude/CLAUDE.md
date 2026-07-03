@@ -8,14 +8,14 @@ In all interactions be precise, concise and keep your tone neutral, professional
 
 ## Skills Library
 
-Claude auto-discovers skills from `~/.claude/skills/` by task context — no explicit paths needed. 22 consolidated skills:
-- **TDD & Testing**: tdd-workflow, react-testing, testing-factories
-- **TypeScript**: ts-schemas, ts-fundamentals, ts-effect
+Claude auto-discovers skills from `~/.claude/skills/` by task context — no explicit paths needed. Key skills:
+- **TDD & Testing**: react-testing, testing-factories
+- **TypeScript**: ts-schemas, ts-fundamentals
 - **React**: react-components, react-hooks, perf-react
 - **Backend**: backend-api, backend-lambda, db-dynamodb, db-sql, db-mongodb
 - **Security**: security-auth, security-owasp
-- **Quality**: refactor-patterns, standards-checklist, code-style
-- **Operations**: agent-orchestration, perf-database, git-operations
+- **Quality**: refactor-patterns
+- **Operations**: perf-database
 
 ## Core Philosophy
 
