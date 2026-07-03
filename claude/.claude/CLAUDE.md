@@ -12,6 +12,7 @@ Claude auto-discovers model-invoked skills from `~/.claude/skills/` by task cont
 - **grilling** (model-invoked): relentless interview to stress-test a plan or design before building.
 - **domain-modeling** (model-invoked): build and sharpen the project's domain model and ubiquitous language; record ADRs.
 - **grill-me**, **grill-with-docs** (user-invoked): launch a grilling session (the latter also drives `domain-modeling` to capture ADRs/glossary as it runs).
+- **review-pr** (user-invoked): review a PR in an isolated worktree at the repo root — set up, grill the dev, run tests/typecheck, surface issues.
 - **writing-great-skills** (user-invoked): reference for authoring and editing skills well.
 
 ## Core Philosophy
