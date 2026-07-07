@@ -62,6 +62,10 @@
 !claude/.claude/commands/
 !claude/.claude/commands/**
 
+# Claude lessons (grok teach-back output) - ALLOW ALL
+!claude/.claude/lessons/
+!claude/.claude/lessons/**
+
 # =============================================================================
 # SERENA DIRECTORY - ALLOW CONFIG ONLY
 # =============================================================================
