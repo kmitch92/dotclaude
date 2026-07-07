@@ -12,6 +12,7 @@ Claude auto-discovers model-invoked skills from `~/.claude/skills/` by task cont
 - **grilling** (model-invoked): relentless interview to stress-test a plan or design before building.
 - **domain-modeling** (model-invoked): build and sharpen the project's domain model and ubiquitous language; record ADRs.
 - **grill-me**, **grill-with-docs** (user-invoked): launch a grilling session (the latter also drives `domain-modeling` to capture ADRs/glossary as it runs).
+- **grok** (user-invoked): grills to shared understanding, gated by a teach-back — the session doesn't end until the user explains the missing principle in their own words; passing lessons persist to `~/.claude/lessons/`.
 - **review-pr** (user-invoked): review a PR in an isolated worktree at the repo root — set up, grill the dev, run tests/typecheck, surface issues.
 - **writing-great-skills** (user-invoked): reference for authoring and editing skills well.
 
@@ -89,6 +90,10 @@ Task tool fields: **subagent_type** (agent name), **description** (3–5 words),
 ## ⚠️ NEVER PUSH TO REMOTE — NON-NEGOTIABLE
 
 The user performs ALL pushes themselves. No agent — including Git Specialist — may run `git push` (with or without `-u`/upstream), set a remote tracking branch, or open/create a PR. Commit locally and STOP; report the commit hash and that it is local-only. Generating PR/compare URLs proactively is also forbidden. Only act on a remote if the user explicitly types "push" in that same request.
+
+## ⚠️ NEVER AMEND OR REWRITE GIT HISTORY — NON-NEGOTIABLE
+
+No agent may run `git commit --amend`, `rebase`, `reset --hard` that discards commits, or force-push — ever, and especially not on a branch that may already be pushed. Amending/rewriting a pushed commit mints a new SHA while the remote keeps the old one, so the branches diverge and `git pull` stops being a fast-forward. There is no reason to remove information from a PR branch's history for the agent's own tidiness — squashing happens (if at all) when the PR merges into main, and that is not the agent's concern. Add a normal follow-up commit instead. If a rewrite is genuinely necessary, STOP and hand back to the user — they perform the amend/rebase themselves. `git rev-parse @{u}` failing ("no upstream configured") does NOT prove a branch is unpushed — verify with `git ls-remote origin <branch>` before assuming local-only.
 
 ## Serena MCP (semantic code tools)
 
