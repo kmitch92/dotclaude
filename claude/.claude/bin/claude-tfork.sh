@@ -3,8 +3,23 @@
 #   - inside tmux  -> opens an adjacent pane running `claude --resume <id> --fork-session`
 #   - outside tmux -> opens a new terminal window (macOS Terminal/iTerm, or common Linux terminals)
 #
+# Optional first arg: vim-style split direction [h|j|k|l] (default: l = right).
+#   l / (absent) -> right (-h)   h -> left (-h -b)   j -> below (-v)   k -> above (-v -b)
+#
 # Relies on the SessionStart hook (track-session.sh) having recorded the session ID.
 set -euo pipefail
+
+# Resolve/validate split direction up front so an invalid value fails fast,
+# before any session lookup or tmux split-window is attempted.
+direction="${1:-l}"
+case "$direction" in
+  ""|l) split_flags=(-h) ;;
+  h)    split_flags=(-h -b) ;;
+  j)    split_flags=(-v) ;;
+  k)    split_flags=(-v -b) ;;
+  *)    echo "FORK FAILED: invalid direction '$direction' — use one of h|j|k|l." >&2
+        exit 1 ;;
+esac
 
 dir="$HOME/.claude/run/sessions"
 
@@ -46,7 +61,7 @@ if [ -n "${TMUX:-}" ]; then
   # New pane to the right, in the session's project dir (resume lookup is cwd-scoped).
   # send-keys (rather than passing the command to split-window) means the fork runs
   # in your normal login shell with your full environment, and the pane survives exit.
-  pane_id=$(tmux split-window -h -c "$cwd" -P -F '#{pane_id}')
+  pane_id=$(tmux split-window "${split_flags[@]}" -c "$cwd" -P -F '#{pane_id}')
   tmux send-keys -t "$pane_id" "$fork_cmd" C-m
   echo "FORK OK: session $sid forked into tmux pane $pane_id (dir: $cwd)"
   exit 0
