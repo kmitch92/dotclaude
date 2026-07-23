@@ -62,6 +62,14 @@
 !claude/.claude/commands/
 !claude/.claude/commands/**
 
+# Claude bin (fork scripts) - ALLOW ALL
+!claude/.claude/bin/
+!claude/.claude/bin/**
+
+# Claude hooks - ALLOW ALL
+!claude/.claude/hooks/
+!claude/.claude/hooks/**
+
 # Claude lessons (grok teach-back output) - ALLOW ALL
 !claude/.claude/lessons/
 !claude/.claude/lessons/**
@@ -100,6 +108,8 @@ claude/.claude/session-env/
 claude/.claude/session-env/**
 claude/.claude/ide/
 claude/.claude/ide/**
+claude/.claude/run/
+claude/.claude/run/**
 
 # Claude log files
 claude/.claude/*.log
