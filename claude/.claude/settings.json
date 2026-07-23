@@ -86,5 +86,10 @@
   "voice": {
     "enabled": true,
     "mode": "hold"
+  },
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "~/.claude/hooks/track-session.sh" } ] }
+    ]
   }
 }
