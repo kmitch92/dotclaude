@@ -70,24 +70,6 @@
     "aws-core",
     "aws-cdk"
   ],
-  "statusLine": {
-    "type": "command",
-    "command": "npx -y ccstatusline@latest",
-    "padding": 0
-  },
-  "enabledPlugins": {
-    "dotfiles-commands@dotfiles-marketplace": true,
-    "frontend-design@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "claude-mem@thedotmack": true
-  },
-  "forceLoginMethod": "claudeai",
-  "skipDangerousModePermissionPrompt": true,
-  "voiceEnabled": true,
-  "voice": {
-    "enabled": true,
-    "mode": "hold"
-  },
   "hooks": {
     "SessionStart": [
       {
@@ -109,5 +91,24 @@
         ]
       }
     ]
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "dotfiles-commands@dotfiles-marketplace": true,
+    "frontend-design@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "claude-mem@thedotmack": true
+  },
+  "forceLoginMethod": "claudeai",
+  "effortLevel": "xhigh",
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "voiceEnabled": true
 }
