@@ -63,6 +63,7 @@
     ]
   },
   "model": "opus[1m]",
+  "outputStyle": "Terse",
   "enableAllProjectMcpServers": false,
   "enabledMcpjsonServers": [
     "context7",

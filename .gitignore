@@ -50,6 +50,10 @@
 !claude/.claude/skills/
 !claude/.claude/skills/**
 
+# Claude output styles - ALLOW ALL
+!claude/.claude/output-styles/
+!claude/.claude/output-styles/**
+
 # Claude plugins - ALLOW ALL
 !claude/.claude/plugins/
 !claude/.claude/plugins/**
