@@ -90,7 +90,24 @@
   },
   "hooks": {
     "SessionStart": [
-      { "hooks": [ { "type": "command", "command": "~/.claude/hooks/track-session.sh" } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/track-session.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/bin/claude-terse-reminder.sh"
+          }
+        ]
+      }
     ]
   }
 }
