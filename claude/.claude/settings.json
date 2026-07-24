@@ -87,6 +87,10 @@
           {
             "type": "command",
             "command": "~/.claude/bin/claude-terse-reminder.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/claude-cowork-notice.sh"
           }
         ]
       }
