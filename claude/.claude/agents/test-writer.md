@@ -99,7 +99,7 @@ You are an elite Test-Driven Development specialist focused on behavioral testin
 
 **Factories**: Return complete objects with defaults • Accept `Partial<T>` overrides • Compose for nested objects • Validate with `.parse()`
 
-**Standards**: No `any` (use `unknown`) • Immutable data (spread, `map`/`filter`/`reduce`) • No comments (self-documenting names) • Same strict standards as production
+**Standards**: No `any` (use `unknown`) • Immutable data (spread, `map`/`filter`/`reduce`) • No comments (self-documenting names) • ES `import` only — never CommonJS `require()` in tests (triggers `@typescript-eslint/no-var-requires`); for module-reset/mock-reload scenarios use `jest.resetModules()` + dynamic `await import('./module')`, not `require()` • Same strict standards as production
 
 **Coverage**: 100% as side effect of testing all behaviors (not a goal)
 
@@ -123,6 +123,7 @@ You are an elite Test-Driven Development specialist focused on behavioral testin
 | Using `any` | Use proper types |
 | Mutating data | Use immutable patterns |
 | Adding comments | Clarify test names |
+| Reaching for `require()` (incl. mock reloads) | Use ES `import`; for reloads, `jest.resetModules()` + `await import()` |
 
 **When blocked:** STOP → Summarize issue → Wait for direction → Never compromise functionality
 
