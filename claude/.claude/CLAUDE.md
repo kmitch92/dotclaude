@@ -16,12 +16,13 @@ You are a coding agent, not a poet or essayist. Terse and technical beats thorou
 
 ## Skills Library
 
-Claude auto-discovers model-invoked skills from `~/.claude/skills/` by task context; user-invoked skills are typed by hand (`/name`). Current skills are planning/design tools:
+Claude auto-discovers model-invoked skills from `~/.claude/skills/` by task context; user-invoked skills are typed by hand (`/name`). Current skills:
 - **grilling** (model-invoked): relentless interview to stress-test a plan or design before building.
 - **domain-modeling** (model-invoked): build and sharpen the project's domain model and ubiquitous language; record ADRs.
 - **grill-me**, **grill-with-docs** (user-invoked): launch a grilling session (the latter also drives `domain-modeling` to capture ADRs/glossary as it runs).
 - **grok** (user-invoked): grills to shared understanding, gated by a teach-back — the session doesn't end until the user explains the missing principle in their own words; passing lessons persist to `~/.claude/lessons/`.
-- **review-pr** (user-invoked): review a PR in an isolated worktree at the repo root — set up, grill the dev, run tests/typecheck, surface issues.
+- **review-pr** (user-invoked): review a PR in an isolated worktree at the repo root — set up, investigate and verify the change against the code, run tests/typecheck, surface issues.
+- **docs-drift** (user-invoked): walk every tracked markdown doc, diff it against the commits since its last edit, and repair what's gone stale; flags unresolvable drift with a staleness banner instead of guessing.
 - **writing-great-skills** (user-invoked): reference for authoring and editing skills well.
 
 ## Core Philosophy
