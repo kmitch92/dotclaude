@@ -60,6 +60,12 @@ The subagent's job, per doc:
 4. Make the minimum edit that restores accuracy. Do not rewrite, restructure, or improve prose that is still correct — preserve the doc's existing voice and structure.
 5. Report back, plainly: what was checked, what changed, and anything suspected but not verifiable from the diff alone.
 
+Distinguish two kinds of open question, the same split `review-pr` draws:
+- **Answerable from the repo** — what the code now does, what a commit changed, whether a symbol still exists. Resolve it by investigation. Do not ask.
+- **Answerable only by the user** — whether an omission was deliberate, whether the doc is still meant to describe something, which of two contradictory readings is intended, whether the doc is abandoned. Ask, one question at a time, grounded in what the diff already showed, so the user confirms or corrects a specific reading rather than re-explaining from scratch.
+
+Asking is a legitimate outcome of this step, not a failure — proceeding on a guess is the failure mode.
+
 Never review two docs in the same subagent call, and never let a subagent edit a doc without having read it in full first.
 
 ## 6. Batch subagents, never more than 2 in parallel
@@ -72,6 +78,22 @@ Docs-only commits, never mixed with code changes. Delegate to **git-specialist**
 - 1–3 files ideal, 5 is the soft cap — batch related doc fixes together (e.g. two docs touched by the same renamed API) if it stays under the cap; otherwise one commit per doc.
 - Never push, never open a PR, never amend or rebase existing history. Commit locally and stop — the user pushes.
 
-## 8. Report
+## 8. When drift can't be resolved, flag it — don't guess
 
-End with a per-file table: doc path, last-edit date, commit count in range, verdict (`current` / `updated` / `skipped`), and what changed or why it was skipped. This is the deliverable even for docs that needed no change — "checked, found current" is a result, not a non-event.
+If the range is relevant but neither investigation nor the user can establish what the doc should now say, do not guess and do not edit the body. Prepend a staleness banner instead.
+
+Insert it immediately after any frontmatter block — never above it; a banner above YAML frontmatter breaks the frontmatter. If the doc has no frontmatter, the banner is the first line:
+
+```
+> [!WARNING]
+> **Possibly out of date.** Last verified against `<sha>` (`<date>`); `<n>` commits have landed since and the drift could not be resolved. <!-- docs-drift:stale sha=<sha> date=<date> -->
+```
+
+- `<sha>` and `<date>` are the doc's last-edit commit and its date (step 2); `<n>` is the commit count in the unresolved range (step 3).
+- The `<!-- docs-drift:stale ... -->` comment is the marker. Idempotent: if a banner carrying this marker already exists, replace it in place with updated values — never stack a second banner.
+- Commit the banner through step 7, same as any other repair.
+- A later run that resolves the drift removes the banner as part of the repair — a doc with a live banner and no other change isn't done.
+
+## 9. Report
+
+End with a per-file table: doc path, last-edit date, commit count in range, verdict (`current` / `updated` / `stale-flagged` / `skipped`), and what changed or why it was skipped. This is the deliverable even for docs that needed no change — "checked, found current" is a result, not a non-event.
