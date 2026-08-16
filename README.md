@@ -8,10 +8,10 @@
 
 **dotclaude** is a complete Claude Code configuration repository that implements a sophisticated multi-agent development system. It provides:
 
-- **13 Specialized AI Agents**: Each agent is an expert in a specific domain (testing, architecture, security, etc.)
+- **12 Specialized AI Agents**: Each agent is an expert in a specific domain (testing, architecture, security, etc.)
 - **Test-Driven Development Framework**: Non-negotiable TDD with Red-Green-Refactor cycle
-- **Comprehensive Documentation**: Organized workflows, references, patterns, and examples
-- **MCP Server Integration**: 6 pre-configured Model Context Protocol servers for enhanced capabilities
+- **Project CLAUDE.md as Primary Documentation**: Single source of orchestration rules, standards, and workflows for all agents
+- **MCP Server Integration**: 7 pre-configured Model Context Protocol servers for enhanced capabilities
 - **Automated Installation**: One-command setup with intelligent dependency handling
 - **Symlink-Based Architecture**: Uses GNU stow for clean, version-controlled configuration management
 
@@ -30,64 +30,85 @@ This repository can be used **independently** or alongside your existing dotfile
 
 ## 📦 What's Included
 
-### Specialized Agents (13)
+### Specialized Agents (12)
 
 | Agent | Domain | Purpose |
 |-------|--------|---------|
 | **Technical Architect** | Planning & Design | Task breakdown, feature planning, WIP management |
 | **Test Writer** | Testing & TDD | Behavioral tests, coverage verification, TDD cycle |
 | **TypeScript Connoisseur** | Type Systems | Advanced TypeScript, Zod schemas, strict mode |
-| **Code Quality & Refactoring Specialist** | Code Review | Quality assessment, refactoring guidance, git operations |
-| **Security & Performance Specialist** | Security & Optimization | OWASP compliance, vulnerability scanning, performance profiling |
-| **Backend TypeScript Specialist** | Backend Development | REST/GraphQL APIs, Lambda functions, database integration |
-| **Database Design Specialist** | Data Modeling | Schema design, migrations, query optimization |
-| **Git & Shell Specialist** | Version Control | Git workflows, commits, PRs, shell scripting, automation |
-| **React Engineer** | Frontend Development | React components, hooks, SSR, client-side state |
-| **AWS CDK Expert** | Infrastructure | CDK stacks, AWS resources, IaC best practices |
-| **Documentation Agent** | Documentation | Project docs, ADRs, API documentation, learning capture |
-| **Design Specialist** | API & Schema Design | Contract-first design, API specifications |
-| **Production Readiness Specialist** | Deployment | Pre-production audits, reliability, monitoring |
+| **Quality & Refactoring Specialist** | Code Review | Quality assessment, refactoring guidance, tier-based standards |
+| **Production Readiness Specialist** | Security & Performance | Security audits, performance optimization, deployment readiness |
+| **Backend TypeScript Specialist** | Backend Development | Contract-first API/database design, REST/GraphQL, Lambda, DynamoDB |
+| **Git Specialist** | Version Control | Commits, branches, history — never pushes or opens PRs |
+| **Shell Specialist** | Automation | Shell scripting, system automation, git hook implementation, CI/CD scripts |
+| **React Engineer** | Frontend Development | React 19+, Next.js, Remix, hooks, SSR |
+| **Documentation Specialist** | Documentation | Project docs, ADRs, quality audits, learning capture |
+| **Task Explorer** | Codebase Onboarding | Read-only context reports for new tickets or unfamiliar code |
+| **Subtask List Generator** | Bulk Fixes | Exhaustive pattern search, standardisation checklists |
+
+### Skills (8)
+
+Skills are auto-discovered from `claude/.claude/skills/`. **Model-invoked** skills are picked up automatically by Claude based on their description; **user-invoked** skills are launched by typing their name by hand and never trigger automatically.
+
+| Skill | Invocation | Purpose |
+|-------|------------|---------|
+| **docs-drift** | User-invoked (`docs-drift`) | Walk every tracked markdown file, diff it against the commits since its last edit, and repair what's gone stale |
+| **domain-modeling** | Model-invoked | Build and sharpen a project's domain model, ubiquitous language, and record ADRs |
+| **grilling** | Model-invoked | Grill the user relentlessly about a plan or design to stress-test it before building |
+| **grill-me** | User-invoked (`grill-me`) | Launch a relentless interview to sharpen a plan or design |
+| **grill-with-docs** | User-invoked (`grill-with-docs`) | Same interview as grill-me, and also creates docs (ADRs and glossary) as it runs |
+| **grok** | User-invoked (`grok`) | Conversational path to shared understanding, gated by a teach-back; passing lessons persist to `~/.claude/lessons/` |
+| **review-pr** | User-invoked (`review-pr`) | Review a PR in an isolated worktree — investigate and verify the change against the code, surface concerns before it merges |
+| **writing-great-skills** | User-invoked (`writing-great-skills`) | Reference for writing and editing skills well |
+
+### Commands (10)
+
+Slash commands live in `claude/.claude/commands/` and are always user-invoked.
+
+| Command | Purpose |
+|---------|---------|
+| **`/commit`** | Create strictly atomic commits — one logical change per commit |
+| **`/crufthard`** | Delete unused exports (cruft) with typetest verification and auto-revert |
+| **`/cruftsoft`** | Identify unused exports (cruft) and report with rationale |
+| **`/document`** | Generate comprehensive CDK infrastructure documentation — architecture diagrams, README, and service docs |
+| **`/merge`** | Resolve git merge conflicts intelligently after pulling from main |
+| **`/schemacheck`** | Audit for GraphQL schema drift and forbidden patterns — ships with project-specific defaults from another codebase (a "Build Queue services" example), so adapt it before relying on it here |
+| **`/tfork [h\|j\|k\|l]`** | Fork this session into an adjacent tmux pane (default right) or a new terminal window |
+| **`/trestart`** | Restart this session in place — continue in the same tmux pane, or relocate it to a new terminal window |
+| **`/typetest`** | Progressive sweep demanding improvement in TypeScript errors, test failures, and coverage until targets are met |
+| **`/workreport`** | Generate a structured work report summarizing task, changes, and verification steps |
 
 ### Documentation Hierarchy
 
-```
-docs/
-├── workflows/          # Development processes
-│   ├── tdd-cycle.md             # Red-Green-Refactor cycle
-│   ├── agent-collaboration.md   # Agent orchestration patterns
-│   └── code-review.md           # Review workflows
-├── references/         # Quick lookups
-│   ├── standards-checklist.md   # Quality gates
-│   └── code-style.md            # Style guide
-├── patterns/          # Domain patterns
-│   ├── typescript/             # TS patterns
-│   ├── react/                  # React patterns
-│   ├── backend/                # Backend patterns
-│   ├── refactoring/            # Refactoring patterns
-│   ├── security/               # Security patterns
-│   └── performance/            # Performance patterns
-└── examples/          # Concrete examples
-    └── (walkthroughs and case studies)
-```
+Two tiers: **project `CLAUDE.md`** (technical context for agents — TDD workflow, orchestration rules, standards, commit conventions — the primary output for any change) and **this README** (overview for humans). New `.md` files are not created without explicit approval; there is no separate `docs/` tree.
 
-### MCP Servers (6)
+### MCP Servers (7)
 
 | Server | Purpose | Key Features |
 |--------|---------|--------------|
 | **context7** | Library Documentation | Up-to-date docs for npm packages, Python libraries |
-| **taskmaster** | Task Management | AI-powered task tracking, prioritization, progress monitoring |
 | **sequential-thinking** | Problem Solving | Structured reasoning, complex problem decomposition |
-| **playwright** | Browser Automation | Web testing, scraping, browser interaction |
-| **aws-core** | AWS Expertise | AWS service guidance, best practices |
-| **aws-cdk** | AWS CDK | Infrastructure as Code, CDK patterns |
+| **puppeteer** | Browser Automation | Web testing, scraping, browser interaction |
+| **browser-tools** | Browser Automation | Browser console/network inspection, audits |
+| **aws-cdk** | AWS Infrastructure | CloudFormation validation, CDK docs, deployment troubleshooting |
+| **serena** | Semantic Code Tools | IDE-grade, symbol-level code navigation and editing via LSP |
+| **headroom** | Context Compression | Compresses tool output to reduce token usage |
 
 ### Installation Scripts
 
 - **`install.sh`**: Master installer orchestrating the entire setup
 - **`scripts/install-claude-code.sh`**: Claude CLI installation
+- **`scripts/install-claude-mem.sh`**: claude-mem plugin + memory worker setup (requires Bun)
+- **`scripts/install-headroom.sh`**: Headroom compression proxy setup (requires uv)
 - **`scripts/setup-mcp.sh`**: MCP server configuration deployment
 - **`scripts/list-mcp-tools.sh`**: MCP tools verification
+- **`scripts/clean-ephemeral.sh`**: Removes machine-local session/task data from `~/.claude`
 - **`scripts/utils.sh`**: Shared utility functions
+
+### Output Style (Default: Terse)
+
+`claude/.claude/output-styles/terse.md` ships one output style, **Terse** (`settings.json` sets `"outputStyle": "Terse"`, so it's on by default for anyone installing this config). It compresses responses to one point per response, drops filler and preamble, and enforces absolute file paths — it does not change tool use or capability, only how responses are written. Toggle it with "stop caveman" / "normal mode", or by editing `outputStyle` in `~/.claude/settings.json`.
 
 ---
 
@@ -102,8 +123,7 @@ cd ~/.dotclaude
 ./install.sh
 
 # Configure API keys
-cp .env.mcp .env.mcp.local
-# Edit .env.mcp.local with your actual keys
+vim .env.mcp.local  # create with CONTEXT7_API_KEY=... (see Configuration below)
 ./scripts/setup-mcp.sh
 
 # Verify setup
@@ -121,6 +141,7 @@ claude
 - gettext / envsubst (for MCP config templating)
 - Node.js & npm (for MCP servers)
 - Bun (for the claude-mem memory worker)
+- uv (for the Headroom proxy and the aws-cdk MCP server, both run via `uvx`)
 - Claude Code CLI
 
 ### Full Installation Process
@@ -137,12 +158,13 @@ cd ~/.dotclaude
 ### What the Install Script Does
 
 1. **Environment Check**: Verifies operating system and shell
-2. **Dependency Installation**: Installs GNU stow if missing
+2. **Dependency Installation**: Installs GNU stow, Node.js, gettext, Bun, and uv if missing
 3. **Backup Creation**: Backs up existing `~/.claude` configuration (timestamped)
 4. **Symlink Management**: Uses `stow` to create symlinks
 5. **Claude CLI Installation**: Installs Claude Code CLI via `install-claude-code.sh`
-6. **MCP Setup Prompt**: Offers to configure MCP servers
-7. **Verification**: Tests the installation and displays status
+6. **MCP Configuration**: Deploys MCP server config automatically via `setup-mcp.sh`
+7. **Additional Tool Setup**: Configures the Headroom proxy, claude-mem, Serena, and the `claude-bare` launcher (each self-guards and skips if its prerequisites are missing)
+8. **Verification**: Tests the installation and displays status
 
 ### Installation Flags
 
@@ -150,7 +172,6 @@ cd ~/.dotclaude
 ./install.sh --help              # Show help
 ./install.sh --skip-deps         # Skip dependency checks
 ./install.sh --no-backup         # Don't backup existing config
-./install.sh --skip-claude-cli   # Skip Claude CLI installation
 ```
 
 ### Post-Installation Steps
@@ -158,16 +179,14 @@ cd ~/.dotclaude
 #### 1. Configure API Keys
 
 ```bash
-# Copy template
-cp .env.mcp .env.mcp.local
-
-# Edit with your keys
+# Create the local secrets file (gitignored, no tracked template to copy)
 vim .env.mcp.local  # or nano, code, etc.
 ```
 
-Add your API keys:
+Add your API key:
 - **CONTEXT7_API_KEY**: From [Upstash Console](https://console.upstash.com)
-- **ANTHROPIC_API_KEY**: From [Anthropic Console](https://console.anthropic.com)
+
+`setup-mcp.sh` warns and disables `context7` if this is missing — all other servers work without any keys.
 
 #### 2. Deploy MCP Configuration
 
@@ -197,45 +216,66 @@ dotclaude/
 ├── .gitignore                    # Whitelist strategy (ignores everything by default)
 ├── README.md                     # This file
 ├── install.sh                    # Master installation orchestrator
-├── .env.mcp                      # API key template (copy to .env.mcp.local)
+├── .env.mcp.local                # API keys (gitignored, created locally — no tracked template)
 │
 ├── mcp/
 │   └── mcp.json.template         # MCP server configuration template
 │
+├── serena/
+│   └── serena_config.yml         # Serena MCP server config (symlinked to ~/.serena/)
+│
 ├── scripts/
 │   ├── install-claude-code.sh    # Claude CLI installer
+│   ├── install-claude-mem.sh     # claude-mem plugin/memory worker setup
+│   ├── install-headroom.sh       # Headroom proxy setup
 │   ├── setup-mcp.sh              # MCP configuration deployer
 │   ├── list-mcp-tools.sh         # MCP tools verification
+│   ├── clean-ephemeral.sh        # Removes machine-local ~/.claude session data
 │   └── utils.sh                  # Shared utility functions
 │
 └── claude/                       # Stow package (source)
     └── .claude/                  # Becomes ~/.claude (target)
-        ├── CLAUDE.md             # Main Agent instructions
+        ├── CLAUDE.md             # Main Agent instructions (primary documentation output)
         ├── settings.json         # Claude Code settings
         │
-        ├── agents/               # 13 specialized agent definitions
+        ├── agents/               # 12 specialized agent definitions
         │   ├── technical-architect.md
         │   ├── test-writer.md
         │   ├── typescript-connoisseur.md
-        │   ├── code-quality-refactoring-specialist.md
-        │   ├── security-performance-specialist.md
-        │   ├── backend-typescript-specialist.md
-        │   ├── database-design-specialist.md
-        │   ├── git-shell-specialist.md
-        │   ├── react-engineer.md
-        │   ├── design-specialist.md
-        │   ├── documentation-agent.md
+        │   ├── quality-refactoring-specialist.md
         │   ├── production-readiness-specialist.md
-        │   └── quality-refactoring-specialist.md
+        │   ├── backend-typescript-specialist.md
+        │   ├── git-specialist.md
+        │   ├── shell-specialist.md
+        │   ├── react-engineer.md
+        │   ├── documentation-specialist.md
+        │   ├── task-explorer.md
+        │   └── subtask-list-generator.md
         │
-        ├── docs/                 # Documentation hierarchy
-        │   ├── workflows/        # Development workflows
-        │   ├── references/       # Quick references
-        │   ├── patterns/         # Domain-specific patterns
-        │   └── examples/         # Concrete examples
+        ├── skills/               # 8 skills (each a directory with a SKILL.md)
+        │   ├── docs-drift/
+        │   ├── domain-modeling/
+        │   ├── grilling/
+        │   ├── grill-me/
+        │   ├── grill-with-docs/
+        │   ├── grok/
+        │   ├── review-pr/
+        │   └── writing-great-skills/
         │
-        └── plugins/              # Plugin configuration
-            └── tmux/             # Tmux integration
+        ├── commands/             # 10 slash commands
+        │   ├── commit.md
+        │   ├── crufthard.md
+        │   ├── cruftsoft.md
+        │   ├── document.md
+        │   ├── merge.md
+        │   ├── schemacheck.md
+        │   ├── tfork.md
+        │   ├── trestart.md
+        │   ├── typetest.md
+        │   └── workreport.md
+        │
+        └── output-styles/        # Default-on Terse output style
+            └── terse.md
 ```
 
 ---
@@ -297,90 +337,56 @@ stow -D claude
 **Invoked For**: Advanced TypeScript, Zod schema design, strict mode compliance
 **Returns**: Type definitions, schema designs, type safety improvements
 
-### Code Quality & Refactoring Specialist
+### Quality & Refactoring Specialist
 **Domain**: Code Review & Quality
-**Invoked For**: Post-GREEN refactoring, code review, pattern enforcement
+**Invoked For**: Post-GREEN refactoring, code review, tier-based standards enforcement
 **Returns**: Refactoring recommendations, quality assessment, clean code
 
-### Security & Performance Specialist
-**Domain**: Security & Optimization
-**Invoked For**: Security audits, OWASP compliance, performance profiling
-**Returns**: Vulnerability reports, performance metrics, optimization recommendations
+### Production Readiness Specialist
+**Domain**: Security & Performance
+**Invoked For**: Security audits, OWASP compliance, performance profiling, deployment readiness
+**Returns**: Vulnerability reports, performance metrics, readiness checklists
 
 ### Backend TypeScript Specialist
 **Domain**: Backend Development
-**Invoked For**: REST/GraphQL APIs, Lambda functions, backend logic
-**Returns**: API implementations, database integrations, backend services
+**Invoked For**: Contract-first API/database design, REST/GraphQL, Lambda, DynamoDB, indexing strategies
+**Returns**: API implementations, database schemas, backend services
 
-### Database Design Specialist
-**Domain**: Data Modeling
-**Invoked For**: Schema design BEFORE implementation
-**Returns**: Database schemas, migration scripts, query optimizations
+### Git Specialist
+**Domain**: Version Control
+**Invoked For**: Local commits, branches, history operations
+**Returns**: Commits with conventional messages — never pushes to remote or opens PRs
 
-### Git & Shell Specialist
-**Domain**: Version Control & Automation
-**Invoked For**: Git operations, commits, PRs, shell scripts, git hooks
-**Returns**: Commits with conventional messages, PRs, shell automation
+### Shell Specialist
+**Domain**: Automation
+**Invoked For**: Shell script implementation, system automation, git hook bodies, CI/CD scripts
+**Returns**: Robust, idempotent, tested shell scripts
 
 ### React Engineer
 **Domain**: Frontend Development
-**Invoked For**: React components, hooks, SSR, client-side state
+**Invoked For**: React 19+, Next.js App Router, Remix, hooks, SSR
 **Returns**: React implementations, component designs, frontend logic
 
-### AWS CDK Expert
-**Domain**: Infrastructure as Code
-**Invoked For**: CDK stacks, AWS resources, infrastructure deployment
-**Returns**: CDK stack definitions, AWS resource configurations
-
-### Documentation Agent
+### Documentation Specialist
 **Domain**: Documentation
-**Invoked For**: Project documentation, ADRs, API docs, learning capture
+**Invoked For**: Project documentation, ADRs, quality audits, learning capture
 **Returns**: Updated documentation, ADRs, CLAUDE.md updates
 
-### Design Specialist
-**Domain**: API & Schema Design
-**Invoked For**: Contract-first design, API specifications, schema design
-**Returns**: API contracts, design documents, schema specifications
+### Task Explorer
+**Domain**: Codebase Onboarding
+**Invoked For**: Picking up a new ticket, understanding an unfamiliar code area
+**Returns**: Read-only context report — relevant files, architecture, data flows, patterns
 
-### Production Readiness Specialist
-**Domain**: Deployment & Operations
-**Invoked For**: Pre-production audits, reliability checks, monitoring setup
-**Returns**: Readiness reports, deployment checklists, monitoring configurations
+### Subtask List Generator
+**Domain**: Bulk Fixes
+**Invoked For**: Standardisation tasks, migrations, fixes spanning many files
+**Returns**: Exhaustive checklist file for domain agents to work through
 
 ---
 
 ## 📚 Documentation Structure
 
-### Workflows (`docs/workflows/`)
-
-**Development Process Flows:**
-- **`tdd-cycle.md`**: Complete Red-Green-Refactor cycle
-- **`agent-collaboration.md`**: Agent orchestration patterns, delegation flows
-- **`code-review.md`**: Review workflows, quality gates
-
-### References (`docs/references/`)
-
-**Quick Lookups:**
-- **`standards-checklist.md`**: Pre-commit, pre-merge, pre-production checklists
-- **`code-style.md`**: Style guide, naming conventions, patterns
-
-### Patterns (`docs/patterns/`)
-
-**Domain-Specific Patterns:**
-- **`typescript/`**: TypeScript patterns, Zod schemas, advanced types
-- **`react/`**: React patterns, hooks, components, SSR
-- **`backend/`**: Backend patterns, APIs, databases, Lambda
-- **`refactoring/`**: Refactoring strategies, code smells, improvements
-- **`security/`**: Security patterns, OWASP, vulnerability prevention
-- **`performance/`**: Performance patterns, optimization, profiling
-
-### Examples (`docs/examples/`)
-
-**Concrete Walkthroughs:**
-- Real-world scenarios
-- Step-by-step implementations
-- Before/after comparisons
-- Agent collaboration examples
+There is no separate `docs/` tree. All TDD workflow, orchestration rules, standards, and patterns that used to live as split reference files now live in a single **`claude/.claude/CLAUDE.md`** (the primary documentation output for any change). This README covers repository setup and usage; CLAUDE.md covers how the agents work.
 
 ---
 
@@ -391,30 +397,35 @@ stow -D claude
 **Use Cases**: Check latest npm package APIs, Python library docs, framework updates
 **API Key**: Upstash (Context7)
 
-### taskmaster
-**Purpose**: AI-powered task management
-**Use Cases**: Track complex features, prioritize work, monitor progress
-**API Key**: Anthropic
-
 ### sequential-thinking
 **Purpose**: Structured problem-solving
 **Use Cases**: Complex debugging, architectural decisions, algorithm design
 **API Key**: None (uses Claude's built-in reasoning)
 
-### playwright
+### puppeteer
 **Purpose**: Browser automation
 **Use Cases**: E2E testing, web scraping, browser interaction testing
 **API Key**: None (local browser control)
 
-### aws-core
-**Purpose**: AWS expert advice
-**Use Cases**: Service selection, architecture guidance, AWS best practices
-**API Key**: None (knowledge-based)
+### browser-tools
+**Purpose**: Browser console/network inspection
+**Use Cases**: Audits, debugging client-side issues via a running browser session
+**API Key**: None (local browser control)
 
 ### aws-cdk
-**Purpose**: AWS CDK patterns
-**Use Cases**: Infrastructure as Code, CDK constructs, deployment patterns
+**Purpose**: AWS Infrastructure as Code
+**Use Cases**: CloudFormation validation/compliance, CDK construct docs, deployment troubleshooting
 **API Key**: None (knowledge-based)
+
+### serena
+**Purpose**: Semantic, symbol-level code tools via LSP
+**Use Cases**: `find_symbol`, `find_referencing_symbols`, safe rename/inline refactors
+**API Key**: None (local language server)
+
+### headroom
+**Purpose**: Context compression proxy
+**Use Cases**: Reduces token usage on large tool outputs
+**API Key**: None (local proxy, requires `uv`)
 
 ---
 
@@ -422,16 +433,15 @@ stow -D claude
 
 ### API Keys
 
-1. **Create local environment file:**
+1. **Create local environment file** (gitignored, no tracked template):
    ```bash
-   cp .env.mcp .env.mcp.local
+   vim .env.mcp.local
    ```
 
-2. **Add your API keys:**
+2. **Add your API key:**
    ```bash
    # .env.mcp.local
    CONTEXT7_API_KEY=ctx7sk-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-   ANTHROPIC_API_KEY=sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    ```
 
 3. **Deploy MCP configuration:**
@@ -469,11 +479,12 @@ Expected output:
 ```
 MCP Tools Available:
   - context7: get_context
-  - taskmaster: create_task, list_tasks, update_task
   - sequential-thinking: think
-  - playwright: navigate, click, screenshot
-  - aws-core: query
-  - aws-cdk: query
+  - puppeteer: navigate, click, screenshot
+  - browser-tools: getConsoleLogs, getNetworkLogs, runAudit
+  - aws-cdk: search_cdk_documentation, validate_cloudformation_template
+  - serena: find_symbol, find_referencing_symbols, replace_symbol_body
+  - headroom: (transparent proxy — no directly invoked tools)
 ```
 
 ---
@@ -500,7 +511,7 @@ Inside Claude Code:
 ```
 You: "What agents are available?"
 
-Claude: "I have access to 13 specialized agents:
+Claude: "I have access to 12 specialized agents:
 - Technical Architect (planning)
 - Test Writer (TDD)
 - ..."
@@ -515,8 +526,8 @@ Claude: "I have access to 13 specialized agents:
 # Test context7
 claude "Use context7 to check the latest React 19 API"
 
-# Test taskmaster
-claude "Create a task to implement user authentication"
+# Test serena
+claude "Use serena to find references to this symbol"
 ```
 
 ### Common Commands
@@ -534,7 +545,7 @@ ls -la ~/.claude
 ls ~/.claude/agents/
 
 # Read documentation
-cat ~/.claude/docs/workflows/tdd-cycle.md
+cat ~/.claude/CLAUDE.md
 
 # Check MCP config
 cat ~/.mcp.json
@@ -599,16 +610,15 @@ CLAUDE_BARE_DIR=~/claude-test claude-bare
 
 ### Modifying Documentation
 
-Documentation is markdown files in `~/.claude/docs/`:
+Documentation lives in `~/.claude/CLAUDE.md` — there is no separate `docs/` tree:
 ```bash
-# Edit existing docs
-vim ~/.claude/docs/workflows/tdd-cycle.md
-
-# Add new workflow
-touch ~/.claude/docs/workflows/my-workflow.md
+# Edit project documentation
+vim ~/.claude/CLAUDE.md
 
 # Changes automatically reflected (symlinks)
 ```
+
+New standalone `.md` files are not created without explicit user approval.
 
 ### Adding MCP Servers
 
@@ -652,10 +662,10 @@ touch ~/.claude/docs/workflows/my-workflow.md
 Edit `~/.claude/settings.json`:
 ```json
 {
-  "theme": "dark",
-  "tabSize": 2,
-  "autoSave": true,
-  "customSetting": "value"
+  "model": "claude-opus-4-5",
+  "outputStyle": "Terse",
+  "effortLevel": "high",
+  "includeCoAuthoredBy": false
 }
 ```
 
@@ -821,9 +831,8 @@ cd ~/.dotclaude
 # Verify keys are in local file (not template)
 cat .env.mcp.local  # Should have actual keys
 
-# Check keys are valid format
+# Check key is valid format
 # Context7: ctx7sk-xxxx-xxxx-xxxx-xxxx
-# Anthropic: sk-ant-api03-xxxxxxxxxxxx
 
 # Redeploy after fixing
 ./scripts/setup-mcp.sh
@@ -916,11 +925,8 @@ stow -R claude
 
 2. **Add documentation**:
    ```bash
-   # Workflows
-   vim claude/.claude/docs/workflows/my-workflow.md
-
-   # Patterns
-   vim claude/.claude/docs/patterns/typescript/my-pattern.md
+   # Project CLAUDE.md is the primary documentation output
+   vim claude/.claude/CLAUDE.md
    ```
 
 3. **Follow structure**:
@@ -1017,7 +1023,7 @@ SOFTWARE.
 
 ## 🔗 Links
 
-- **Documentation**: [~/.claude/docs/](./claude/.claude/docs/)
+- **Documentation**: [~/.claude/CLAUDE.md](./claude/.claude/CLAUDE.md)
 - **Issues**: [GitHub Issues](https://github.com/yourusername/dotclaude/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/yourusername/dotclaude/discussions)
 - **Claude Code**: [Anthropic Claude Code](https://www.anthropic.com)
