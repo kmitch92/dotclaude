@@ -56,15 +56,15 @@ Full suites are expensive — jest/vitest workers ~1 GB each; a full CDK snapsho
 | RED | Test Writer | `[RED COMPLETE]` | Domain agent implementation |
 | GREEN | Domain Agent | `[GREEN COMPLETE]` | Test Writer verification |
 | VERIFY | Test Writer | `[GREEN VERIFIED]` | Quality & Refactoring |
-| REFACTOR | Quality & Refactoring | `[REFACTOR COMPLETE]` | Git Specialist commit |
+| REFACTOR | Quality & Refactoring | `[REFACTOR COMPLETE]` | Stop and report — user runs `/commit` |
 
 - **RULE 1**: FORBIDDEN to invoke a domain agent (Backend, React, Shell) for implementation without a preceding `[RED COMPLETE]` from Test Writer in the current chain.
-- **RULE 2**: FORBIDDEN to commit production code via Git Specialist without a preceding `[REFACTOR COMPLETE]` from Quality & Refactoring.
+- **RULE 2**: FORBIDDEN for the orchestrator to auto-invoke Git Specialist to commit at any point in the RGR chain. Committing is user-initiated only, via the `/commit` slash command. On completion of any phase — including after `[REFACTOR COMPLETE]` — STOP and report what changed; do not invoke Git Specialist as part of the chain.
 - **RULE 3**: RGR is ALWAYS sequential, NEVER parallel between phases — RED → GREEN → VERIFY → REFACTOR.
 - **RULE 4**: Phase tokens are mandatory in agent output; absence = protocol violation.
-- **RULE 5**: Exempt task types (tag `[RGR EXEMPT: <reason>]`): documentation-only, config (no production logic), schema-only design (TypeScript Connoisseur pre-RED), git ops (commit gate still applies), design/planning (Technical Architect), Production Readiness audits.
+- **RULE 5**: Exempt task types (tag `[RGR EXEMPT: <reason>]`): documentation-only, config (no production logic), schema-only design (TypeScript Connoisseur pre-RED), git ops (`/commit` is user-invoked, not RGR-gated), design/planning (Technical Architect), Production Readiness audits.
 
-**Exempt agents** (operate outside RGR by nature): Technical Architect (planning), TypeScript Connoisseur (pre-RED schema), Documentation, Git Specialist (commit gate instead), Production Readiness (audits), Task Explorer (read-only), Subtask List Generator (tracking files only).
+**Exempt agents** (operate outside RGR by nature): Technical Architect (planning), TypeScript Connoisseur (pre-RED schema), Documentation, Production Readiness (audits), Task Explorer (read-only), Subtask List Generator (tracking files only).
 
 **Self-check before any domain agent for implementation**: (1) do I have `[RED COMPLETE]` for this task? (2) does the prompt reference the failing tests? (3) am I requesting GREEN work? Any "no" → STOP, invoke Test Writer first. Skipping this = writing code directly.
 
@@ -119,14 +119,16 @@ Serena doesn't change the RGR phase gates — it's a sharper tool for the same p
 
 | Task Type | Pattern |
 |-----------|---------|
-| **New Features** | Architect → Design (API/DB) → For each task: Test Writer (RED) → Git Specialist (commit test if >3 files away from target) → Domain Agent (GREEN) → Git Specialist (commit implementation, <5 files) → Test Writer (verify) → Production Readiness (if needed) → Quality & Refactoring (assess) → Domain Agent (refactor if needed) → Git Specialist (commit refactor by module) → Documentation (CLAUDE.md) → Git Specialist (commit docs separately) |
-| **Bug Fixes** | Test Writer (failing test) → Git Specialist (commit test) → Domain Agent (fix) → Git Specialist (commit fix, <5 files) → Test Writer (verify + edge cases) → Quality & Refactoring (assess) → Documentation (CLAUDE.md) → Git Specialist (commit docs separately) |
-| **Refactoring** | Quality & Refactoring (assess) → Test Writer (100% coverage check) → Domain Agent (refactor maintaining API, commit per module) → Git Specialist (commit batches of 3-5 files per module) → Test Writer (tests pass without changes) → Quality & Refactoring (review) → Documentation (CLAUDE.md) → Git Specialist (commit docs separately) |
+| **New Features** | Architect → Design (API/DB) → For each task: Test Writer (RED) → Domain Agent (GREEN) → Test Writer (verify) → Production Readiness (if needed) → Quality & Refactoring (assess) → Domain Agent (refactor if needed) → Documentation (CLAUDE.md) |
+| **Bug Fixes** | Test Writer (failing test) → Domain Agent (fix) → Test Writer (verify + edge cases) → Quality & Refactoring (assess) → Documentation (CLAUDE.md) |
+| **Refactoring** | Quality & Refactoring (assess) → Test Writer (100% coverage check) → Domain Agent (refactor maintaining API, batched by module) → Test Writer (tests pass without changes) → Quality & Refactoring (review) → Documentation (CLAUDE.md) |
 | **Code Review** | Batch 1: Quality & Refactoring + Test Writer (2 parallel) → Batch 2: TypeScript Connoisseur + Production Readiness if security-critical (2 parallel). NEVER run >2 in parallel. Synthesize feedback. |
-| **Documentation** | documentation-specialist → Git Specialist (commit docs separately, never with code) |
-| **Security Review** | Production Readiness (identify) → Test Writer (security tests) → Git Specialist (commit tests) → Domain Agent (fix) → Git Specialist (commit fixes, <5 files per commit) → Production Readiness (verify) → Documentation (CLAUDE.md) → Git Specialist (commit docs separately) |
-| **Performance Optimization** | Production Readiness (profile) → Test Writer (benchmark) → Git Specialist (commit benchmarks) → Domain Agent (optimize) → Git Specialist (commit optimization, <5 files) → Production Readiness (verify) → Test Writer (regression test) → Documentation (CLAUDE.md) → Git Specialist (commit docs separately) |
-| **Bulk/Standardisation Fixes** | Task Explorer (context) → Subtask List Generator (enumerate all locations) → For each batch: Test Writer (RED) → Domain Agent (GREEN) → Git Specialist (commit batch, <5 files) → Test Writer (verify) → Quality & Refactoring (assess) → Git Specialist (commit) → Documentation (CLAUDE.md) → Git Specialist (commit docs) |
+| **Documentation** | documentation-specialist |
+| **Security Review** | Production Readiness (identify) → Test Writer (security tests) → Domain Agent (fix) → Production Readiness (verify) → Documentation (CLAUDE.md) |
+| **Performance Optimization** | Production Readiness (profile) → Test Writer (benchmark) → Domain Agent (optimize) → Production Readiness (verify) → Test Writer (regression test) → Documentation (CLAUDE.md) |
+| **Bulk/Standardisation Fixes** | Task Explorer (context) → Subtask List Generator (enumerate all locations) → For each batch: Test Writer (RED) → Domain Agent (GREEN) → Test Writer (verify) → Quality & Refactoring (assess) → Documentation (CLAUDE.md) |
+
+**Every workflow above ends with changes left uncommitted in the working tree.** The orchestrator never auto-invokes Git Specialist — on completion of the chain, STOP, report what changed, and tell the user to run `/commit`. Docs stay separate from code at commit time (see Commit Granularity below); `/commit` enforces this when the user triggers it.
 
 ## When to Ask vs Proceed
 
@@ -139,11 +141,13 @@ File count matters more than "stable states". Priorities: granularity > stabilit
 
 **Limits (enforced)**: 1–3 files ideal · 5 = soft cap (justify in commit body) · 10 = hard cap (needs user approval) · never >10 without splitting.
 
-**Commit during development, not at "feature complete".** Separate commits for: schema; tests (RED — alone, or with impl if <3 files total); implementation (GREEN); refactor (batched by module); config (always separate); docs/CLAUDE.md (always separate); type definitions. If accumulated >5 files, STOP and commit. Multi-file refactors: batch by module (30 files → 6–10 commits of 3–5).
+**Prompt for `/commit` during development, not only at "feature complete".** The orchestrator never commits itself — it stops and tells the user to run `/commit`. Separate commits for: schema; tests (RED — alone, or with impl if <3 files total); implementation (GREEN); refactor (batched by module); config (always separate); docs/CLAUDE.md (always separate, never bundled with code); type definitions. If accumulated changes exceed ~5 files or cross a phase boundary, STOP and prompt the user to run `/commit` before continuing. Multi-file refactors: batch by module (30 files → 6–10 commits of 3–5) — prompt for `/commit` between batches so the splits stay clean.
 
 **Reject**: mega-commits ("initial implementation" with 50 files); bundling unrelated changes; waiting for feature-complete; committing generated files with source; mixing config/docs/tests/impl.
 
-**Git Specialist enforces**: refuse >10 files; request a split strategy; ask justification at 5–10; recommend splitting if >3 files mix concerns.
+**Git Specialist enforces (when `/commit` runs)**: refuse >10 files; request a split strategy; ask justification at 5–10; recommend splitting if >3 files mix concerns.
+
+**Known tradeoff**: since commits no longer happen automatically at each phase boundary, by the time `/commit` runs, RED + GREEN + REFACTOR changes may all be mixed in one working tree — git-specialist may need `git add -p` to reconstruct atomic splits. Prompt the user to run `/commit` at natural phase boundaries (after RED, after GREEN, after REFACTOR) rather than only at the very end, so the splits stay clean.
 
 Commits should compile/pass tests where possible; if a split needs a temporary broken state, use feature flags or skip CI.
 
