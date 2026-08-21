@@ -548,7 +548,7 @@ RECOMMENDATION:
 RECOMMENDATION:
 1. Invoke Test Writer to fix failing tests
 2. Invoke Backend TypeScript Specialist to resolve type errors
-3. Re-invoke git-specialist after fixes complete"
+3. Tell the user to run `/commit` again after fixes complete"
 ```
 
 **After commits complete (local-only):**

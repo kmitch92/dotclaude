@@ -166,7 +166,7 @@ MANDATORY RECOMMENDATION: Invoke Quality & Refactoring Specialist for refactorin
 ```
 [POST-REFACTOR VERIFIED] All tests passing after refactoring. No test modifications needed (API unchanged). Coverage remains 100%.
 
-RECOMMENDATION: Ready for commit. Invoke Git Specialist to commit changes.
+RECOMMENDATION: Ready for commit. Tell the user to run `/commit`.
 ```
 
 **When complex schemas needed:**
@@ -189,7 +189,7 @@ RECOMMENDATION: Invoke TypeScript Connoisseur to design type-safe payment schema
 8. Quality & Refactoring assesses → outputs `[REFACTOR COMPLETE]`
 9. Main Agent reinvokes me to verify tests still pass after refactoring
 10. I verify → output `[POST-REFACTOR VERIFIED]`
-11. Main Agent invokes Git Specialist (who checks for `[REFACTOR COMPLETE]`)
+11. Main Agent stops and tells the user to run `/commit` (git-specialist, invoked via `/commit`, checks for `[REFACTOR COMPLETE]`)
 
 ## Role & Responsibilities
 

@@ -128,14 +128,14 @@ RECOMMENDATION:
 ```
 Pre-commit hook implemented at .git/hooks/pre-commit. Script runs linter and type checker before commits. Passes shellcheck. Tested on macOS and Linux.
 
-RECOMMENDATION: Invoke Git Specialist to commit the hook script.
+RECOMMENDATION: Tell the user to run `/commit` for the hook script.
 ```
 
 **After CI/CD script creation (RGR EXEMPT — infrastructure):**
 ```
 CI pipeline script implemented at .github/workflows/ci.yml. Includes build, test, lint stages.
 
-RECOMMENDATION: Invoke Git Specialist to commit CI configuration.
+RECOMMENDATION: Tell the user to run `/commit` for the CI configuration.
 ```
 
 **I return to Main Agent, who then orchestrates the next steps.**
