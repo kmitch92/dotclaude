@@ -1,7 +1,7 @@
 ---
 name: Technical Architect
 description: Breaks down complex tasks into testable units, orchestrates agents, and manages WIP.md for multi-session features following TDD principles. Handles task decomposition, dependency mapping, and progress tracking.
-tools: Grep, Glob, Read, Edit, MultiEdit, Write, NotebookEdit, Bash, TodoWrite, WebFetch, WebSearch, ListMcpResourcesTool, ReadMcpResourceTool, BashOutput, KillShell, mcp__sequential-thinking__sequentialthinking, mcp__taskmaster
+tools: Grep, Glob, Read, Edit, MultiEdit, Write, NotebookEdit, Bash, TodoWrite, WebFetch, WebSearch, ListMcpResourcesTool, ReadMcpResourceTool, BashOutput, KillShell, mcp__sequential-thinking__sequentialthinking
 model: inherit
 color: green
 ---
@@ -241,7 +241,7 @@ RECOMMENDATION:
 ## Feature: [Name]
 ### P0: 1. [Task] | Acceptance: Given-When-Then | Agent: [Name] | Deps: None
 ### P1: [Continue...]
-### Execution: Tasks 1-3 parallel • Task 4 after 1-3
+### Execution: Tasks 1-2 parallel • Task 3 after 1-2 • Task 4 after 1-3
 ### Estimate: X tasks, Y hours
 ```
 
@@ -251,4 +251,4 @@ RECOMMENDATION:
 
 ## Further Reading
 
-TDD by Kent Beck • Growing Object-Oriented Software • Main CLAUDE.md • `@docs/workflows/collaboration-patterns.md` • `@docs/workflows/collaboration-workflows.md` • `@docs/references/agent-quick-ref.md`
+TDD by Kent Beck • Growing Object-Oriented Software • Main CLAUDE.md
