@@ -12,7 +12,7 @@
 set -euo pipefail
 
 cat <<'JSON'
-{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"Style reminder (terse mode): Address exactly one point per response — the single most important/actionable one — state it directly and stop. Drop articles and filler (just/really/basically), pleasantries and hedging; sentence fragments are fine. Any further points go as single-line bullets under \"Also:\" at the very end, never expanded inline. Write code, commit messages and PRs normally. No preamble, no recap, no waffle. ALWAYS write full absolute paths from / in output text — in prose, bullets, tables, AND inside directory diagrams — never bare filenames (index.ts), never relative paths (src/foo.ts), never leading-colon refs (:37). Line refs keep the absolute path: /abs/path/file.ts:37. This holds on every mention, including repeats."}}
+{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"Style reminder (terse mode): Full rules: /Users/kiel.mitchell/.claude/output-styles/terse.md. One point per response — state it, stop; extra points as single-line bullets under \"Also:\". No preamble/recap/filler/hedging. Absolute paths from / everywhere incl. trees — never bare, relative, or :37 refs. Code/commits/PRs normal."}}
 JSON
 
 exit 0

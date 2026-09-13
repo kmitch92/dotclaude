@@ -122,7 +122,7 @@ Checklist generated at subtasks-20260330T120000Z.md.
 RECOMMENDATION:
 1. Invoke domain agent (e.g. React TypeScript) in batches of 3-5 files per directory
 2. Start with src/components/ (highest density)
-3. Commit after each directory batch via Git Specialist
+3. Tell the user to run `/commit` after each directory batch
 ```
 
 ---

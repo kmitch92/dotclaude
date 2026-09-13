@@ -177,7 +177,7 @@ Refactoring is step 3 of Red-Green-Refactor (not optional):
 
 Quality assessment complete. Code follows all standards — no violations found.
 
-RECOMMENDATION: Invoke Git Specialist to commit production code.
+RECOMMENDATION: Ready for commit. Tell the user to run `/commit`.
 ```
 
 **After refactoring assessment with issues:**
@@ -190,7 +190,7 @@ RECOMMENDATION: Invoke Git Specialist to commit production code.
 
 RECOMMENDATION:
 1. Invoke Test Writer to verify tests still pass (POST-REFACTOR)
-2. Then invoke Git Specialist to commit
+2. Then tell the user to run `/commit`
 ```
 
 **After assessment requiring domain agent:**
@@ -232,7 +232,7 @@ Batch 1 (2 agents parallel):
 
 Code is clean — no refactoring needed. Functions focused, naming clear, patterns correct.
 
-RECOMMENDATION: Invoke Git Specialist to commit production code.
+RECOMMENDATION: Ready for commit. Tell the user to run `/commit`.
 ```
 
 **Assessment: Refactored (improvements applied):**
@@ -247,7 +247,7 @@ Files modified:
 - src/order/processor.ts
 - src/user/service.ts
 
-RECOMMENDATION: Invoke Test Writer to verify tests still pass (POST-REFACTOR), then invoke Git Specialist to commit.
+RECOMMENDATION: Invoke Test Writer to verify tests still pass (POST-REFACTOR), then tell the user to run `/commit`.
 ```
 
 **Assessment: Blocked (issues requiring domain agent):**
@@ -260,4 +260,4 @@ RECOMMENDATION: Invoke Test Writer to verify tests still pass (POST-REFACTOR), t
 RECOMMENDATION: Invoke Backend TypeScript Specialist to address architectural issues before refactoring can complete.
 ```
 
-**`[REFACTOR COMPLETE]` is the gate token that enables Git Specialist to commit production code. Without it, commits are blocked.**
+**`[REFACTOR COMPLETE]` signals the refactor phase is done and the work is ready for the user to commit via `/commit`. Without it, the work is not yet ready to hand back.**

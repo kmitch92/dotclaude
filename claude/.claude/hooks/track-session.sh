@@ -22,12 +22,17 @@ else
   key="tty-${tty_name:-unknown}"
 fi
 
-jq -n --arg sid "$session_id" --arg cwd "$cwd" \
-  '{session_id: $sid, cwd: $cwd, updated: now | todate}' > "$dir/$key"
+# Co-tenancy fields: current git branch (best-effort; empty outside a repo) and
+# the raw tmux pane id. git must never abort the hook, hence `|| true`.
+branch=$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+pane="${TMUX_PANE:-}"
+
+jq -n --arg sid "$session_id" --arg cwd "$cwd" --arg branch "$branch" --arg pane "$pane" \
+  '{session_id: $sid, cwd: $cwd, branch: $branch, pane: $pane, updated: now | todate}' > "$dir/$key"
 
 # Also keep a per-project "latest" record as a fallback lookup.
 proj_key="cwd-$(printf '%s' "$cwd" | shasum -a 1 2>/dev/null | cut -c1-12 || printf '%s' "$cwd" | sha1sum | cut -c1-12)"
-jq -n --arg sid "$session_id" --arg cwd "$cwd" \
-  '{session_id: $sid, cwd: $cwd, updated: now | todate}' > "$dir/$proj_key"
+jq -n --arg sid "$session_id" --arg cwd "$cwd" --arg branch "$branch" --arg pane "$pane" \
+  '{session_id: $sid, cwd: $cwd, branch: $branch, pane: $pane, updated: now | todate}' > "$dir/$proj_key"
 
 exit 0
