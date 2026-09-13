@@ -11,7 +11,7 @@
 - **12 Specialized AI Agents**: Each agent is an expert in a specific domain (testing, architecture, security, etc.)
 - **Test-Driven Development Framework**: Non-negotiable TDD with Red-Green-Refactor cycle
 - **Project CLAUDE.md as Primary Documentation**: Single source of orchestration rules, standards, and workflows for all agents
-- **MCP Server Integration**: 7 pre-configured Model Context Protocol servers for enhanced capabilities
+- **MCP Server Integration**: 6 pre-configured Model Context Protocol servers for enhanced capabilities
 - **Automated Installation**: One-command setup with intelligent dependency handling
 - **Symlink-Based Architecture**: Uses GNU stow for clean, version-controlled configuration management
 
@@ -83,7 +83,7 @@ Slash commands live in `claude/.claude/commands/` and are always user-invoked.
 
 Two tiers: **project `CLAUDE.md`** (technical context for agents — TDD workflow, orchestration rules, standards, commit conventions — the primary output for any change) and **this README** (overview for humans). New `.md` files are not created without explicit approval; there is no separate `docs/` tree.
 
-### MCP Servers (7)
+### MCP Servers (6)
 
 | Server | Purpose | Key Features |
 |--------|---------|--------------|
@@ -93,14 +93,12 @@ Two tiers: **project `CLAUDE.md`** (technical context for agents — TDD workflo
 | **browser-tools** | Browser Automation | Browser console/network inspection, audits |
 | **aws-cdk** | AWS Infrastructure | CloudFormation validation, CDK docs, deployment troubleshooting |
 | **serena** | Semantic Code Tools | IDE-grade, symbol-level code navigation and editing via LSP |
-| **headroom** | Context Compression | Compresses tool output to reduce token usage |
 
 ### Installation Scripts
 
 - **`install.sh`**: Master installer orchestrating the entire setup
 - **`scripts/install-claude-code.sh`**: Claude CLI installation
 - **`scripts/install-claude-mem.sh`**: claude-mem plugin + memory worker setup (requires Bun)
-- **`scripts/install-headroom.sh`**: Headroom compression proxy setup (requires uv)
 - **`scripts/setup-mcp.sh`**: MCP server configuration deployment
 - **`scripts/list-mcp-tools.sh`**: MCP tools verification
 - **`scripts/clean-ephemeral.sh`**: Removes machine-local session/task data from `~/.claude`
@@ -141,7 +139,7 @@ claude
 - gettext / envsubst (for MCP config templating)
 - Node.js & npm (for MCP servers)
 - Bun (for the claude-mem memory worker)
-- uv (for the Headroom proxy and the aws-cdk MCP server, both run via `uvx`)
+- uv (for the aws-cdk MCP server, run via `uvx`)
 - Claude Code CLI
 
 ### Full Installation Process
@@ -163,7 +161,7 @@ cd ~/.dotclaude
 4. **Symlink Management**: Uses `stow` to create symlinks
 5. **Claude CLI Installation**: Installs Claude Code CLI via `install-claude-code.sh`
 6. **MCP Configuration**: Deploys MCP server config automatically via `setup-mcp.sh`
-7. **Additional Tool Setup**: Configures the Headroom proxy, claude-mem, Serena, and the `claude-bare` launcher (each self-guards and skips if its prerequisites are missing)
+7. **Additional Tool Setup**: Configures claude-mem, Serena, and the `claude-bare` launcher (each self-guards and skips if its prerequisites are missing)
 8. **Verification**: Tests the installation and displays status
 
 ### Installation Flags
@@ -227,7 +225,6 @@ dotclaude/
 ├── scripts/
 │   ├── install-claude-code.sh    # Claude CLI installer
 │   ├── install-claude-mem.sh     # claude-mem plugin/memory worker setup
-│   ├── install-headroom.sh       # Headroom proxy setup
 │   ├── setup-mcp.sh              # MCP configuration deployer
 │   ├── list-mcp-tools.sh         # MCP tools verification
 │   ├── clean-ephemeral.sh        # Removes machine-local ~/.claude session data
@@ -422,11 +419,6 @@ There is no separate `docs/` tree. All TDD workflow, orchestration rules, standa
 **Use Cases**: `find_symbol`, `find_referencing_symbols`, safe rename/inline refactors
 **API Key**: None (local language server)
 
-### headroom
-**Purpose**: Context compression proxy
-**Use Cases**: Reduces token usage on large tool outputs
-**API Key**: None (local proxy, requires `uv`)
-
 ---
 
 ## 🔧 Configuration
@@ -484,7 +476,6 @@ MCP Tools Available:
   - browser-tools: getConsoleLogs, getNetworkLogs, runAudit
   - aws-cdk: search_cdk_documentation, validate_cloudformation_template
   - serena: find_symbol, find_referencing_symbols, replace_symbol_body
-  - headroom: (transparent proxy — no directly invoked tools)
 ```
 
 ---
