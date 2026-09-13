@@ -12,8 +12,7 @@
     "MCP_TIMEOUT": "30000",
     "MCP_TOOL_TIMEOUT": "60000",
     "MAX_MCP_OUTPUT_TOKENS": "40000",
-    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "1",
-    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8787"
+    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "1"
   },
   "includeCoAuthoredBy": false,
   "permissions": {
@@ -67,7 +66,8 @@
   "enabledMcpjsonServers": [
     "context7",
     "aws-core",
-    "aws-cdk"
+    "aws-cdk",
+    "comfyui"
   ],
   "hooks": {
     "SessionStart": [
@@ -90,6 +90,17 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/claude-cowork-notice.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/bin/claude-orient-reminder.sh"
           }
         ]
       }

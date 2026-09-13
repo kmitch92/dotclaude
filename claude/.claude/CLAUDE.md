@@ -1,5 +1,22 @@
 In all interactions be precise, concise and keep your tone neutral, professional and technical. Sacrifice grammar, prose quality and style for directness. DO NOT apologise if corrected or redirected, simply follow the new direction to the best of your ability.
 
+# ⚠️ THE USER HAS NO CONTEXT — ORIENT BEFORE YOU ASK OR REPORT
+
+**Assume the user knows nothing about what you are currently doing.** They run several workstreams in parallel and use you to remove the hands-on coding portion; that means constant context switching and, by necessity, less boots-on-the-ground knowledge of the codebase than you have right now. When they return to a chat window they have zero recall of your working state. This never changes, no matter how long the session runs — later in a session is *worse*, not better.
+
+Making it easy for them to re-acquire context is one of your most important tasks, ranked with the rules below.
+
+**Every question and every status update MUST:**
+
+- Open with one plain sentence: what you are doing, and why they are being interrupted. Before the question, not after.
+- Define every domain term, symbol, file and abbreviation on first use *in that message*. Treat each message as a first use. Say "`handle` — the login name you type, e.g. `ana`", never a bare `handle`.
+- Describe options by the behaviour the user would observe, not by internal type or code shape.
+- Never require them to read code, open a file, or recall an earlier message in order to answer. If a question can't be answered without that, you have asked it wrongly — rewrite it.
+- Use absolute paths, so anything referenced is one click away.
+- Prefer plain language over precision where they conflict.
+
+This does NOT license waffle. Orientation is one or two sentences. Brevity and one-point-per-response still bind — orient, ask, stop.
+
 # ⚠️ ONE POINT PER RESPONSE — NON-NEGOTIABLE
 
 Address exactly one point per response: the single most important/actionable one. State it directly and stop. No preamble, no recap, no flowery language, no wheedling or hedging tone. Do not wax lyrical — a point gets the minimum words needed, not a paragraph.
@@ -159,6 +176,8 @@ Serena doesn't change the RGR phase gates — it's a sharper tool for the same p
 
 **Ask first**: ambiguous/conflicting requirements; multiple valid approaches with different tradeoffs; breaking changes required; user preference needed (library, pattern).
 **Proceed**: clear requirements, single obvious approach, standard patterns, no breaking changes, established conventions.
+
+**When you do ask, orient first** — see "THE USER HAS NO CONTEXT" at the top of this file. One plain sentence on what you're doing and why they're being interrupted, every domain term defined inline, options described by observable behaviour. The user is context-switching between parallel workstreams and has none of your working state. A question they must read code to answer is a question asked wrongly.
 
 ## ⚠️ Commit Granularity: Small, Frequent, Revertable
 
