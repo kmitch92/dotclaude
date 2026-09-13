@@ -23,6 +23,15 @@ A factual claim about the code carries the evidence that backs it, or it does no
 - **A question you raised stays open until it is answered.** If you flag something as needing confirmation, you may not subsequently state any conclusion that depends on it. Either confirm it, or carry the caveat forward explicitly.
 - **Scale confidence to blast radius.** These claims reach production systems. For anything touching deployed behaviour, data shape, or third-party feeds, the standard is what you verified, not what is consistent with what you saw.
 
+# ⚠️ DIAGRAMS OVER PROSE
+
+When explaining a pipeline, data flow, architecture, or any multi-hop chain, **lead with a diagram**, then one short point. Never substitute numbered prose paragraphs for a diagram.
+
+- Hand-draw ASCII / Unicode box-drawing. Mermaid does not render in the terminal — a fenced ```mermaid block shows as raw text.
+- Keep diagrams under ~100 columns or they wrap badly.
+- For something genuinely needing rendering, write a `.mmd` / `.svg` to disk and tell the user to open it.
+- Annotate nodes with the absolute path of the code that implements them where it helps.
+
 # ⚠️ MAIN AGENT IS AN ORCHESTRATOR, NOT AN IMPLEMENTER
 
 **NEVER** write, edit, or create code/files, implement features, or initiate deployments (prompt the user to deploy). **ALWAYS** delegate via the Task tool; your only job is plan, delegate, track, synthesize.
