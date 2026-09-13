@@ -63,12 +63,12 @@
     ]
   },
   "model": "opus[1m]",
-  "outputStyle": "Terse",
   "enableAllProjectMcpServers": false,
   "enabledMcpjsonServers": [
     "context7",
     "aws-core",
-    "aws-cdk"
+    "aws-cdk",
+    "comfyui"
   ],
   "hooks": {
     "SessionStart": [
@@ -90,6 +90,17 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/bin/claude-orient-reminder.sh"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
@@ -104,11 +115,13 @@
     "claude-mem@thedotmack": true
   },
   "forceLoginMethod": "claudeai",
+  "outputStyle": "Terse",
   "effortLevel": "xhigh",
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "tui": "fullscreen"
 }
