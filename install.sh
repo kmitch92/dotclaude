@@ -269,12 +269,11 @@ install_uv() {
 
   print_warning "uv not found"
   print_info "uv is needed for:"
-  print_info "  - Headroom proxy (installed via 'uv tool install')"
   print_info "  - aws-cdk MCP server (run via uvx, which ships with uv)"
 
   if ! confirm "Install uv?"; then
     print_warning "Skipping uv installation"
-    print_info "Note: Headroom and the aws-cdk MCP server will not be available without uv"
+    print_info "Note: the aws-cdk MCP server will not be available without uv"
     return 0
   fi
 
@@ -288,7 +287,7 @@ install_uv() {
     print_success "uv installed"
   else
     print_warning "uv installation failed"
-    print_info "Note: Headroom and the aws-cdk MCP server will not be available without uv"
+    print_info "Note: the aws-cdk MCP server will not be available without uv"
   fi
 }
 
@@ -329,9 +328,9 @@ check_dependencies() {
     print_success "Bun installed: $(bun --version)"
   fi
 
-  # Check uv (optional but recommended for Headroom and aws-cdk MCP via uvx)
+  # Check uv (optional but recommended for the aws-cdk MCP server via uvx)
   if ! command_exists uv; then
-    print_warning "uv not installed (needed for Headroom and aws-cdk MCP server via uvx)"
+    print_warning "uv not installed (needed for the aws-cdk MCP server via uvx)"
   else
     print_success "uv installed: $(uv --version)"
   fi
@@ -511,26 +510,6 @@ deploy_mcp_config() {
   bash "$SCRIPT_DIR/scripts/setup-mcp.sh"
 
   print_success "MCP configuration deployed"
-}
-
-# =============================================================================
-# Headroom Proxy Setup (optional)
-# =============================================================================
-
-setup_headroom_proxy() {
-  print_header "Setting Up Headroom Proxy"
-
-  # Optional step: skip gracefully if the script is not present.
-  if [[ ! -f "$SCRIPT_DIR/scripts/install-headroom.sh" ]]; then
-    print_info "Headroom setup script not found, skipping: scripts/install-headroom.sh"
-    return 0
-  fi
-
-  # Run Headroom setup script (it is idempotent and self-guards on uv/headroom).
-  print_info "Running Headroom setup script..."
-  bash "$SCRIPT_DIR/scripts/install-headroom.sh"
-
-  print_success "Headroom proxy setup complete"
 }
 
 # =============================================================================
@@ -806,9 +785,6 @@ main() {
   # Deploy MCP configuration
   # Always deploy MCP config (works even without API keys for some servers)
   deploy_mcp_config
-
-  # Set up Headroom proxy (optional; self-guards on prerequisites)
-  setup_headroom_proxy
 
   # Set up claude-mem (optional; self-guards on the claude CLI)
   setup_claude_mem
