@@ -12,7 +12,7 @@
 #   4. Runs <repo>/scripts/setup-mcp.sh (failure aborts the migration).
 #   5. Moves legacy ~/.mcp.json (file or symlink, not followed) to
 #      ~/.mcp.json.bak.<timestamp>.
-#   6. Creates ~/.claude/machine.json {"workerCap": 2, "scoutCap": 6} if missing.
+#   6. Creates ~/.claude/machine.json from claude/.claude/machine.template.json via scripts/setup-machine.sh if missing.
 #   7. Runs `claude doctor` and reports auto-update status (warning only).
 #
 # Idempotent: a second run finds nothing to uninstall, no ~/.mcp.json to move
@@ -31,6 +31,7 @@ source "$SCRIPT_DIR/utils.sh"
 readonly MEM_PLUGIN="claude-mem@thedotmack"
 readonly LEGACY_MCP_SERVERS="aws-core-mcp-server aws-cdk-mcp-server"
 readonly SETUP_MCP="$SCRIPT_DIR/setup-mcp.sh"
+readonly SETUP_MACHINE="$SCRIPT_DIR/setup-machine.sh"
 readonly LEGACY_MCP_JSON="$HOME/.mcp.json"
 readonly MACHINE_JSON="$HOME/.claude/machine.json"
 readonly WORKER_AGENT="$HOME/.claude/agents/worker.md"
@@ -140,11 +141,13 @@ create_machine_json() {
     return 0
   fi
   if $DRY_RUN; then
-    print_info "Would create $MACHINE_JSON with workerCap 2, scoutCap 6"
+    print_info "Would create $MACHINE_JSON from machine.template.json via setup-machine.sh"
     return 0
   fi
-  printf '{"workerCap": 2, "scoutCap": 6}\n' > "$MACHINE_JSON"
-  print_success "Created $MACHINE_JSON"
+  if ! bash "$SETUP_MACHINE"; then
+    print_error "setup-machine.sh failed"
+    exit 1
+  fi
 }
 
 report_auto_updates() {
