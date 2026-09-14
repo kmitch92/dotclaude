@@ -13,7 +13,8 @@
 #     "setup-mcp.sh failed", no "migration complete".
 #   - $HOME/.mcp.json (file or symlink, not followed) moved to
 #     $HOME/.mcp.json.bak.<timestamp>; absent -> no-op.
-#   - $HOME/.claude/machine.json created as {"workerCap":2,"scoutCap":6} when
+#   - $HOME/.claude/machine.json created as a byte-for-byte copy of
+#     <repo>/claude/.claude/machine.template.json via scripts/setup-machine.sh when
 #     missing; an existing file is left byte-for-byte unchanged.
 #   - claude doctor: Auto-updates line containing "disabled" -> prints
 #     "auto-updates disabled"; otherwise warns "auto-updates still enabled".
@@ -24,10 +25,11 @@
 #
 # Stubbed env: each case runs a COPY of scripts/ in a throwaway repo dir whose
 # scripts/setup-mcp.sh is replaced by a stub that logs each invocation and exits
-# with a controllable code. HOME is a throwaway dir. A stub `claude` (first on
-# PATH) logs each call as one JSON array line of its argv; `plugin list` and
-# `doctor` print fixture files; `mcp remove` exits with a controllable code. Any
-# PATH dir holding the real `claude` is stripped. The script is run from an
+# with a controllable code. The throwaway repo also gets a fixture template at
+# claude/.claude/machine.template.json. HOME is a throwaway dir. A stub `claude`
+# (first on PATH) logs each call as one JSON array line of its argv; `plugin list`
+# and `doctor` print fixture files; `mcp remove` exits with a controllable code.
+# Any PATH dir holding the real `claude` is stripped. The script is run from an
 # unrelated cwd so it must locate the repo from its own path.
 
 set -uo pipefail
@@ -226,6 +228,8 @@ setup_env() {
   PLUGIN_LIST_FILE="$WORK/$tag.plugin-list.txt"
   DOCTOR_FILE="$WORK/$tag.doctor.txt"
   cp -R "$SRC_REPO/scripts" "$REPO/"
+  mkdir -p "$REPO/claude/.claude"
+  printf '{"workerCap": 2, "scoutCap": 6}\n' > "$REPO/claude/.claude/machine.template.json"
   write_setup_mcp_stub 0
   set_plugin_list "$PLUGINS_WITH_MEM"
   set_doctor "$DOCTOR_DISABLED"
@@ -400,6 +404,21 @@ else
 fi
 assert_eq "$("$JQ_BIN" '.workerCap' "$HOME_DIR/.claude/machine.json" 2>/dev/null || true)" "2" "machine.json missing: workerCap is the number 2"
 assert_eq "$("$JQ_BIN" '.scoutCap' "$HOME_DIR/.claude/machine.json" 2>/dev/null || true)" "6" "machine.json missing: scoutCap is the number 6"
+
+echo "== missing machine.json is a byte-for-byte copy of the repo template =="
+setup_env
+printf '{"workerCap": 5, "scoutCap": 3, "note": "fixture"}\n' > "$REPO/claude/.claude/machine.template.json"
+run_migrate
+assert_eq "$RC" "0" "template copy: exits 0"
+assert_same_file "$HOME_DIR/.claude/machine.json" "$REPO/claude/.claude/machine.template.json" "template copy: machine.json is byte-identical to template"
+
+echo "== missing template fails the migration =="
+setup_env
+rm -f "$REPO/claude/.claude/machine.template.json"
+run_migrate
+assert_ne "$RC" "0" "missing template: exits non-zero"
+assert_absent "$HOME_DIR/.claude/machine.json" "missing template: machine.json absent"
+assert_not_contains "$OUTPUT" "migration complete" "missing template: does not report migration complete"
 
 echo "== doctor reports auto-updates disabled =="
 setup_env
