@@ -117,6 +117,8 @@ claude/.claude/*.log
 # Local settings and secrets
 .env.mcp
 claude/.claude/settings.local.json
+# Per-machine agent caps (machine-specific, never shared)
+claude/.claude/machine.json
 .env.mcp.local
 **/*.local
 

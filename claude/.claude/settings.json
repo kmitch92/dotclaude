@@ -76,6 +76,10 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/track-session.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/agent-cap.sh"
           }
         ]
       }
@@ -101,6 +105,26 @@
           {
             "type": "command",
             "command": "~/.claude/bin/claude-orient-reminder.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/agent-cap.sh"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "worker|scout",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/agent-cap.sh"
           }
         ]
       }
