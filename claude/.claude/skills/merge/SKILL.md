@@ -58,8 +58,10 @@ Detect the package manager from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.l
 
 ```bash
 <pkg-manager> run type-check || npx tsc --noEmit
-<pkg-manager> test
+<pkg-manager> test <test files covering files touched by the merge>
 ```
+
+Run only the test files covering files touched by the merge, once, never in watch mode. Never the full suite unless the user asks.
 
 If either fails, report the failures and ask whether to proceed or fix first.
 
@@ -79,4 +81,4 @@ State: conflicts resolved (auto vs. user-guided), files modified, type-check res
 2. Favor keeping both sides' functionality over deleting either.
 3. Read full file context, not just the markers.
 4. Config and schema conflicts always go to the user.
-5. Verify with type-check and tests before finishing.
+5. Verify with type-check and the tests covering merged files before finishing.
