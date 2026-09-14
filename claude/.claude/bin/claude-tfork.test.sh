@@ -10,8 +10,8 @@
 
 set -uo pipefail
 
-SCRIPT="/Users/kiel.mitchell/dotclaude/claude/.claude/bin/claude-tfork.sh"
-SCRATCH="/private/tmp/claude-488525469/-Users-kiel-mitchell/c1827a9e-5998-40f9-baf3-28720e662b71/scratchpad"
+SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/claude-tfork.sh"
+SCRATCH="${TMPDIR:-/tmp}"
 
 WORK="$(mktemp -d "${SCRATCH}/tfork-test.XXXXXX")"
 cleanup() { rm -rf "$WORK"; }

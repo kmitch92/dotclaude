@@ -62,10 +62,6 @@
 !claude/.claude/scripts/
 !claude/.claude/scripts/**
 
-# Claude commands - ALLOW ALL
-!claude/.claude/commands/
-!claude/.claude/commands/**
-
 # Claude bin (fork scripts) - ALLOW ALL
 !claude/.claude/bin/
 !claude/.claude/bin/**
@@ -77,14 +73,6 @@
 # Claude lessons (grok teach-back output) - ALLOW ALL
 !claude/.claude/lessons/
 !claude/.claude/lessons/**
-
-# =============================================================================
-# SERENA DIRECTORY - ALLOW CONFIG ONLY
-# =============================================================================
-# Tracks the deployable config (symlinked to ~/.serena by install.sh).
-# Serena's runtime drops (logs, memories, caches) stay ignored by default.
-!serena/
-!serena/serena_config.yml
 
 # =============================================================================
 # RUNTIME/GENERATED FILES - EXPLICIT IGNORES
@@ -121,6 +109,8 @@ claude/.claude/*.log
 # Local settings and secrets
 .env.mcp
 claude/.claude/settings.local.json
+# Per-machine agent caps (machine-specific, never shared)
+claude/.claude/machine.json
 .env.mcp.local
 **/*.local
 

@@ -13,7 +13,7 @@
 
 set -uo pipefail
 
-SCRIPT="/Users/kiel.mitchell/dotclaude/claude/.claude/hooks/track-session.sh"
+SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/track-session.sh"
 
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/track-session-test.XXXXXX")"
 cleanup() { rm -rf "$WORK"; }

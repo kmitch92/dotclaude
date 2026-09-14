@@ -153,7 +153,7 @@ install_nodejs() {
   print_warning "Node.js/npm not found"
   print_info "Node.js is needed for:"
   print_info "  - Claude Code installation"
-  print_info "  - MCP servers (context7, sequential-thinking, puppeteer, browser-tools, aws-cdk)"
+  print_info "  - MCP servers (context7, aws-cdk, aws-documentation, puppeteer)"
 
   if ! confirm "Install Node.js?"; then
     print_warning "Skipping Node.js installation"
@@ -224,37 +224,6 @@ install_gettext() {
   fi
 }
 
-install_bun() {
-  print_info "Checking for Bun..."
-
-  if command_exists bun; then
-    print_success "Bun already installed: $(bun --version)"
-    return 0
-  fi
-
-  print_warning "Bun not found"
-  print_info "Bun is needed for:"
-  print_info "  - claude-mem memory worker (runs on the bun runtime)"
-
-  if ! confirm "Install Bun?"; then
-    print_warning "Skipping Bun installation"
-    print_info "Note: claude-mem's memory worker will not run without Bun"
-    return 0
-  fi
-
-  # The official installer is cross-platform (macOS + Linux) and installs to
-  # ~/.bun/bin; bun is not packaged in apt/dnf/pacman repos, so use it for all OSes.
-  print_info "Installing Bun via official installer..."
-  if curl -fsSL https://bun.sh/install | bash; then
-    # Add bun to PATH for the remainder of the current install run.
-    export PATH="$HOME/.bun/bin:$PATH"
-    print_success "Bun installed"
-  else
-    print_warning "Bun installation failed"
-    print_info "Note: claude-mem's memory worker will not run without Bun"
-  fi
-}
-
 # =============================================================================
 # uv (Astral) Installation
 # =============================================================================
@@ -321,13 +290,6 @@ check_dependencies() {
     print_success "Node.js installed: $node_version"
   fi
 
-  # Check Bun (optional but recommended for claude-mem memory worker)
-  if ! command_exists bun; then
-    print_warning "Bun not installed (needed for claude-mem memory worker)"
-  else
-    print_success "Bun installed: $(bun --version)"
-  fi
-
   # Check uv (optional but recommended for the aws-cdk MCP server via uvx)
   if ! command_exists uv; then
     print_warning "uv not installed (needed for the aws-cdk MCP server via uvx)"
@@ -381,7 +343,6 @@ install_dependencies() {
   install_stow
   install_gettext
   install_nodejs
-  install_bun
   install_uv
 
   print_success "All dependencies installed"
@@ -415,19 +376,20 @@ backup_existing_config() {
     print_info "No existing ~/.claude directory found"
   fi
 
-  # Backup ~/.mcp.json
+  # Backup ~/.mcp.json (legacy: MCP servers are now registered at user scope
+  # via `claude mcp add-json --scope user`, not read from this file)
   if [[ -e "$MCP_CONFIG_FILE" ]]; then
     local backup_path
     backup_path=$(backup_file "$MCP_CONFIG_FILE")
-    print_success "Backed up ~/.mcp.json"
+    print_success "Backed up legacy ~/.mcp.json"
     # Remove original after backup
     if [[ ! -L "$MCP_CONFIG_FILE" ]]; then
       rm -f "$MCP_CONFIG_FILE"
-      print_info "Removed original ~/.mcp.json file"
+      print_info "Removed legacy ~/.mcp.json file (MCP servers are now registered at user scope)"
     fi
     backed_up=true
   else
-    print_info "No existing ~/.mcp.json file found"
+    print_info "No legacy ~/.mcp.json file found"
   fi
 
   if [[ "$backed_up" == "false" ]]; then
@@ -513,61 +475,6 @@ deploy_mcp_config() {
 }
 
 # =============================================================================
-# claude-mem Setup (optional)
-# =============================================================================
-
-setup_claude_mem() {
-  print_header "Setting Up claude-mem"
-
-  # Optional step: skip gracefully if the script is not present.
-  if [[ ! -f "$SCRIPT_DIR/scripts/install-claude-mem.sh" ]]; then
-    print_info "claude-mem setup script not found, skipping: scripts/install-claude-mem.sh"
-    return 0
-  fi
-
-  # Run claude-mem setup script (it is idempotent and self-guards on the claude CLI).
-  print_info "Running claude-mem setup script..."
-  bash "$SCRIPT_DIR/scripts/install-claude-mem.sh"
-
-  print_success "claude-mem setup complete"
-}
-
-# =============================================================================
-# Serena Config Deployment (optional)
-# =============================================================================
-
-setup_serena() {
-  print_header "Setting Up Serena Configuration"
-
-  local serena_dir="$HOME/.serena"
-  local serena_config="$serena_dir/serena_config.yml"
-  local config_source="$SCRIPT_DIR/serena/serena_config.yml"
-
-  if [[ ! -f "$config_source" ]]; then
-    print_info "Serena config source not found, skipping: serena/serena_config.yml"
-    return 0
-  fi
-
-  mkdir -p "$serena_dir"
-
-  # Back up and remove any existing non-symlink config
-  if [[ -f "$serena_config" ]] && [[ ! -L "$serena_config" ]]; then
-    local backup_path
-    backup_path=$(backup_file "$serena_config")
-    print_info "Backed up existing serena_config.yml"
-    rm -f "$serena_config"
-  fi
-
-  # Create or re-point symlink
-  if [[ -L "$serena_config" ]]; then
-    rm "$serena_config"
-  fi
-
-  ln -s "$config_source" "$serena_config"
-  print_success "Serena config symlinked: ~/.serena/serena_config.yml → $config_source"
-}
-
-# =============================================================================
 # claude-bare Launcher Deployment (optional)
 # =============================================================================
 
@@ -623,30 +530,17 @@ validate_installation() {
     validation_ok=false
   fi
 
-  # Check ~/.mcp.json exists
-  if [[ -f "$MCP_CONFIG_FILE" ]]; then
-    print_success "~/.mcp.json file exists"
-
-    # Verify no unsubstituted variables
-    if grep -q '${' "$MCP_CONFIG_FILE" 2>/dev/null; then
-      print_warning "~/.mcp.json contains unsubstituted variables"
-      print_info "Edit .env.mcp.local and run: scripts/setup-mcp.sh"
-    else
-      print_success "~/.mcp.json properly configured"
-    fi
-  else
-    print_warning "~/.mcp.json not found"
-    print_info "Run scripts/setup-mcp.sh to deploy MCP configuration"
-  fi
-
-  # Check Claude Code CLI
+  # Check the claude CLI is on PATH (MCP servers are registered at user scope
+  # via `claude mcp add-json`, not deployed to a config file)
   if command_exists claude; then
     local claude_version
     claude_version=$(claude --version 2>&1 | head -n1 || echo "unknown")
-    print_success "Claude Code CLI installed: $claude_version"
+    print_success "claude CLI installed: $claude_version"
+    print_info "Run 'claude mcp list' to see registered MCP servers"
   else
-    print_warning "Claude Code CLI not installed"
+    print_error "claude CLI not found on PATH"
     print_info "Install with: scripts/install-claude-code.sh"
+    validation_ok=false
   fi
 
   # Check GNU Stow
@@ -696,7 +590,7 @@ ${YELLOW}4. Start using Claude Code:${NC}
 
 ${BLUE}For more information:${NC}
    • Documentation: ~/.claude/docs/
-   • MCP servers: ~/.mcp.json
+   • MCP servers: user scope (claude mcp list)
    • Add API keys: .env.mcp.local
 
 ${GREEN}Happy coding with Claude!${NC}
@@ -724,7 +618,7 @@ ${YELLOW}3. Start using Claude Code:${NC}
 
 ${BLUE}Configuration:${NC}
    • Claude config: ~/.claude/
-   • MCP config: ~/.mcp.json
+   • MCP servers: user scope (claude mcp list)
    • API keys: $SCRIPT_DIR/.env.mcp.local
 
 ${GREEN}Happy coding with Claude!${NC}
@@ -786,12 +680,6 @@ main() {
   # Always deploy MCP config (works even without API keys for some servers)
   deploy_mcp_config
 
-  # Set up claude-mem (optional; self-guards on the claude CLI)
-  setup_claude_mem
-
-  # Set up Serena config
-  setup_serena
-
   # Set up claude-bare launcher (optional; self-guards on source presence)
   setup_claude_bare
 
@@ -799,7 +687,7 @@ main() {
   validate_installation
 
   # Show next steps
-  if [[ -f "$SCRIPT_DIR/.env.mcp.local" ]] && [[ -f "$MCP_CONFIG_FILE" ]]; then
+  if [[ -f "$SCRIPT_DIR/.env.mcp.local" ]]; then
     show_next_steps_configured
   else
     show_next_steps

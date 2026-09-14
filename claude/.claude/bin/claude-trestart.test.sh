@@ -14,8 +14,8 @@
 
 set -uo pipefail
 
-SCRIPT="/Users/kiel.mitchell/dotclaude/claude/.claude/bin/claude-trestart.sh"
-SCRATCH="/private/tmp/claude-488525469/-Users-kiel-mitchell-dotclaude/62bf746d-4b7e-41ae-b918-4aecc2d3d220/scratchpad"
+SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/claude-trestart.sh"
+SCRATCH="${TMPDIR:-/tmp}"
 
 WORK="$(mktemp -d "${SCRATCH}/trestart-test.XXXXXX")"
 cleanup() { rm -rf "$WORK"; }
