@@ -13,7 +13,8 @@
 
 set -uo pipefail
 
-SCRIPT="/Users/kiel.mitchell/dotclaude/claude/.claude/hooks/claude-cowork-notice.sh"
+TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT="$TEST_DIR/claude-cowork-notice.sh"
 
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/cowork-test.XXXXXX")"
 cleanup() { rm -rf "$WORK"; }
@@ -262,7 +263,7 @@ STUB_TMUX_PANES="%99 %50"
 write_record "$SESSIONS/tmux-99" "SID-SELF"  "$CWD" "main" "%99" "$NOW"
 write_record "$SESSIONS/tmux-50" "SID-OTHER" "$CWD" "main" "%50" "$NOW"
 run_hook "SID-SELF" "%99"
-TERSE_SCRIPT="/Users/kiel.mitchell/dotclaude/claude/.claude/bin/claude-terse-reminder.sh"
+TERSE_SCRIPT="$TEST_DIR/../bin/claude-terse-reminder.sh"
 TERSE_OUT="$(bash "$TERSE_SCRIPT" </dev/null 2>/dev/null || true)"
 COWORK_TOPKEYS="$(printf '%s' "$OUT" | jq -cS 'keys' 2>/dev/null || true)"
 TERSE_TOPKEYS="$(printf '%s' "$TERSE_OUT" | jq -cS 'keys' 2>/dev/null || true)"
