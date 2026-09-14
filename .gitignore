@@ -41,6 +41,7 @@
 !claude/.claude/CLAUDE.md
 !claude/.claude/CHANGELOG_TEMPLATE.md
 !claude/.claude/settings.json
+!claude/.claude/machine.template.json
 
 # Claude agents - ALLOW ALL
 !claude/.claude/agents/
@@ -81,6 +82,9 @@
 
 # Git worktrees (local development)
 /worktrees/
+
+# Orchestrate plan files (local only)
+/.plans/
 
 # Claude runtime directories
 claude/.claude/debug/
