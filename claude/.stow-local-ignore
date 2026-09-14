@@ -1,0 +1,69 @@
+# Stow ignore list for the `claude` package.
+#
+# A .stow-local-ignore file REPLACES stow's built-in defaults, so the standard
+# VCS/editor patterns are repeated here before our own additions.
+#
+# Why this file exists: Claude Code writes runtime state (session transcripts,
+# history, caches, daemon sockets) into ~/.claude. Those same paths accumulate
+# in this working tree, and stow is all-or-nothing -- a single conflict means
+# ZERO symlinks get created, silently leaving settings.json unlinked. Ignoring
+# runtime state here keeps `stow claude` limited to real configuration.
+#
+# Patterns are Perl regexes matched against each path segment's basename, so
+# they are anchored with ^...$ to avoid partial matches (e.g. bare `cache`
+# would otherwise also match `cache.md`).
+
+# --- stow defaults ---
+RCS
+.+,v
+CVS
+\.\#.+
+\.cvsignore
+\.svn
+_darcs
+\.hg
+\.git
+\.gitignore
+\.gitmodules
+.+~
+\#.*\#
+^/README.*
+^/LICENSE.*
+^/COPYING
+
+# --- Claude Code runtime state: directories ---
+^backups$
+^cache$
+^daemon$
+^daemon-auth-cooldown$
+^debug$
+^file-history$
+^ide$
+^jobs$
+^paste-cache$
+^plans$
+^plugins$
+^projects$
+^run$
+^session-env$
+^sessions$
+^shell-snapshots$
+^statsig$
+^tasks$
+^todos$
+
+# --- Claude Code runtime state: files ---
+^\.claude\.json$
+^\.last-cleanup$
+^\.last-update-result\.json$
+^\.oauth_refresh\.lock$
+^daemon-auth-status\.json$
+^daemon\.log$
+^history\.jsonl$
+^mcp-needs-auth-cache\.json$
+^policy-limits\.json$
+^remote-settings\.json$
+^stats-cache\.json$
+
+# Per-machine agent caps: generated from machine.template.json, never shared.
+^machine\.json$

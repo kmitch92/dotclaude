@@ -428,23 +428,52 @@ install_claude_config() {
   # Create symlinks with GNU Stow
   print_info "Creating symlinks with GNU Stow..."
 
-  if stow -v claude 2>&1 | grep -q "LINK"; then
-    print_success "Claude configuration symlinked: ~/.claude"
+  # Stow is all-or-nothing: one conflict means ZERO symlinks are created. It
+  # also prints its planned "LINK:" lines even when aborting, so we must check
+  # stow's own exit status -- never a grep over its output -- or a total failure
+  # reads as success and leaves settings.json unlinked.
+  # NOTE: `set -e` is active, and a failing command substitution in an
+  # assignment aborts the script before $? can be read. Wrapping the capture in
+  # `if` suspends errexit so the real exit status survives.
+  local stow_output stow_status
+  if stow_output=$(stow -v claude 2>&1); then
+    stow_status=0
   else
-    print_warning "No new symlinks created (may already exist)"
+    stow_status=$?
   fi
 
-  # Verify symlink
-  if [[ -L "$CLAUDE_CONFIG_DIR" ]]; then
-    local target
-    target=$(readlink "$CLAUDE_CONFIG_DIR")
-    print_success "Verified: ~/.claude → $target"
-  elif [[ -d "$CLAUDE_CONFIG_DIR" ]]; then
-    print_success "Configuration directory exists: ~/.claude"
-  else
-    print_error "Failed to create ~/.claude"
+  if [[ $stow_status -ne 0 ]]; then
+    print_error "GNU Stow failed (exit $stow_status) - no symlinks were created"
+    echo "$stow_output" >&2
+    print_info "Conflicting paths above are usually Claude Code runtime state."
+    print_info "Add them to claude/.stow-local-ignore, then re-run."
     exit 1
   fi
+
+  if grep -q '^LINK' <<<"$stow_output"; then
+    print_success "Claude configuration symlinked: ~/.claude"
+  else
+    print_info "No new symlinks needed (already up to date)"
+  fi
+
+  # Verify the config that actually matters resolves, rather than just checking
+  # that ~/.claude exists -- it always does, since Claude Code creates it.
+  local required=(settings.json CLAUDE.md agents skills hooks)
+  local missing=()
+  local item
+  for item in "${required[@]}"; do
+    [[ -e "$CLAUDE_CONFIG_DIR/$item" ]] || missing+=("$item")
+  done
+
+  if (( ${#missing[@]} > 0 )); then
+    print_error "Stow reported success but these are missing from ~/.claude:"
+    for item in "${missing[@]}"; do
+      echo "  - $item" >&2
+    done
+    exit 1
+  fi
+
+  print_success "Verified: ~/.claude/settings.json → $(readlink "$CLAUDE_CONFIG_DIR/settings.json")"
 }
 
 # =============================================================================

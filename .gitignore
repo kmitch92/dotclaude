@@ -37,6 +37,9 @@
 !claude/
 !claude/.claude/
 
+# Stow ignore list - keeps Claude Code runtime state out of the symlink set
+!claude/.stow-local-ignore
+
 # Claude root configuration files - ALLOW
 !claude/.claude/CLAUDE.md
 !claude/.claude/CHANGELOG_TEMPLATE.md
