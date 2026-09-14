@@ -62,10 +62,6 @@
 !claude/.claude/scripts/
 !claude/.claude/scripts/**
 
-# Claude commands - ALLOW ALL
-!claude/.claude/commands/
-!claude/.claude/commands/**
-
 # Claude bin (fork scripts) - ALLOW ALL
 !claude/.claude/bin/
 !claude/.claude/bin/**
