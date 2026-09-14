@@ -1,7 +1,7 @@
 ---
 name: grill-with-docs
-description: A relentless interview to sharpen a plan or design, which also creates docs (ADR's and glossary) as we go.
+description: Interview to stress-test a plan or design, capturing ADRs and glossary terms as it goes
 disable-model-invocation: true
 ---
 
-Run a `/grilling` session, using the `/domain-modeling` skill.
+Read `~/.claude/skills/grill/SKILL.md` and `~/.claude/skills/domain-modeling/SKILL.md`, and follow both together: run the interview from `grill`, and apply `domain-modeling`'s discipline throughout to capture glossary terms and ADRs as they resolve.
