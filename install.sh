@@ -696,7 +696,7 @@ main() {
   # Install Claude Code CLI
   install_claude_code
 
-  # Create ~/.claude/machine.json from template if missing
+  # Write ~/.claude/machine.json from template (replaces existing)
   deploy_machine_config
 
   # Deploy MCP configuration

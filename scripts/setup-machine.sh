@@ -3,8 +3,9 @@
 # =============================================================================
 # Machine Configuration
 # =============================================================================
-# Copies <repo>/claude/.claude/machine.template.json to ~/.claude/machine.json
-# when missing; never overwrites. Run by install.sh and migrate-lean-config.sh.
+# Copies <repo>/claude/.claude/machine.template.json to ~/.claude/machine.json,
+# replacing any existing file or symlink. To change caps: edit the template,
+# rerun this script. Run by install.sh and migrate-lean-config.sh.
 #
 # Usage: ./scripts/setup-machine.sh
 # =============================================================================
@@ -42,13 +43,14 @@ if [ ! -d "$HOME/.claude" ]; then
     exit 1
 fi
 
-# Leave unchanged if target exists as file or symlink (including dangling)
+# Remove first so a symlink (including dangling) is replaced, not followed
 if [ -e "$TARGET" ] || [ -L "$TARGET" ]; then
-    print_info "$TARGET exists - leaving unchanged"
-    exit 0
+    rm -f "$TARGET"
+    cp "$TEMPLATE" "$TARGET"
+    print_success "Updated $TARGET"
+else
+    cp "$TEMPLATE" "$TARGET"
+    print_success "Created $TARGET"
 fi
-
-cp "$TEMPLATE" "$TARGET"
-print_success "Created $TARGET"
-print_info "Edit it to change agent caps for this machine"
+print_info "To change agent caps: edit $TEMPLATE, then re-run setup-machine.sh"
 exit 0

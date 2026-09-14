@@ -6,8 +6,9 @@
 # target = $HOME/.claude/machine.json.
 # - target absent (neither file nor symlink): copy template byte-for-byte to target;
 #   exit 0; output contains "Created".
-# - target exists as file, or as symlink (including dangling): not modified, not
-#   replaced, symlink not followed; exit 0; output contains "leaving unchanged".
+# - target exists as file, or as symlink (including dangling): replaced by a
+#   regular file, byte-for-byte copy of the template; a symlink is not followed
+#   (its destination is untouched); exit 0; output contains "Updated".
 # - template missing: exit non-zero; output contains "machine.template.json not found";
 #   target not created.
 # - template not valid JSON (per jq): exit non-zero; output contains "not valid JSON";
@@ -16,8 +17,8 @@
 # - $HOME/.claude directory missing: exit non-zero; output contains
 #   "<HOME>/.claude not found" rendered with the real HOME path;
 #   nothing created.
-# - running twice: second run exits 0 and target is byte-identical to after the
-#   first run.
+# - template edited after a run: rerun exits 0 and target matches the new
+#   template.
 #
 # Stubbed env: each case runs a COPY of scripts/ in a throwaway repo dir with a
 # fixture template at <throwaway repo>/claude/.claude/machine.template.json.
@@ -132,9 +133,9 @@ assert_eq "1" "$([ -f "$SRC_REPO/claude/.claude/machine.template.json" ] && echo
 REAL_TEMPLATE_VALID="$([ -f "$SRC_REPO/claude/.claude/machine.template.json" ] && "$JQ_BIN" -e . <"$SRC_REPO/claude/.claude/machine.template.json" >/dev/null 2>&1 && echo 1 || echo 0)"
 assert_eq "$REAL_TEMPLATE_VALID" "1" "machine.template.json is valid JSON"
 REAL_WORKER_CAP="$("$JQ_BIN" -r '.workerCap' <"$SRC_REPO/claude/.claude/machine.template.json" 2>/dev/null || echo "")"
-assert_eq "$REAL_WORKER_CAP" "2" "machine.template.json has workerCap=2"
+assert_eq "$REAL_WORKER_CAP" "5" "machine.template.json has workerCap=5"
 REAL_SCOUT_CAP="$("$JQ_BIN" -r '.scoutCap' <"$SRC_REPO/claude/.claude/machine.template.json" 2>/dev/null || echo "")"
-assert_eq "$REAL_SCOUT_CAP" "6" "machine.template.json has scoutCap=6"
+assert_eq "$REAL_SCOUT_CAP" "10" "machine.template.json has scoutCap=10"
 
 echo "== target absent: copy template and exit 0 =="
 setup_env
@@ -153,53 +154,59 @@ else
   fail "copy: target is byte-identical to template (target does not exist)"
 fi
 
-echo "== target is an existing file: leave unchanged =="
+echo "== target is an existing file: overwrite with template =="
 setup_env
 write_template '{"workerCap": 5, "scoutCap": 3}
 '
-printf '{"original": "keep-me"}
-' > "$HOME_DIR/.claude/machine.json"
-cp "$HOME_DIR/.claude/machine.json" "$WORK/machine-before"
+printf '{"original": "old-values"}\n' > "$HOME_DIR/.claude/machine.json"
 run_setup
 assert_eq "$RC" "0" "file: exits 0"
-assert_contains "$OUTPUT" "leaving unchanged" "file: output contains leaving unchanged"
-if cmp -s "$HOME_DIR/.claude/machine.json" "$WORK/machine-before"; then
-  pass "file: target is byte-identical to before"
+assert_contains "$OUTPUT" "Updated" "file: output contains Updated"
+if cmp -s "$HOME_DIR/.claude/machine.json" "$REPO/claude/.claude/machine.template.json"; then
+  pass "file: target is byte-identical to template"
 else
-  fail "file: target is byte-identical to before (changed)"
+  fail "file: target is byte-identical to template (content differs)"
 fi
 
-echo "== target is a symlink: leave unchanged =="
+echo "== target is a symlink: replaced by a regular file, destination untouched =="
 setup_env
 write_template '{"workerCap": 5, "scoutCap": 3}
 '
 LINK_TARGET="$WORK/$(basename "$HOME_DIR").linked-machine.json"
-printf '{"linked": "keep-me"}
-' > "$LINK_TARGET"
+printf '{"linked": "keep-me"}\n' > "$LINK_TARGET"
 ln -s "$LINK_TARGET" "$HOME_DIR/.claude/machine.json"
 cp "$LINK_TARGET" "$WORK/link-target-before"
 run_setup
 assert_eq "$RC" "0" "symlink: exits 0"
-assert_contains "$OUTPUT" "leaving unchanged" "symlink: output contains leaving unchanged"
-assert_eq "$(readlink "$HOME_DIR/.claude/machine.json" 2>/dev/null || true)" "$LINK_TARGET" "symlink: symlink still points at its target"
-if cmp -s "$LINK_TARGET" "$WORK/link-target-before"; then
-  pass "symlink: symlink target content unchanged"
+assert_contains "$OUTPUT" "Updated" "symlink: output contains Updated"
+assert_eq "$([ -f "$HOME_DIR/.claude/machine.json" ] && [ ! -L "$HOME_DIR/.claude/machine.json" ] && echo 1 || echo 0)" "1" "symlink: target is now a regular file"
+if cmp -s "$HOME_DIR/.claude/machine.json" "$REPO/claude/.claude/machine.template.json"; then
+  pass "symlink: target is byte-identical to template"
 else
-  fail "symlink: symlink target content unchanged (changed)"
+  fail "symlink: target is byte-identical to template (content differs)"
+fi
+if cmp -s "$LINK_TARGET" "$WORK/link-target-before"; then
+  pass "symlink: old symlink destination content unchanged"
+else
+  fail "symlink: old symlink destination content unchanged (changed)"
 fi
 
-echo "== target is a dangling symlink: leave unchanged =="
+echo "== target is a dangling symlink: replaced by a regular file =="
 setup_env
 write_template '{"workerCap": 5, "scoutCap": 3}
 '
 DANGLING_TARGET="$WORK/nonexistent-target"
 ln -s "$DANGLING_TARGET" "$HOME_DIR/.claude/machine.json"
-LINK_READLINK_BEFORE="$(readlink "$HOME_DIR/.claude/machine.json")"
 run_setup
 assert_eq "$RC" "0" "dangling: exits 0"
-assert_contains "$OUTPUT" "leaving unchanged" "dangling: output contains leaving unchanged"
-assert_eq "$(readlink "$HOME_DIR/.claude/machine.json" 2>/dev/null || true)" "$LINK_READLINK_BEFORE" "dangling: symlink still points at same target"
-assert_absent "$DANGLING_TARGET" "dangling: symlink target still does not exist"
+assert_contains "$OUTPUT" "Updated" "dangling: output contains Updated"
+assert_eq "$([ -f "$HOME_DIR/.claude/machine.json" ] && [ ! -L "$HOME_DIR/.claude/machine.json" ] && echo 1 || echo 0)" "1" "dangling: target is now a regular file"
+if cmp -s "$HOME_DIR/.claude/machine.json" "$REPO/claude/.claude/machine.template.json"; then
+  pass "dangling: target is byte-identical to template"
+else
+  fail "dangling: target is byte-identical to template (content differs)"
+fi
+assert_absent "$DANGLING_TARGET" "dangling: old symlink destination still does not exist"
 
 echo "== template missing: exit non-zero, output message, do not create target =="
 setup_env
@@ -243,22 +250,21 @@ assert_contains "$OUTPUT" "$HOME_DIR/.claude not found" "missing-dir: output con
 assert_absent "$HOME_DIR/.claude/machine.json" "missing-dir: target not created"
 assert_absent "$HOME_DIR/.claude" "missing-dir: .claude directory not created"
 
-echo "== running twice: idempotent =="
+echo "== template edited after a run: rerun applies the new template =="
 setup_env
 write_template '{"workerCap": 5, "scoutCap": 3}
 '
 run_setup
-RC1=$RC
-OUTPUT1="$OUTPUT"
-assert_eq "$RC1" "0" "idempotent: first run exits 0"
-cp "$HOME_DIR/.claude/machine.json" "$WORK/machine-after-first"
+assert_eq "$RC" "0" "toggle: first run exits 0"
+write_template '{"workerCap": 1, "scoutCap": 9}
+'
 run_setup
-RC2=$RC
-assert_eq "$RC2" "0" "idempotent: second run exits 0"
-if cmp -s "$HOME_DIR/.claude/machine.json" "$WORK/machine-after-first"; then
-  pass "idempotent: target is byte-identical after second run"
+assert_eq "$RC" "0" "toggle: second run exits 0"
+assert_contains "$OUTPUT" "Updated" "toggle: second run output contains Updated"
+if cmp -s "$HOME_DIR/.claude/machine.json" "$REPO/claude/.claude/machine.template.json"; then
+  pass "toggle: target matches the edited template"
 else
-  fail "idempotent: target is byte-identical after second run (changed)"
+  fail "toggle: target matches the edited template (content differs)"
 fi
 
 echo "== script can be run from unrelated cwd =="
