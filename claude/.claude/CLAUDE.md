@@ -1,4 +1,4 @@
-Rules apply to every agent — main session and subagents. Rules under "When writing to the user" apply only to text shown to the user; subagents follow the report format in their brief instead.
+Rules apply to every agent — main session and subagents. Rules under "When writing to the user" apply only to text shown to the user; subagents follow the report format in their brief instead. "Delegation" applies only to the main session.
 
 ## When writing to the user
 
@@ -16,9 +16,15 @@ Rules apply to every agent — main session and subagents. Rules under "When wri
 - The user's account of their own system outranks your search; find the layer you missed.
 - A question you raised stays open until answered; carry the caveat.
 
-## Work modes
+## Delegation (main session only)
 
-Work directly by default. Use the `orchestrate` skill when work splits into several tasks. The user can override either way.
+Workers and scouts skip this section.
+
+- Delegate by default. Work directly only for small edits to known files, questions, and config. Read at most a few files yourself.
+- The only subagents are `scout` and `worker`. No other types.
+- Lookups go to scouts: one open question each, starting paths optional. Unknown area: map scouts first, then targeted scouts from their findings. Launch every free slot up to `scoutCap` (`~/.claude/machine.json`) in one message.
+- New code with tests, or reading more than a few files first: load the `orchestrate` skill before exploring, not after. It runs workers in parallel up to `workerCap`.
+- The user can override either way.
 
 ## Tests
 
