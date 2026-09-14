@@ -14,6 +14,8 @@ If a brief cannot be written without leaving a choice to the worker, gather more
 
 One module — one test file — per RED/GREEN pair. A Haiku worker should finish well inside its 30-turn cap. Split larger work into more modules rather than writing a bigger brief.
 
+Design modules to be independent — separate files, no shared edits — so they can run in parallel. Many small atomic briefs finish faster than a few large ones.
+
 ## Worker brief format
 
 Copy this block exactly:
@@ -43,11 +45,16 @@ Copy this block exactly:
 
 ```
 QUESTION    what to find
-SCOPE       absolute paths or globs to search
+SCOPE       optional: paths or globs to start from
 RETURN      output format, e.g. /abs/path:line — fact
 ```
 
-One question per scout. Give an explicit SCOPE — do not let a scout search the whole repo when a narrower path will do. RETURN must ask for `/abs/path:line — fact` form. If a question is broad, split it across several scouts and run them in parallel rather than writing one wide brief.
+Scout briefs are loose on purpose: the scout finds what you don't know yet. Open questions are fine ("where is auth checked?", "what calls `saveOrder`?", "map `src/billing/`: entry points, tests, conventions").
+
+- One question per scout. RETURN must ask for `/abs/path:line — fact` form.
+- SCOPE is a starting hint. Omit it when you don't know where to look.
+- When the area is unknown, send one or more map scouts first ("list the modules under X and what each does"), then fan out targeted scouts from their findings.
+- Prefer many narrow scouts in parallel over one wide scout.
 
 ## Model
 
