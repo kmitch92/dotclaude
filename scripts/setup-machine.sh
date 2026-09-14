@@ -19,41 +19,35 @@ source "$DOTFILES_DIR/scripts/utils.sh"
 
 print_header "Machine Configuration"
 
-# Template path
 TEMPLATE="$DOTFILES_DIR/claude/.claude/machine.template.json"
 TARGET="$HOME/.claude/machine.json"
 
-# Check 1: jq must exist
 if ! command_exists jq; then
-    print_error "jq not found"
+    print_error "jq not found on PATH - install jq, then re-run setup-machine.sh"
     exit 1
 fi
 
-# Check 2: template must exist
 if [ ! -f "$TEMPLATE" ]; then
-    print_error "machine.template.json not found"
+    print_error "machine.template.json not found: $TEMPLATE"
     exit 1
 fi
 
-# Check 3: template must be valid JSON
-if ! jq -e . <"$TEMPLATE" >/dev/null 2>&1; then
-    print_error "not valid JSON"
+if ! jq empty <"$TEMPLATE" >/dev/null 2>&1; then
+    print_error "$TEMPLATE is not valid JSON"
     exit 1
 fi
 
-# Check 4: $HOME/.claude must be a directory
 if [ ! -d "$HOME/.claude" ]; then
-    print_error "$HOME/.claude not found"
+    print_error "$HOME/.claude not found - stow claude/.claude first (run install.sh)"
     exit 1
 fi
 
-# Check if target already exists (file or symlink, including dangling)
+# Leave unchanged if target exists as file or symlink (including dangling)
 if [ -e "$TARGET" ] || [ -L "$TARGET" ]; then
-    print_info "leaving unchanged: $TARGET"
+    print_info "$TARGET exists - leaving unchanged"
     exit 0
 fi
 
-# Copy template to target
 cp "$TEMPLATE" "$TARGET"
 print_success "Created $TARGET"
 print_info "Edit it to change agent caps for this machine"
