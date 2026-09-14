@@ -10,6 +10,7 @@
 # - Dependency installation (Stow, Node.js, gettext)
 # - Configuration backup
 # - Symlink management with GNU Stow
+# - Per-machine config (machine.json) from template
 # - MCP server configuration deployment
 # - Validation and verification
 #
@@ -455,6 +456,23 @@ install_claude_code() {
 }
 
 # =============================================================================
+# Machine Configuration Deployment
+# =============================================================================
+
+deploy_machine_config() {
+  print_header "Deploying Machine Configuration"
+
+  # Check if setup-machine.sh exists
+  if [[ ! -f "$SCRIPT_DIR/scripts/setup-machine.sh" ]]; then
+    print_error "Machine setup script not found: scripts/setup-machine.sh"
+    exit 1
+  fi
+
+  # Run machine setup script
+  bash "$SCRIPT_DIR/scripts/setup-machine.sh"
+}
+
+# =============================================================================
 # MCP Configuration Deployment
 # =============================================================================
 
@@ -591,6 +609,7 @@ ${YELLOW}4. Start using Claude Code:${NC}
 ${BLUE}For more information:${NC}
    • Documentation: ~/.claude/docs/
    • MCP servers: user scope (claude mcp list)
+   • Agent caps: ~/.claude/machine.json
    • Add API keys: .env.mcp.local
 
 ${GREEN}Happy coding with Claude!${NC}
@@ -619,6 +638,7 @@ ${YELLOW}3. Start using Claude Code:${NC}
 ${BLUE}Configuration:${NC}
    • Claude config: ~/.claude/
    • MCP servers: user scope (claude mcp list)
+   • Agent caps: ~/.claude/machine.json
    • API keys: $SCRIPT_DIR/.env.mcp.local
 
 ${GREEN}Happy coding with Claude!${NC}
@@ -675,6 +695,9 @@ main() {
 
   # Install Claude Code CLI
   install_claude_code
+
+  # Create ~/.claude/machine.json from template if missing
+  deploy_machine_config
 
   # Deploy MCP configuration
   # Always deploy MCP config (works even without API keys for some servers)
