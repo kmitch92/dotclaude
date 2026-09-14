@@ -153,7 +153,7 @@ install_nodejs() {
   print_warning "Node.js/npm not found"
   print_info "Node.js is needed for:"
   print_info "  - Claude Code installation"
-  print_info "  - MCP servers (context7, sequential-thinking, puppeteer, browser-tools, aws-cdk)"
+  print_info "  - MCP servers (context7, aws-cdk, aws-documentation, puppeteer)"
 
   if ! confirm "Install Node.js?"; then
     print_warning "Skipping Node.js installation"
@@ -533,41 +533,6 @@ setup_claude_mem() {
 }
 
 # =============================================================================
-# Serena Config Deployment (optional)
-# =============================================================================
-
-setup_serena() {
-  print_header "Setting Up Serena Configuration"
-
-  local serena_dir="$HOME/.serena"
-  local serena_config="$serena_dir/serena_config.yml"
-  local config_source="$SCRIPT_DIR/serena/serena_config.yml"
-
-  if [[ ! -f "$config_source" ]]; then
-    print_info "Serena config source not found, skipping: serena/serena_config.yml"
-    return 0
-  fi
-
-  mkdir -p "$serena_dir"
-
-  # Back up and remove any existing non-symlink config
-  if [[ -f "$serena_config" ]] && [[ ! -L "$serena_config" ]]; then
-    local backup_path
-    backup_path=$(backup_file "$serena_config")
-    print_info "Backed up existing serena_config.yml"
-    rm -f "$serena_config"
-  fi
-
-  # Create or re-point symlink
-  if [[ -L "$serena_config" ]]; then
-    rm "$serena_config"
-  fi
-
-  ln -s "$config_source" "$serena_config"
-  print_success "Serena config symlinked: ~/.serena/serena_config.yml → $config_source"
-}
-
-# =============================================================================
 # claude-bare Launcher Deployment (optional)
 # =============================================================================
 
@@ -785,12 +750,6 @@ main() {
   # Deploy MCP configuration
   # Always deploy MCP config (works even without API keys for some servers)
   deploy_mcp_config
-
-  # Set up claude-mem (optional; self-guards on the claude CLI)
-  setup_claude_mem
-
-  # Set up Serena config
-  setup_serena
 
   # Set up claude-bare launcher (optional; self-guards on source presence)
   setup_claude_bare

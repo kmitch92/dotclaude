@@ -98,40 +98,16 @@ if echo "$servers" | grep -q "context7"; then
     echo ""
 fi
 
-# Serena Tools (Code Intelligence)
-if echo "$servers" | grep -q "serena"; then
-    print_success "Serena (Semantic Code Retrieval)"
-    echo "  • mcp__serena__[tools require runtime query]"
-    echo "  Note: Run 'claude /mcp' to see exact Serena tools"
-    echo ""
-fi
-
-# Sequential Thinking Tools
-if echo "$servers" | grep -q "sequential-thinking"; then
-    print_success "Sequential Thinking (Problem Solving)"
-    echo "  • mcp__sequential-thinking__sequentialthinking"
-    echo ""
-fi
-
-# Playwright Tools (Browser Automation)
-if echo "$servers" | grep -q "playwright"; then
-    print_success "Playwright (Browser Automation)"
-    echo "  • mcp__playwright__puppeteer_navigate"
-    echo "  • mcp__playwright__puppeteer_screenshot"
-    echo "  • mcp__playwright__puppeteer_click"
-    echo "  • mcp__playwright__puppeteer_fill"
-    echo "  • mcp__playwright__puppeteer_select"
-    echo "  • mcp__playwright__puppeteer_hover"
-    echo "  • mcp__playwright__puppeteer_evaluate"
-    echo "  Note: Run 'claude /mcp' to see all Playwright tools"
-    echo ""
-fi
-
-# AWS Core Tools
-if echo "$servers" | grep -q "aws-core"; then
-    print_success "AWS Core (Foundation AWS Operations)"
-    echo "  • mcp__aws-core__[tools require runtime query]"
-    echo "  Note: Run 'claude /mcp' to see exact AWS Core tools"
+# Puppeteer Tools (Browser Automation)
+if echo "$servers" | grep -q "puppeteer"; then
+    print_success "Puppeteer (Browser Automation)"
+    echo "  • mcp__puppeteer__puppeteer_navigate"
+    echo "  • mcp__puppeteer__puppeteer_screenshot"
+    echo "  • mcp__puppeteer__puppeteer_click"
+    echo "  • mcp__puppeteer__puppeteer_fill"
+    echo "  • mcp__puppeteer__puppeteer_select"
+    echo "  • mcp__puppeteer__puppeteer_hover"
+    echo "  • mcp__puppeteer__puppeteer_evaluate"
     echo ""
 fi
 
@@ -143,23 +119,13 @@ if echo "$servers" | grep -q "aws-cdk"; then
     echo ""
 fi
 
-# Browser Tools
-if echo "$servers" | grep -q "browser-tools"; then
-    print_success "Browser Tools (Browser Debugging & Auditing)"
-    echo "  • mcp__browser-tools__getConsoleLogs"
-    echo "  • mcp__browser-tools__getConsoleErrors"
-    echo "  • mcp__browser-tools__getNetworkErrors"
-    echo "  • mcp__browser-tools__getNetworkLogs"
-    echo "  • mcp__browser-tools__takeScreenshot"
-    echo "  • mcp__browser-tools__getSelectedElement"
-    echo "  • mcp__browser-tools__wipeLogs"
-    echo "  • mcp__browser-tools__runAccessibilityAudit"
-    echo "  • mcp__browser-tools__runPerformanceAudit"
-    echo "  • mcp__browser-tools__runSEOAudit"
-    echo "  • mcp__browser-tools__runNextJSAudit"
-    echo "  • mcp__browser-tools__runDebuggerMode"
-    echo "  • mcp__browser-tools__runAuditMode"
-    echo "  • mcp__browser-tools__runBestPracticesAudit"
+# AWS Documentation Tools
+if echo "$servers" | grep -q "aws-documentation"; then
+    print_success "AWS Documentation (Docs Search & Retrieval)"
+    echo "  • mcp__aws-documentation__search_documentation"
+    echo "  • mcp__aws-documentation__read_documentation"
+    echo "  • mcp__aws-documentation__read_sections"
+    echo "  • mcp__aws-documentation__recommend"
     echo ""
 fi
 
