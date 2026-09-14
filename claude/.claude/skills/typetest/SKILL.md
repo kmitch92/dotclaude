@@ -1,223 +1,54 @@
 ---
-description: Progressive sweep demanding improvement in TypeScript errors, test failures, and coverage until targets are met
-allowed-tools: Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Bash(tsc:*), Read, Write, Edit, MultiEdit, Grep, Glob
+name: typetest
+description: Sweep the project for TypeScript errors, test failures, and coverage gaps, then fix them incrementally until targets are met
+disable-model-invocation: true
+allowed-tools: Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Bash(tsc:*), Read, Write, Edit, Grep, Glob
 ---
 
-Perform a full sweep of the project for TypeScript errors and test failures, then incrementally fix all issues.
+Sweep the whole project for TypeScript errors and test failures, then fix them incrementally. This skill's purpose is a full-project sweep, so it deliberately runs the full type-check and full test suite — the one exception to "targeted tests only".
 
-## Phase 1: Discovery
+## 1. Discover
 
-### 1.1 Detect Package Manager
-Check for lock files in priority order:
-- `pnpm-lock.yaml` → use pnpm
-- `yarn.lock` → use yarn
-- `package-lock.json` → use npm
+Detect the package manager from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm).
 
-### 1.2 Run TypeScript Check
-Execute TypeScript compiler in check mode:
 ```bash
-# Try package.json script first
-<pkg-manager> run type-check || <pkg-manager> run typecheck || npx tsc --noEmit
-```
-
-Capture ALL TypeScript errors. Parse each error to extract:
-- File path
-- Line number
-- Error code (e.g., TS2345)
-- Error message
-
-### 1.3 Run Test Suite
-Detect and run test framework:
-```bash
-# Check package.json for test script, then run
+<pkg-manager> run type-check || npx tsc --noEmit
 <pkg-manager> test
-# Or detect framework: vitest, jest, etc.
-```
-
-Capture ALL test failures. Parse each failure to extract:
-- Test file path
-- Test name/description
-- Failure reason
-- Stack trace
-
-### 1.4 Run Coverage Check
-Execute test coverage measurement:
-```bash
 <pkg-manager> test -- --coverage
 ```
 
-Capture coverage metrics:
-- Statement coverage %
-- Branch coverage %
-- Function coverage %
-- Line coverage %
-- Uncovered files list
+Record every TypeScript error (file, line, code, message), every test failure (file, name, reason), and every coverage gap (uncovered files/functions). List TypeScript errors before test failures — fix order follows this priority.
 
-### 1.5 Build Task List
-Use TodoWrite to create task list of all issues:
-- Group TypeScript errors by file
-- Group test failures by file
-- List coverage gaps (uncovered files/functions)
-- TypeScript errors MUST be listed before test failures (priority order)
+## 2. Fix TypeScript errors first
 
-## Phase 2: TypeScript Fixes (PRIORITIZED FIRST)
+Type errors cause cascading test failures, so clear them before touching tests.
 
-TypeScript errors MUST be fixed before test failures. Type errors often cause cascading test failures.
+For each error: read the file, find the root cause, fix it — no `any`, use `unknown` with type guards; import real schemas, never redefine them; stay strict-mode compliant. Verify with `npx tsc --noEmit` after each fix, one at a time, not batched.
 
-For EACH TypeScript error:
+## 3. Fix test failures
 
-1. **Read affected file** - Understand full context around the error
+For each failure: read the test, diagnose (missing implementation, wrong expectation, type mismatch from step 2, stale mock, async bug), apply the smallest correct fix, verify by running that one test.
 
-2. **Analyze error** - Determine root cause:
-   - Type mismatch
-   - Missing type annotation
-   - Incorrect generic usage
-   - Null/undefined handling
-   - Schema validation issue
+## 4. Improve coverage
 
-3. **Apply fix following strict standards**:
-   - NO `any` types - use `unknown` with type guards instead
-   - Proper Zod schema usage where schemas exist
-   - Strict mode compliance (strictNullChecks, etc.)
-   - Branded types for IDs where appropriate (e.g., `UserId`, `OrderId`)
-   - Import real schemas from codebase - NEVER redefine schemas
-   - Use type narrowing and guards over assertions
+Target 100%. For each uncovered file/function, write tests for real behavior — happy path, edge cases, errors — then re-run coverage and confirm the number moved.
 
-4. **Verify fix**:
-   ```bash
-   npx tsc --noEmit
-   ```
-   Confirm the specific error is resolved
+## 5. Verify and report
 
-5. **Update task list** - Mark error as resolved
+Run the full type-check and full test suite again. Report, as deltas from the start of this run:
+- TypeScript errors: X → Y
+- Test failures: X → Y
+- Coverage: X% → Y%
 
-6. **Proceed to next error** - Do not batch fixes; verify each individually
+**Exit only if at least one metric improved** (or is already at target: 0 errors, 0 failures, 100% coverage). If nothing moved, the task isn't done — go back and fix something.
 
-## Phase 3: Test Fixes
+## Rules
 
-After ALL TypeScript errors are resolved, address test failures.
-
-For EACH failing test:
-
-1. **Read test file** - Understand what behavior is being tested
-
-2. **Diagnose failure cause**:
-   - **Missing implementation**: Production code needs to be written/updated
-   - **Incorrect expectation**: Test assertion needs updating
-   - **Type mismatch**: Phase 2 fixes changed signatures
-   - **Mock/stub issue**: Test doubles need updating
-   - **Async issue**: Missing await, timing problems
-
-3. **Apply appropriate fix**:
-   - For missing implementation: Write minimum code to pass (TDD green phase)
-   - For incorrect expectation: Update test to match correct behavior
-   - For type issues: Update types to align with implementation
-   - Maintain behavioral testing - test outcomes not implementation
-
-4. **Verify fix** - Run specific test:
-   ```bash
-   <pkg-manager> test -- --testPathPattern="<test-file>" --testNamePattern="<test-name>"
-   ```
-
-5. **Update task list** - Mark test as resolved
-
-6. **Proceed to next failure**
-
-## Phase 3.5: Coverage Improvement
-
-After ALL test failures are resolved, improve test coverage.
-
-### Target: 100% Coverage
-
-For EACH uncovered file/function:
-
-1. **Read uncovered code** - Understand what behavior needs testing
-
-2. **Write missing tests following TDD principles**:
-   - Test behavior through public APIs
-   - Cover happy paths and edge cases
-   - Test error conditions
-   - Use realistic test data
-
-3. **Verify coverage improvement**:
-   ```bash
-   <pkg-manager> test -- --coverage
-   ```
-   Confirm coverage increased for that file/function
-
-4. **Update task list** - Mark coverage gap as resolved
-
-5. **Proceed to next uncovered area**
-
-## Phase 4: Verification
-
-### 4.1 Full TypeScript Check
-```bash
-npx tsc --noEmit
-```
-Confirm: **0 errors**
-
-### 4.2 Full Test Suite
-```bash
-<pkg-manager> test
-```
-Confirm: **All tests pass**
-
-### 4.3 Measure Improvement
-
-Calculate deltas from start of execution:
-- TypeScript errors: start → end (must decrease or reach 0)
-- Test failures: start → end (must decrease or reach 0)
-- Coverage: start% → end% (must increase or reach 100%)
-
-### 4.4 Exit Criteria (MANDATORY)
-
-**You may ONLY finish if AT LEAST ONE of:**
-- TypeScript errors decreased (or already 0)
-- Test failures decreased (or already 0)
-- Coverage increased (or already 100%)
-
-**If all metrics unchanged**: You have NOT completed the task. Return to Phase 2/3/3.5 and make more progress.
-
-### 4.5 Report Summary
-Provide final status:
-- TypeScript errors: X → Y (delta: -N)
-- Test failures: X → Y (delta: -N)
-- Coverage: X% → Y% (delta: +N%)
-- Files modified
-- Next priority items for subsequent invocation (if not at 0/0/100%)
-
-## Critical Rules
-
-1. **Order matters**: TypeScript errors BEFORE test failures. Types affect tests.
-
-2. **Incremental verification**: After EACH fix, verify before proceeding. Do not batch.
-
-3. **Use TodoWrite**: Track all issues and progress. Update status after each fix.
-
-4. **No `any` types**: Use `unknown` + type guards. No exceptions.
-
-5. **Import real schemas**: Never redefine Zod schemas in fixes. Import from source.
-
-6. **Strict mode compliance**: All fixes must satisfy TypeScript strict mode.
-
-7. **If blocked on one issue**: Move to next item. You MUST make progress somewhere. Return to blocked items. If truly stuck on ALL items, fix something else - add a test, improve coverage, fix a different error.
-
-8. **Ask only when necessary**: If fix approach is unclear, try the most conservative fix first. Only ask user if you've attempted fixes and failed. Default to action, not questions.
-
-9. **Behavioral testing**: When fixing tests, ensure tests verify behavior through public APIs, not implementation details.
-
-10. **Minimum changes**: Apply smallest fix that resolves the issue. Do not refactor unrelated code.
-
-11. **NO "pre-existing" excuses**: Every error, every failure, every coverage gap is YOUR responsibility. "This existed before my task" is NEVER acceptable. Fix it.
-
-12. **Progressive improvement required**: Each invocation MUST improve at least one metric. If you cannot fix a specific issue, fix a different one.
-
-13. **Coverage is mandatory**: Uncovered code is a defect. Write tests for it.
-
-14. **Repeated invocation guarantee**: If this command is called enough times, the codebase WILL reach:
-    - 0 TypeScript compilation errors
-    - 0 failing tests
-    - 100% test coverage
-
-This is not aspirational. This is a guarantee the command must fulfill through progressive improvement.
+- TypeScript before tests, always.
+- Verify after every single fix, not in batches.
+- No `any` — `unknown` plus type guards.
+- Import schemas, never redefine them.
+- Blocked on one issue? Fix a different one — always make progress somewhere.
+- Smallest fix that resolves the issue; don't refactor unrelated code.
+- "Pre-existing" is not an excuse — fix it anyway.
+- Repeated runs must converge toward 0 errors, 0 failures, 100% coverage.
