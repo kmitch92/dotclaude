@@ -376,19 +376,20 @@ backup_existing_config() {
     print_info "No existing ~/.claude directory found"
   fi
 
-  # Backup ~/.mcp.json
+  # Backup ~/.mcp.json (legacy: MCP servers are now registered at user scope
+  # via `claude mcp add-json --scope user`, not read from this file)
   if [[ -e "$MCP_CONFIG_FILE" ]]; then
     local backup_path
     backup_path=$(backup_file "$MCP_CONFIG_FILE")
-    print_success "Backed up ~/.mcp.json"
+    print_success "Backed up legacy ~/.mcp.json"
     # Remove original after backup
     if [[ ! -L "$MCP_CONFIG_FILE" ]]; then
       rm -f "$MCP_CONFIG_FILE"
-      print_info "Removed original ~/.mcp.json file"
+      print_info "Removed legacy ~/.mcp.json file (MCP servers are now registered at user scope)"
     fi
     backed_up=true
   else
-    print_info "No existing ~/.mcp.json file found"
+    print_info "No legacy ~/.mcp.json file found"
   fi
 
   if [[ "$backed_up" == "false" ]]; then
@@ -529,30 +530,17 @@ validate_installation() {
     validation_ok=false
   fi
 
-  # Check ~/.mcp.json exists
-  if [[ -f "$MCP_CONFIG_FILE" ]]; then
-    print_success "~/.mcp.json file exists"
-
-    # Verify no unsubstituted variables
-    if grep -q '${' "$MCP_CONFIG_FILE" 2>/dev/null; then
-      print_warning "~/.mcp.json contains unsubstituted variables"
-      print_info "Edit .env.mcp.local and run: scripts/setup-mcp.sh"
-    else
-      print_success "~/.mcp.json properly configured"
-    fi
-  else
-    print_warning "~/.mcp.json not found"
-    print_info "Run scripts/setup-mcp.sh to deploy MCP configuration"
-  fi
-
-  # Check Claude Code CLI
+  # Check the claude CLI is on PATH (MCP servers are registered at user scope
+  # via `claude mcp add-json`, not deployed to a config file)
   if command_exists claude; then
     local claude_version
     claude_version=$(claude --version 2>&1 | head -n1 || echo "unknown")
-    print_success "Claude Code CLI installed: $claude_version"
+    print_success "claude CLI installed: $claude_version"
+    print_info "Run 'claude mcp list' to see registered MCP servers"
   else
-    print_warning "Claude Code CLI not installed"
+    print_error "claude CLI not found on PATH"
     print_info "Install with: scripts/install-claude-code.sh"
+    validation_ok=false
   fi
 
   # Check GNU Stow
@@ -602,7 +590,7 @@ ${YELLOW}4. Start using Claude Code:${NC}
 
 ${BLUE}For more information:${NC}
    • Documentation: ~/.claude/docs/
-   • MCP servers: ~/.mcp.json
+   • MCP servers: user scope (claude mcp list)
    • Add API keys: .env.mcp.local
 
 ${GREEN}Happy coding with Claude!${NC}
@@ -630,7 +618,7 @@ ${YELLOW}3. Start using Claude Code:${NC}
 
 ${BLUE}Configuration:${NC}
    • Claude config: ~/.claude/
-   • MCP config: ~/.mcp.json
+   • MCP servers: user scope (claude mcp list)
    • API keys: $SCRIPT_DIR/.env.mcp.local
 
 ${GREEN}Happy coding with Claude!${NC}
@@ -699,7 +687,7 @@ main() {
   validate_installation
 
   # Show next steps
-  if [[ -f "$SCRIPT_DIR/.env.mcp.local" ]] && [[ -f "$MCP_CONFIG_FILE" ]]; then
+  if [[ -f "$SCRIPT_DIR/.env.mcp.local" ]]; then
     show_next_steps_configured
   else
     show_next_steps
