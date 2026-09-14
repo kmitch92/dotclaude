@@ -1,20 +1,20 @@
 {
   "cleanupPeriodDays": 90,
   "env": {
-    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "24000",
     "BASH_DEFAULT_TIMEOUT_MS": "31000",
     "BASH_MAX_TIMEOUT_MS": "600000",
-    "BASH_MAX_OUTPUT_LENGTH": "50000",
     "DISABLE_COST_WARNINGS": "1",
-    "DISABLE_BUG_COMMAND": "1",
-    "DISABLE_ERROR_REPORTING": "1",
-    "DISABLE_TELEMETRY": "1",
     "MCP_TIMEOUT": "30000",
     "MCP_TOOL_TIMEOUT": "60000",
-    "MAX_MCP_OUTPUT_TOKENS": "40000",
-    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "1"
+    "MAX_MCP_OUTPUT_TOKENS": "5000",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_AUTOUPDATER": "1"
   },
-  "includeCoAuthoredBy": false,
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
   "permissions": {
     "allow": [
       "LS",
@@ -35,20 +35,13 @@
       "Bash(claude config --help)",
       "Bash(claude config get:*)",
       "Bash(claude config list:*)",
-      "Bash(./utils/configure-claude-code-settings.sh:*)",
-      "Bash(check-mcp-logs:*)",
       "Bash(python:*)",
       "Bash(git:*)",
       "Bash(gh:*)",
       "Bash(ls:*)",
       "Bash(tmux display-message \"[A-Za-z0-9\\s\\-_.:!?,]+\")",
-      "mcp__playwright",
       "Bash(npm install:*)",
-      "Bash(npx vitest:*)",
-      "Bash(head -5 vitest.config.* vite.config.*)",
-      "Bash(grep -r \"globals\" vitest.config.* vite.config.*)",
-      "Bash(node -e ':*)",
-      "Bash(node --test cli/test/deployment-contract-v2.test.js)"
+      "Bash(npx vitest:*)"
     ],
     "deny": [
       "Bash(git push:main)",
@@ -61,7 +54,7 @@
       "//"
     ]
   },
-  "model": "opus[1m]",
+  "model": "claude-opus-5[1m]",
   "enableAllProjectMcpServers": false,
   "hooks": {
     "SessionStart": [
@@ -126,7 +119,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "npx -y ccstatusline@latest",
+    "command": "npx -y ccstatusline@2.2.29",
     "padding": 0
   },
   "enabledPlugins": {
@@ -134,7 +127,11 @@
   },
   "forceLoginMethod": "claudeai",
   "outputStyle": "Terse",
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
+  "bashOutputMaxChars": 4000,
+  "autoCompactWindow": 400000,
+  "autoUpdatesChannel": "stable",
+  "disableBundledSkills": true,
   "voice": {
     "enabled": true,
     "mode": "hold"
