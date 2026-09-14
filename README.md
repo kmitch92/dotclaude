@@ -12,6 +12,8 @@ orchestration system.
 │   └── claude-bare          launcher, isolated config dir
 ├── scripts/
 │   ├── setup-mcp.sh          renders template, registers via claude CLI
+│   ├── setup-machine.sh      writes machine.json from template
+│   ├── migrate-lean-config.sh  one-off switch of an old machine
 │   ├── install-claude-code.sh
 │   ├── list-mcp-tools.sh
 │   ├── clean-ephemeral.sh
@@ -21,6 +23,7 @@ orchestration system.
 │   └── mcp.json.template      4 MCP servers
 └── claude/.claude/            stowed to ~/.claude
     ├── CLAUDE.md               rules, every agent
+    ├── machine.template.json   default agent caps, copied to machine.json
     ├── settings.json           model, hooks, output style, permissions
     ├── agents/                 worker.md, scout.md
     ├── skills/                 orchestrate + stack skills + commands
@@ -34,9 +37,9 @@ orchestration system.
 ## How it works
 
 ```
-main session (default: works directly)
+main session (small edits: works directly)
        |
-       | work splits into several tasks
+       | needs tests or exploration
        v
   orchestrate skill
        |
@@ -55,12 +58,10 @@ main session (default: works directly)
 
 ## Rules and output
 
-- `claude/.claude/CLAUDE.md` — core rules, at most 500 words, loaded by every
-  agent.
-- Output style Terse (`claude/.claude/output-styles/terse.md`) — main session
-  only.
-- Per-prompt reminder hook — `claude/.claude/bin/claude-terse-reminder.sh`.
-- Pre-question orientation hook — `claude/.claude/bin/claude-orient-reminder.sh`.
+- `CLAUDE.md` — core rules, max 500 words, loaded by every agent.
+- `output-styles/terse.md` — main session only.
+- `bin/claude-terse-reminder.sh` — style reminder on every prompt.
+- `bin/claude-orient-reminder.sh` — reminder before each question to the user.
 
 ## Skills
 
@@ -69,7 +70,7 @@ typed only (`/name`).
 
 - Stack skills, read by workers when a brief lists them: `aws-diagnostics`,
   `backend`, `docs`, `react`, `security-performance`, `shell`, `testing`,
-  `typescript`. `brief-writing` is read by `orchestrate` itself, not workers.
+  `typescript`. `brief-writing` is for `orchestrate` only.
 - User commands: `commit`, `cruft`, `docs-drift`, `domain-modeling`, `grill`,
   `grill-with-docs`, `grok`, `merge`, `review-pr`, `tfork`, `trestart`,
   `typetest`, `writing-great-skills`.
@@ -77,53 +78,61 @@ typed only (`/name`).
 ## Hooks
 
 - `agent-cap` — enforces per-machine parallel caps on worker/scout subagents.
-- `worker-git-block` — blocks git commit/push inside worker subagents.
+- `worker-git-block` — blocks git commit, push, rebase, reset --hard in workers.
 - `track-session` — records session id and cwd for `tfork`/`trestart`.
 - `cowork-notice` — warns when another session shares cwd and branch.
-- reminders — `claude-terse-reminder.sh`, `claude-orient-reminder.sh`.
 
 ## Per-machine config
 
-`claude/.claude/machine.json` (gitignored), defaults 2/6 when missing:
+`claude/.claude/machine.json` is gitignored, written from the tracked
+template `claude/.claude/machine.template.json` by `install.sh` (or
+`scripts/setup-machine.sh`):
 
 ```json
-{"workerCap": 2, "scoutCap": 6}
+{"workerCap": 5, "scoutCap": 10}
 ```
+
+Each run replaces `machine.json`. To change caps, edit the template and rerun
+`scripts/setup-machine.sh`. The agent-cap hook defaults to 2/6 if
+`machine.json` is missing.
 
 ## Install
 
-Prerequisites (checked by `install.sh`): GNU Stow and gettext (`envsubst`),
-required; Node.js/npm and `uv` (`uvx`), recommended, for the Claude Code CLI
-and MCP servers.
+Needs GNU Stow, gettext (`envsubst`), and `jq`. Recommended: Node.js/npm and `uv`
+for the Claude Code CLI and MCP servers.
 
 ```
 ./install.sh
 ```
 
-Backs up any existing `~/.claude` and `~/.mcp.json`, symlinks
-`claude/.claude/` to `~/.claude` with `stow`, installs the Claude Code CLI,
-deploys MCP config.
+Backs up `~/.claude` and `~/.mcp.json`, stows `claude/.claude/` to
+`~/.claude`, installs the CLI, writes `~/.claude/machine.json` from the
+template, registers MCP servers.
 
-`scripts/setup-mcp.sh` renders `mcp/mcp.json.template` with `envsubst`, runs
-`claude mcp remove --scope user <name>`, `claude mcp add-json --scope
-user <name> <json>` per server. Requires `claude` CLI; never writes
-`~/.mcp.json`. No `.env.mcp` file exists — create `.env.mcp.local` and set
-`CONTEXT7_API_KEY` (empty skips `context7`).
+`scripts/setup-mcp.sh` renders `mcp/mcp.json.template` with `envsubst` and
+registers each server with `claude mcp add-json --scope user`. Set
+`CONTEXT7_API_KEY` in `.env.mcp.local` (empty skips `context7`).
+
+## Migrate an old machine
+
+```
+./scripts/migrate-lean-config.sh --dry-run
+./scripts/migrate-lean-config.sh
+```
+
+Uninstalls the claude-mem plugin, removes legacy AWS MCP servers, runs
+`setup-mcp.sh`, moves `~/.mcp.json` to a `.bak` file, creates `machine.json`
+from the template via `setup-machine.sh`. Safe to rerun.
 
 ## Updates
 
-Models are pinned: `settings.json` sets the main session model;
-`claude/.claude/agents/worker.md` and `scout.md` pin their own. Claude Code
-stays on the stable channel, auto-update off (`autoUpdatesChannel: stable`,
-`DISABLE_AUTOUPDATER=1`) — run `claude update` deliberately.
+Models pinned in `settings.json`, `worker.md`, `scout.md`. Claude Code on the
+stable channel, auto-update off; run `claude update` by hand.
 
 ## Tests
 
-Shell tests, run individually with `bash <file>`:
-
-- `scripts/tests/*.test.sh` — install/setup scripts.
-- `claude/.claude/hooks/*.test.sh` — hooks.
-- `claude/.claude/bin/*.test.sh` — `tfork`, `trestart`.
+Run one file at a time with `bash <file>`: `scripts/tests/*.test.sh`,
+`claude/.claude/hooks/*.test.sh`, `claude/.claude/bin/*.test.sh`.
 
 ## Uninstall
 
@@ -131,4 +140,5 @@ Shell tests, run individually with `bash <file>`:
 stow -D claude
 ```
 
-Removes the `~/.claude` symlink.
+Removes the `~/.claude` symlink. MCP servers stay registered; remove each with
+`claude mcp remove --scope user <name>`.
