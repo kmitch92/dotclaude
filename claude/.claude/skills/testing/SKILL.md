@@ -43,6 +43,8 @@ disable-model-invocation: true
 
 - Run only the specific test file(s) covering the change being verified.
 - Never run the full suite unless explicitly asked — full runs are expensive and are the user's/CI's responsibility.
+- Bare runner commands (`npm test`, `pytest`, `go test ./...`) run everything — always pass the test file path or a filter.
+- Run once, never in watch mode (`vitest run`, not `vitest`; no `--watch`) — watch mode never exits.
 
 ## Self-correction
 
