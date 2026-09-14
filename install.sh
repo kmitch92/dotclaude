@@ -224,37 +224,6 @@ install_gettext() {
   fi
 }
 
-install_bun() {
-  print_info "Checking for Bun..."
-
-  if command_exists bun; then
-    print_success "Bun already installed: $(bun --version)"
-    return 0
-  fi
-
-  print_warning "Bun not found"
-  print_info "Bun is needed for:"
-  print_info "  - claude-mem memory worker (runs on the bun runtime)"
-
-  if ! confirm "Install Bun?"; then
-    print_warning "Skipping Bun installation"
-    print_info "Note: claude-mem's memory worker will not run without Bun"
-    return 0
-  fi
-
-  # The official installer is cross-platform (macOS + Linux) and installs to
-  # ~/.bun/bin; bun is not packaged in apt/dnf/pacman repos, so use it for all OSes.
-  print_info "Installing Bun via official installer..."
-  if curl -fsSL https://bun.sh/install | bash; then
-    # Add bun to PATH for the remainder of the current install run.
-    export PATH="$HOME/.bun/bin:$PATH"
-    print_success "Bun installed"
-  else
-    print_warning "Bun installation failed"
-    print_info "Note: claude-mem's memory worker will not run without Bun"
-  fi
-}
-
 # =============================================================================
 # uv (Astral) Installation
 # =============================================================================
@@ -321,13 +290,6 @@ check_dependencies() {
     print_success "Node.js installed: $node_version"
   fi
 
-  # Check Bun (optional but recommended for claude-mem memory worker)
-  if ! command_exists bun; then
-    print_warning "Bun not installed (needed for claude-mem memory worker)"
-  else
-    print_success "Bun installed: $(bun --version)"
-  fi
-
   # Check uv (optional but recommended for the aws-cdk MCP server via uvx)
   if ! command_exists uv; then
     print_warning "uv not installed (needed for the aws-cdk MCP server via uvx)"
@@ -381,7 +343,6 @@ install_dependencies() {
   install_stow
   install_gettext
   install_nodejs
-  install_bun
   install_uv
 
   print_success "All dependencies installed"
@@ -510,26 +471,6 @@ deploy_mcp_config() {
   bash "$SCRIPT_DIR/scripts/setup-mcp.sh"
 
   print_success "MCP configuration deployed"
-}
-
-# =============================================================================
-# claude-mem Setup (optional)
-# =============================================================================
-
-setup_claude_mem() {
-  print_header "Setting Up claude-mem"
-
-  # Optional step: skip gracefully if the script is not present.
-  if [[ ! -f "$SCRIPT_DIR/scripts/install-claude-mem.sh" ]]; then
-    print_info "claude-mem setup script not found, skipping: scripts/install-claude-mem.sh"
-    return 0
-  fi
-
-  # Run claude-mem setup script (it is idempotent and self-guards on the claude CLI).
-  print_info "Running claude-mem setup script..."
-  bash "$SCRIPT_DIR/scripts/install-claude-mem.sh"
-
-  print_success "claude-mem setup complete"
 }
 
 # =============================================================================
