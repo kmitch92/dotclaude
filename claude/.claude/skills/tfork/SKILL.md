@@ -1,5 +1,7 @@
 ---
+name: tfork
 description: Fork this session into an adjacent tmux pane (direction h/j/k/l, default right) or a new terminal window
+disable-model-invocation: true
 argument-hint: [h|j|k|l]
 allowed-tools: Bash(~/.claude/bin/claude-tfork.sh:*)
 ---

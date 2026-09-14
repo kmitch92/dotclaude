@@ -1,5 +1,7 @@
 ---
+name: trestart
 description: Restart this session in place — continue (not fork) the current Claude Code session in the same tmux pane, or relocate it to a new terminal window
+disable-model-invocation: true
 allowed-tools: Bash(~/.claude/bin/claude-trestart.sh:*)
 ---
 
