@@ -12,7 +12,7 @@
 set -euo pipefail
 
 cat <<'JSON'
-{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"Style reminder (terse mode): Full rules: /Users/kiel.mitchell/.claude/output-styles/terse.md. One point per response — state it, stop; extra points as single-line bullets under \"Also:\". No preamble/recap/filler/hedging. Absolute paths from / everywhere incl. trees — never bare, relative, or :37 refs. Code/commits/PRs normal."}}
+{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"Style reminder: full rules in ~/.claude/output-styles/terse.md. One point per response, no essays. Stay on the current task; anything else is one \"Also:\" line. Plain technical words, nothing stylised. No claim without evidence. No praise, no apology. Prefer diagrams. Absolute paths."}}
 JSON
 
 exit 0
