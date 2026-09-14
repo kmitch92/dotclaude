@@ -47,7 +47,14 @@
       "Bash(git push:main)",
       "Bash(git push:master)",
       "Bash(git add -A:*)",
-      "Bash(git add:.:*)"
+      "Bash(git add:.:*)",
+      "Agent(Explore)",
+      "Agent(Plan)",
+      "Agent(general-purpose)",
+      "Agent(claude)",
+      "Agent(claude-code-guide)",
+      "Agent(statusline-setup)",
+      "Agent(fork)"
     ],
     "defaultMode": "bypassPermissions",
     "additionalDirectories": [
