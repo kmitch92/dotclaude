@@ -136,10 +136,7 @@
     "padding": 0
   },
   "enabledPlugins": {
-    "dotfiles-commands@dotfiles-marketplace": true,
-    "frontend-design@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "claude-mem@thedotmack": true
+    "typescript-lsp@claude-plugins-official": true
   },
   "forceLoginMethod": "claudeai",
   "outputStyle": "Terse",
