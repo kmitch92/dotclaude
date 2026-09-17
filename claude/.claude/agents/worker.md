@@ -1,9 +1,9 @@
 ---
 name: worker
-description: Executes one task brief from the orchestrate skill. Follows the brief exactly and reports in the brief's format.
+description: Executes one task brief from the main session. Follows the brief exactly and reports in the brief's format.
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: claude-haiku-4-5-20251001
-maxTurns: 30
+maxTurns: 60
 hooks:
   PreToolUse:
     - matcher: "Bash"
@@ -16,7 +16,7 @@ hooks:
 
 You get one task brief. Follow it exactly. Make no design decisions.
 
-The brief's REPORT format replaces the user-facing rules in CLAUDE.md — your report goes to the orchestrator, not the user.
+The brief's REPORT format replaces the user-facing rules in CLAUDE.md — your report goes to the main session, not the user. CLAUDE.md's Delegation section belongs to the session that briefed you: never dispatch a subagent, never delegate your own task.
 
 ## Brief format
 
