@@ -26,7 +26,7 @@ orchestration system.
     ├── machine.template.json   default agent caps, copied to machine.json
     ├── settings.json           model, hooks, output style, permissions
     ├── agents/                 worker.md, scout.md
-    ├── skills/                 orchestrate + stack skills + commands
+    ├── skills/                 stack skills + user commands
     ├── hooks/                  agent-cap, worker-git-block, track-session, cowork-notice
     ├── bin/                    reminder hooks, tfork, trestart
     ├── output-styles/          terse.md
@@ -37,40 +37,33 @@ orchestration system.
 ## How it works
 
 ```
-main session (small edits: works directly)
+main session — plans, delegates, reviews, consolidates
        |
-       | needs tests or exploration
+       +--> scout   (read-only lookup, Haiku, one question each)
+       +--> worker  (one brief, one change, Haiku, RED then GREEN)
+       |            agent-cap hook refuses launches past the caps
        v
-  orchestrate skill
-       |
-       v
-  writes plan -> <project>/.plans/<name>.md
-       |
-       +--> scout   (read-only, Haiku, up to scoutCap)
-       +--> worker  (one brief, Haiku, up to workerCap)
+  reviews each report and diff
        |
        v
-  reviews report + diff
-       |
-       v
-  commits per stage (RED / GREEN / REFACTOR / CHORE)
+  user checks the diff in lazygit, runs /commit
 ```
 
 ## Rules and output
 
-- `CLAUDE.md` — core rules, max 500 words, loaded by every agent.
+- `CLAUDE.md` — core rules, max 650 words, loaded by every agent.
 - `output-styles/terse.md` — main session only.
 - `bin/claude-terse-reminder.sh` — style reminder on every prompt.
 - `bin/claude-orient-reminder.sh` — reminder before each question to the user.
 
 ## Skills
 
-`orchestrate` is the only skill Claude starts itself. Everything else is
-typed only (`/name`).
+Every skill is typed by hand (`/name`); none start themselves.
 
 - Stack skills, read by workers when a brief lists them: `aws-diagnostics`,
   `backend`, `docs`, `react`, `security-performance`, `shell`, `testing`,
-  `typescript`. `brief-writing` is for `orchestrate` only.
+  `typescript`. `brief-writing` holds the full brief formats, for when the
+  short form in `CLAUDE.md` is not enough.
 - User commands: `commit`, `cruft`, `docs-drift`, `domain-modeling`, `grill`,
   `grill-with-docs`, `grok`, `merge`, `review-pr`, `tfork`, `trestart`,
   `typetest`, `writing-great-skills`.

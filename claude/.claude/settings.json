@@ -63,6 +63,7 @@
   },
   "model": "claude-opus-5[1m]",
   "enableAllProjectMcpServers": false,
+  "disableBundledSkills": true,
   "hooks": {
     "SessionStart": [
       {
@@ -124,6 +125,7 @@
       }
     ]
   },
+  "bashOutputMaxChars": 4000,
   "statusLine": {
     "type": "command",
     "command": "npx -y ccstatusline@2.2.29",
@@ -135,15 +137,13 @@
   "forceLoginMethod": "claudeai",
   "outputStyle": "Terse",
   "effortLevel": "high",
-  "bashOutputMaxChars": 4000,
   "autoCompactWindow": 400000,
   "autoUpdatesChannel": "stable",
-  "disableBundledSkills": true,
+  "tui": "fullscreen",
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
-  "voiceEnabled": true,
-  "tui": "fullscreen"
+  "voiceEnabled": true
 }

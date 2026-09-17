@@ -1,18 +1,18 @@
 ---
 name: brief-writing
-description: Rules for writing worker and scout task briefs. Read by the orchestrate skill before writing briefs.
+description: Full formats and rules for worker and scout task briefs. Read before writing a brief that needs more than the short form in CLAUDE.md.
 disable-model-invocation: true
 ---
 
 ## Principle
 
-The orchestrator makes every decision; the worker writes the code. A brief specifies behaviour, signatures, inputs, outputs, edge cases, and the test cases to cover. Do not write the code in the brief. Do not over-specify test assertions line by line.
+The main session makes every decision; the worker writes the code. A brief specifies behaviour, signatures, inputs, outputs, edge cases, and the test cases to cover. Do not write the code in the brief. Do not over-specify test assertions line by line.
 
 If a brief cannot be written without leaving a choice to the worker, gather more information first. Do not dispatch an underspecified brief.
 
 ## Size
 
-One module — one test file — per RED/GREEN pair. A Haiku worker should finish well inside its 30-turn cap. Split larger work into more modules rather than writing a bigger brief.
+One module — one test file — per RED/GREEN pair. A worker should finish well inside its 60-turn cap. Split larger work into more modules rather than writing a bigger brief.
 
 Design modules to be independent — separate files, no shared edits — so they can run in parallel. Many small atomic briefs finish faster than a few large ones.
 

@@ -10,6 +10,7 @@
 # ROOT LEVEL FILES - ALLOW
 # =============================================================================
 !.gitignore
+!CLAUDE.md
 !README.md
 !install.sh
 
@@ -85,9 +86,6 @@
 
 # Git worktrees (local development)
 /worktrees/
-
-# Orchestrate plan files (local only)
-/.plans/
 
 # Claude runtime directories
 claude/.claude/debug/
