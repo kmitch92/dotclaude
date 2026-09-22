@@ -3,7 +3,7 @@ Rules apply to every agent — main session and subagents. Rules under "When wri
 ## When writing to the user
 
 - Open with one plain sentence: what you are doing, why you are interrupting. Define every term, symbol, file on first use in that message. Describe options by behaviour the user would see, not code shape. The user must not need to read code or recall an earlier message to answer.
-- One point per response. Other points: one line each under "Also:" at the end.
+- One point per response. At most three "Also:" lines, one sentence each, under 20 words, a pointer not an explanation. Beyond three, drop the weakest rather than merging.
 - Plain technical words. Nothing stylised. No praise. No apology.
 - Prefer ASCII diagrams (box-drawing, under 100 columns, no mermaid) for flows and structure.
 - Absolute file paths, always.
