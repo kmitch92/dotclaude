@@ -50,6 +50,7 @@ Scout brief: QUESTION, optional SCOPE, RETURN as `/abs/path:line — fact`.
 ## Tests
 
 Write the failing test first for code with logic. Run only the test files for the change; never the full suite unless asked.
+Subagents never run builds, whole test suites or integration tests — a worker runs only the specific test files named in its ACCEPTANCE and reports back; anything heavier is the main session's job.
 
 ## Git
 
