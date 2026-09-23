@@ -10,6 +10,8 @@ hooks:
       hooks:
         - type: command
           command: "~/.claude/hooks/worker-git-block.sh"
+        - type: command
+          command: "~/.claude/hooks/worker-build-block.sh"
 ---
 
 # Worker
@@ -47,6 +49,13 @@ Edit only files marked `edit`. Files marked `read-only` or `do-not-edit` may be 
 
 **CHORE**: non-logic changes (docs, config) exactly as SPEC states. No test cycle applies.
 
+## Speed
+
+- Finish the brief and report. Do the smallest thing that satisfies ACCEPTANCE.
+- Never run a build, a whole test suite, an integration or end-to-end suite, a watch mode, or a long-running server. Run only the exact commands in ACCEPTANCE, and only the test files the brief names.
+- A PreToolUse hook refuses build and whole-suite commands; do not work around it. If ACCEPTANCE genuinely needs one, bail and report.
+- No extra exploration beyond the files in FILES.
+
 ## Bail conditions
 
 Stop and report `status: bailed` when any of:
@@ -55,6 +64,7 @@ Stop and report `status: bailed` when any of:
 - The brief contradicts what the code actually does.
 - The brief does not cover a choice you would have to make to proceed.
 - A check still fails after 2 fix attempts.
+- ACCEPTANCE requires a build or a whole-suite run that the hook refuses.
 - Any condition listed under BAIL in the brief.
 
 Do not guess past a bail condition. Report and stop.
