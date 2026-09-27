@@ -130,10 +130,27 @@ expect_blocked "git push --force origin main" "push"
 expect_blocked "git rebase main" "rebase"
 expect_blocked "git reset --hard HEAD~1" "reset"
 
+echo "== working-tree-changing git operations are blocked =="
+expect_blocked "git checkout -- ." "checkout"
+expect_blocked "git checkout -- path/to/file" "checkout"
+expect_blocked "git checkout main" "checkout"
+expect_blocked "git checkout -b feature" "checkout"
+expect_blocked "git restore path/to/file" "restore"
+expect_blocked "git restore --staged --worktree path" "restore"
+expect_blocked "git clean -fd" "clean"
+expect_blocked "git clean -xfd ." "clean"
+expect_blocked "git stash" "stash"
+expect_blocked "git stash push -m wip" "stash"
+expect_blocked "git stash pop" "stash"
+
 echo "== blocked operations are caught behind -C and compound commands =="
 expect_blocked "git -C /tmp/x commit -m y" "commit"
 expect_blocked "cd /tmp/x && git commit -m y" "commit"
 expect_blocked "npm test; git push" "push"
+expect_blocked "git -C /tmp/x checkout -- ." "checkout"
+expect_blocked "cd /tmp/x && git restore ." "restore"
+expect_blocked "npm test; git clean -fd" "clean"
+expect_blocked "git -C /tmp/x stash pop" "stash"
 
 echo "== blocked operations are caught regardless of spacing and separators =="
 expect_blocked "git   commit -m x" "commit"
@@ -143,6 +160,12 @@ expect_blocked "true&&git commit -m x" "commit"
 expect_blocked "npm test;git push" "push"
 expect_blocked "false||git push" "push"
 expect_blocked $'npm test\ngit push' "push"
+expect_blocked "git   checkout -- ." "checkout"
+expect_blocked $'git\trestore ./*' "restore"
+expect_blocked "  git clean -fd" "clean"
+expect_blocked "true&&git stash" "stash"
+expect_blocked "npm run test;git stash push -m wip" "stash"
+expect_blocked "false||git stash pop" "stash"
 
 echo "== blocked operations are caught behind global options, full paths and trailing flags =="
 expect_blocked "git -c user.name=x commit -m y" "commit"
@@ -150,6 +173,11 @@ expect_blocked "/usr/bin/git push" "push"
 expect_blocked "git reset HEAD~1 --hard" "reset"
 expect_blocked 'git -C "/tmp/my dir" commit -m y' "commit"
 expect_blocked 'git -C /tmp/my\ dir commit -m y' "commit"
+expect_blocked "git -c user.email=x checkout -- ." "checkout"
+expect_blocked "/usr/bin/git restore path/to/file" "restore"
+expect_blocked 'git -C "/tmp/work" clean -fd' "clean"
+expect_blocked 'git -C /tmp/w\ dir stash' "stash"
+expect_blocked "git --git-dir=/tmp/.git stash pop" "stash"
 
 echo "== read-only, staging and non-git commands are allowed =="
 expect_allowed "git status"
@@ -165,12 +193,24 @@ expect_allowed 'git log --grep=commit\ fix'
 
 echo "== a git operation mentioned only inside a quoted string is allowed =="
 expect_allowed 'echo "git commit is blocked"'
+expect_allowed 'echo "git checkout -- . to discard changes"'
+expect_allowed 'echo "git restore is dangerous"'
+expect_allowed 'echo "git clean -fd removes untracked files"'
+expect_allowed 'echo "git stash push -m msg saves changes"'
 
 echo "== tools other than Bash are allowed =="
 run_hook "$(tool_json "Read" "git push --force origin main")"
 assert_eq "$RC" "0" "non-Bash: Read carrying a git push string exits 0"
 run_hook "$(tool_json "Write" "git commit -m x")"
 assert_eq "$RC" "0" "non-Bash: Write carrying a git commit string exits 0"
+run_hook "$(tool_json "Read" "git checkout -- .")"
+assert_eq "$RC" "0" "non-Bash: Read carrying a git checkout string exits 0"
+run_hook "$(tool_json "Write" "git restore path/to/file")"
+assert_eq "$RC" "0" "non-Bash: Write carrying a git restore string exits 0"
+run_hook "$(tool_json "Edit" "git clean -fd")"
+assert_eq "$RC" "0" "non-Bash: Edit carrying a git clean string exits 0"
+run_hook "$(tool_json "Read" "git stash pop")"
+assert_eq "$RC" "0" "non-Bash: Read carrying a git stash command exits 0"
 
 echo "== invalid stdin never blocks =="
 run_hook '{"tool_name": "Bash", "tool_input": {"command": "git push"'
