@@ -2,7 +2,7 @@
 name: scout
 description: Read-only code lookup — find where something lives, trace a flow, map a directory or its conventions. Returns path:line evidence, no decisions. Use for any codebase search; launch many in parallel, one question each.
 tools: Read, Grep, Glob
-model: claude-haiku-4-5-20251001
+model: claude-sonnet-5
 maxTurns: 60
 ---
 

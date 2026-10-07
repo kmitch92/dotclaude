@@ -2,7 +2,7 @@
 name: worker
 description: Executes one task brief from the main session. Follows the brief exactly and reports in the brief's format.
 tools: Read, Edit, Write, Bash, Grep, Glob
-model: claude-haiku-4-5-20251001
+model: claude-sonnet-5
 maxTurns: 60
 hooks:
   PreToolUse:

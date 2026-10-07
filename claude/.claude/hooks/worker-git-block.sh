@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # PreToolUse[Bash] hook for the worker agent: workers may not commit, push,
-# rebase or hard-reset. Blocks (exit 2, reason on stderr) when any simple command
-# in the Bash command line is `git [global opts] commit|push|rebase` or
+# rebase, hard-reset, checkout, restore, clean, or stash. Blocks (exit 2, reason
+# on stderr) when any simple command in the Bash command line is
+# `git [global opts] commit|push|rebase|checkout|restore|clean|stash` or
 # `git reset --hard` — including after cd, &&, ;, | and git -C <dir>.
 # Text inside quotes is ignored, so `echo "git commit"` is allowed.
 # Non-Bash tools and unparseable input exit 0: the hook never blocks on its own failure.
@@ -40,14 +41,14 @@ op=$(printf '%s\n' "$cmd" | awk -v sq="'" '
       for (j++; j <= nt && t[j] ~ /^-/; j++)
         if (t[j] ~ /^(-C|-c|--git-dir|--work-tree|--namespace|--config-env)$/) j++
       if (j > nt) continue
-      if (t[j] == "commit" || t[j] == "push" || t[j] == "rebase") { print t[j]; exit }
+      if (t[j] == "commit" || t[j] == "push" || t[j] == "rebase" || t[j] == "checkout" || t[j] == "restore" || t[j] == "clean" || t[j] == "stash") { print t[j]; exit }
       if (t[j] == "reset")
         for (m = j + 1; m <= nt; m++) if (t[m] == "--hard") { print "reset --hard"; exit }
     }
   }')
 
 if [ -n "$op" ]; then
-  echo "Blocked: workers may not run git $op. Leave changes uncommitted and report back to the orchestrator." >&2
+  echo "Blocked: workers may not run git $op. These operations destroy uncommitted work in the shared tree; leave your changes uncommitted and report back." >&2
   exit 2
 fi
 exit 0
