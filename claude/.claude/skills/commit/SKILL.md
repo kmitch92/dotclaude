@@ -2,23 +2,33 @@
 name: commit
 description: Create atomic, conventional-format commits from pending changes
 disable-model-invocation: true
-allowed-tools: Bash(git:*), Read, Grep, Glob
+allowed-tools: Bash(git:*), Bash(~/.claude/skills/commit/preflight.sh:*), Read, Grep, Glob
 ---
 
 Create atomic commits for all pending changes. One logical change per commit.
 
+## Pre-flight (mandatory)
+
+- Run `~/.claude/skills/commit/preflight.sh` first, before any planning or staging.
+- Exit 0: continue.
+- Exit 1: show the findings to the user verbatim in a code block. Every flagged path is excluded from every planned commit. For LARGE / JUNK / BINARY findings, propose the exact `.gitignore` line that would cover the path (do not add it unless the user agrees). For any SECRET finding: stop, do not create any commit, report, wait for the user.
+- Exit 2: stop and report.
+- Never work around the script (no `git add -f`, no renaming to dodge a pattern).
+- `--staged` checks only what is currently staged.
+
 ## Process
 
-1. Run `git status` and `git diff` (plus `git diff --staged`) to see everything pending.
-2. Group changes into logical commits. Draft the full plan before touching git:
+1. Run `~/.claude/skills/commit/preflight.sh` (see Pre-flight above).
+2. Run `git status` and `git diff` (plus `git diff --staged`) to see everything pending.
+3. Group changes into logical commits. Draft the full plan before touching git:
    ```
    1. feat(api): add user authentication endpoint
    2. test(api): add authentication tests
    3. docs(api): document authentication flow
    ```
-3. If the plan has more than 5 commits, show it and wait for confirmation before executing.
-4. Execute one commit at a time, in order.
-5. Report every commit SHA created and state they are local-only (not pushed).
+4. If the plan has more than 5 commits, show it and wait for confirmation before executing.
+5. Execute one commit at a time, in order. Before each commit, run `~/.claude/skills/commit/preflight.sh --staged`; if it exits non-zero, unstage the flagged paths with `git restore --staged <path>`, show the findings, and skip them.
+6. Report every commit SHA created and state they are local-only (not pushed).
 
 ## Atomicity
 
@@ -58,7 +68,7 @@ optional body — explains WHY, lines ≤72 chars
 
 ## Never commit
 
-Secrets, credentials, API keys, `node_modules`, `package-lock.json` (unless the dependency bump is intentional), generated files, logs, large binaries without justification.
+The pre-flight script is the enforced list: LARGE, JUNK, SECRET, and BINARY findings. It cannot judge two things: generated files you can regenerate, and a lockfile change that was not an intentional dependency bump — exclude those by hand.
 
 ## Never
 
@@ -68,3 +78,4 @@ Secrets, credentials, API keys, `node_modules`, `package-lock.json` (unless the 
 ## Report
 
 List every commit SHA created and state they are local-only.
+Pre-flight: <N> findings, <M> paths excluded (or: clean).
