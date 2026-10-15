@@ -27,7 +27,7 @@ orchestration system.
     ├── settings.json           model, hooks, output style, permissions
     ├── agents/                 worker.md, scout.md
     ├── skills/                 stack skills + user commands
-    ├── hooks/                  agent-cap, worker-git-block, track-session, cowork-notice
+    ├── hooks/                  agent-cap, worker-git-block, track-session, cowork-notice, pre-compact, session-start-compact, compact-timeline
     ├── bin/                    reminder hooks, tfork, trestart
     ├── output-styles/          terse.md
     ├── lessons/                grok output
