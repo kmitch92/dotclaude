@@ -77,6 +77,25 @@
             "command": "~/.claude/hooks/agent-cap.sh"
           }
         ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/session-start-compact.sh"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/pre-compact.sh"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
