@@ -6,6 +6,32 @@
 #   preflight.sh                 check every pending path (git status --porcelain)
 #   preflight.sh --staged        check only staged paths (git diff --cached)
 #   preflight.sh <path>...       check exactly those paths
+#
+# Findings print as KIND<TAB>detail<TAB>path. KIND is one of LARGE, JUNK,
+# SECRET, BINARY, SUSPECT.
+#
+# Exit codes: 0 = no findings, 1 = at least one LARGE/JUNK/SECRET/BINARY
+# finding, 3 = findings exist but all of them are SUSPECT, 2 = not a git repo.
+#
+# SUSPECT is a lower-confidence secret finding: a pattern that looks like a
+# credential but sits in a test/fixture path (see is_test_path), or whose
+# matched text is obviously synthetic (see is_synthetic), or (for
+# generic-assignment) a quoted value that survived the placeholder/entropy
+# filter. Drop rules for generic-assignment, in order: drop if the value
+# contains interpolation/template syntax ($ { } ( ) < > % or whitespace);
+# drop if it case-insensitively contains a placeholder word (example,
+# sample, dummy, fake, placeholder, changeme, replace, your, xxx, test,
+# secret, password, token, redacted, hunter2, foo, bar, lorem, abc, 123,
+# null, none, todo); drop if shorter than 12 chars or if fewer than two of
+# lowercase/uppercase/digit/other are present; otherwise SUSPECT in a test
+# path or if the matched text is synthetic, SECRET elsewhere. Drop rules
+# take precedence over the synthetic check: a dropped value produces no
+# line at all. The synthetic check applies to every secret rule: the
+# matched text (the full regex match; for private-key, the BEGIN header
+# line plus the next non-empty line) is synthetic if it contains a run of
+# 8+ consecutive ascending letters or digits, any single character
+# repeated 6+ times in a row, or one of fake/example/sample/dummy/
+# placeholder/test/redacted (case-insensitive).
 set -u
 
 usage_error() {
@@ -25,6 +51,7 @@ max_kb="${PREFLIGHT_MAX_KB:-512}"
 cd "$repo_top" || exit 2
 
 total_findings=0
+high_findings=0
 files_with_findings=0
 
 secret_names=(
@@ -54,6 +81,74 @@ secret_pats=(
 )
 
 secret_icase=(0 0 0 0 0 0 0 0 0 1)
+
+# is_synthetic TEXT -> true (exit 0) if TEXT is obviously a fabricated
+# secret value: a run of 8+ consecutive ascending letters or digits, any
+# single character repeated 6+ times in a row, or one of the placeholder
+# words fake/example/sample/dummy/placeholder/test/redacted (case
+# insensitive). No regex backreferences; ascending runs are matched against
+# a fixed list of 8-char windows so this stays bash 3.2 / BSD+GNU safe.
+is_synthetic() {
+    local text="$1"
+    local upper
+    upper="$(printf '%s' "$text" | tr '[:lower:]' '[:upper:]')"
+
+    local alpha="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    local alen=${#alpha}
+    local i=0
+    while (( i + 8 <= alen )); do
+        local window="${alpha:$i:8}"
+        case "$upper" in
+            *"$window"*) return 0 ;;
+        esac
+        i=$((i + 1))
+    done
+
+    local digits="0123456789"
+    local dlen=${#digits}
+    i=0
+    while (( i + 8 <= dlen )); do
+        local window="${digits:$i:8}"
+        case "$text" in
+            *"$window"*) return 0 ;;
+        esac
+        i=$((i + 1))
+    done
+
+    local tlen=${#text}
+    i=0
+    while (( i < tlen )); do
+        local c="${text:$i:1}"
+        local run="${c}${c}${c}${c}${c}${c}"
+        case "$text" in
+            *"$run"*) return 0 ;;
+        esac
+        i=$((i + 1))
+    done
+
+    if printf '%s' "$text" | grep -qiE 'fake|example|sample|dummy|placeholder|test|redacted'; then
+        return 0
+    fi
+
+    return 1
+}
+
+# is_test_path RELPATH -> true (exit 0) if the path looks like a test or
+# fixture path, false (exit 1) otherwise.
+is_test_path() {
+    local relpath="$1"
+    local test_pats=(
+        '\.(test|spec)\.[A-Za-z0-9]+$'
+        '(^|/)(tests?|__tests__|fixtures?|__fixtures__|__mocks__|testdata|spec)/'
+        '_test\.(go|py|rb|sh)$'
+        '(^|/)test_[^/]*\.py$'
+    )
+    local p
+    for p in "${test_pats[@]}"; do
+        [[ "$relpath" =~ $p ]] && return 0
+    done
+    return 1
+}
 
 # junk_reason_for PATH -> prints a reason string on stdout, or nothing.
 junk_reason_for() {
@@ -109,6 +204,7 @@ process_path() {
         local kb=$((size / 1024))
         printf 'LARGE\t%sKB\t%s\n' "$kb" "$relpath"
         file_findings=$((file_findings + 1))
+        high_findings=$((high_findings + 1))
         is_large=1
     fi
 
@@ -117,6 +213,7 @@ process_path() {
     if [[ -n "$junk_reason" ]]; then
         printf 'JUNK\t%s\t%s\n' "$junk_reason" "$relpath"
         file_findings=$((file_findings + 1))
+        high_findings=$((high_findings + 1))
     fi
 
     local is_text=1
@@ -133,12 +230,125 @@ process_path() {
             local icase="${secret_icase[$i]}"
             local grep_opts="-nE"
             (( icase == 1 )) && grep_opts="-nEi"
-            local lineno
-            lineno="$(grep $grep_opts -e "$pat" -- "$relpath" 2>/dev/null | head -n 1 | cut -d: -f1)"
-            if [[ -n "$lineno" ]]; then
-                printf 'SECRET\t%s:%s\t%s\n' "$name" "$lineno" "$relpath"
-                file_findings=$((file_findings + 1))
-            fi
+
+            case "$name" in
+                generic-assignment)
+                    local matches
+                    matches="$(grep $grep_opts -e "$pat" -- "$relpath" 2>/dev/null)"
+                    if [[ -n "$matches" ]]; then
+                        local surv_lineno=""
+                        local surv_matched=""
+                        while IFS= read -r m; do
+                            [[ -n "$m" ]] || continue
+                            local mlineno="${m%%:*}"
+                            local mcontent="${m#*:}"
+                            local grep_o_opts="-oE"
+                            (( icase == 1 )) && grep_o_opts="-oEi"
+                            local matched_full
+                            matched_full="$(printf '%s\n' "$mcontent" | grep $grep_o_opts -e "$pat" | head -n 1)"
+                            local value
+                            value="$(printf '%s' "$matched_full" | sed -E "s/^[^\"']*[\"']//; s/[\"']\$//")"
+
+                            if printf '%s' "$value" | grep -qE '[$(){}<>%[:space:]]'; then
+                                continue
+                            fi
+                            if printf '%s' "$value" | grep -qiE 'example|sample|dummy|fake|placeholder|changeme|replace|your|xxx|test|secret|password|token|redacted|hunter2|foo|bar|lorem|abc|123|null|none|todo'; then
+                                continue
+                            fi
+                            local vlen=${#value}
+                            if (( vlen < 12 )); then
+                                continue
+                            fi
+                            local classes=0
+                            printf '%s' "$value" | grep -q '[a-z]' && classes=$((classes + 1))
+                            printf '%s' "$value" | grep -q '[A-Z]' && classes=$((classes + 1))
+                            printf '%s' "$value" | grep -q '[0-9]' && classes=$((classes + 1))
+                            printf '%s' "$value" | grep -qE '[^a-zA-Z0-9]' && classes=$((classes + 1))
+                            if (( classes < 2 )); then
+                                continue
+                            fi
+
+                            surv_lineno="$mlineno"
+                            surv_matched="$matched_full"
+                            break
+                        done < <(printf '%s\n' "$matches")
+
+                        if [[ -n "$surv_lineno" ]]; then
+                            local kind="SECRET"
+                            is_test_path "$relpath" && kind="SUSPECT"
+                            is_synthetic "$surv_matched" && kind="SUSPECT"
+                            printf '%s\t%s:%s\t%s\n' "$kind" "$name" "$surv_lineno" "$relpath"
+                            file_findings=$((file_findings + 1))
+                            [[ "$kind" == "SECRET" ]] && high_findings=$((high_findings + 1))
+                        fi
+                    fi
+                    ;;
+                jwt)
+                    local lineno_content
+                    lineno_content="$(grep $grep_opts -e "$pat" -- "$relpath" 2>/dev/null | head -n 1)"
+                    if [[ -n "$lineno_content" ]]; then
+                        local lineno="${lineno_content%%:*}"
+                        local lcontent="${lineno_content#*:}"
+                        local grep_o_opts="-oE"
+                        (( icase == 1 )) && grep_o_opts="-oEi"
+                        local matched_text
+                        matched_text="$(printf '%s\n' "$lcontent" | grep $grep_o_opts -e "$pat" | head -n 1)"
+                        local kind="SECRET"
+                        is_test_path "$relpath" && kind="SUSPECT"
+                        is_synthetic "$matched_text" && kind="SUSPECT"
+                        printf '%s\t%s:%s\t%s\n' "$kind" "$name" "$lineno" "$relpath"
+                        file_findings=$((file_findings + 1))
+                        [[ "$kind" == "SECRET" ]] && high_findings=$((high_findings + 1))
+                    fi
+                    ;;
+                private-key)
+                    local lineno
+                    lineno="$(grep $grep_opts -e "$pat" -- "$relpath" 2>/dev/null | head -n 1 | cut -d: -f1)"
+                    if [[ -n "$lineno" ]]; then
+                        local header_line next_line nl total_lines
+                        header_line="$(sed -n "${lineno}p" "$relpath" 2>/dev/null)"
+                        next_line=""
+                        total_lines="$(wc -l <"$relpath" 2>/dev/null)"
+                        total_lines="${total_lines//[[:space:]]/}"
+                        [[ -n "$total_lines" ]] || total_lines=0
+                        nl=$((lineno + 1))
+                        while (( nl <= total_lines )); do
+                            local candidate
+                            candidate="$(sed -n "${nl}p" "$relpath" 2>/dev/null)"
+                            if [[ -n "$candidate" ]]; then
+                                next_line="$candidate"
+                                break
+                            fi
+                            nl=$((nl + 1))
+                        done
+                        local matched_text="${header_line}"$'\n'"${next_line}"
+                        local kind="SECRET"
+                        is_test_path "$relpath" && kind="SUSPECT"
+                        is_synthetic "$matched_text" && kind="SUSPECT"
+                        printf '%s\t%s:%s\t%s\n' "$kind" "$name" "$lineno" "$relpath"
+                        file_findings=$((file_findings + 1))
+                        [[ "$kind" == "SECRET" ]] && high_findings=$((high_findings + 1))
+                    fi
+                    ;;
+                *)
+                    local lineno_content
+                    lineno_content="$(grep $grep_opts -e "$pat" -- "$relpath" 2>/dev/null | head -n 1)"
+                    if [[ -n "$lineno_content" ]]; then
+                        local lineno="${lineno_content%%:*}"
+                        local lcontent="${lineno_content#*:}"
+                        local grep_o_opts="-oE"
+                        (( icase == 1 )) && grep_o_opts="-oEi"
+                        local matched_text
+                        matched_text="$(printf '%s\n' "$lcontent" | grep $grep_o_opts -e "$pat" | head -n 1)"
+                        local kind="SECRET"
+                        is_synthetic "$matched_text" && kind="SUSPECT"
+                        printf '%s\t%s:%s\t%s\n' "$kind" "$name" "$lineno" "$relpath"
+                        file_findings=$((file_findings + 1))
+                        [[ "$kind" == "SECRET" ]] && high_findings=$((high_findings + 1))
+                    fi
+                    ;;
+            esac
+
             i=$((i + 1))
         done
     fi
@@ -146,6 +356,7 @@ process_path() {
     if (( is_text == 0 )) && (( is_large == 0 )) && (( size > 0 )); then
         printf 'BINARY\tnon-text\t%s\n' "$relpath"
         file_findings=$((file_findings + 1))
+        high_findings=$((high_findings + 1))
     fi
 
     if (( file_findings > 0 )); then
@@ -214,7 +425,11 @@ fi
 
 if (( total_findings > 0 )); then
     echo "preflight: $total_findings finding(s) in $files_with_findings file(s)" >&2
-    exit 1
+    if (( high_findings > 0 )); then
+        exit 1
+    else
+        exit 3
+    fi
 else
     echo "preflight: clean" >&2
     exit 0
