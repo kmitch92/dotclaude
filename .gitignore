@@ -74,6 +74,8 @@
 # Claude hooks - ALLOW ALL
 !claude/.claude/hooks/
 !claude/.claude/hooks/**
+!claude/.claude/ste/
+!claude/.claude/ste/**
 
 # Claude lessons (grok teach-back output) - ALLOW ALL
 !claude/.claude/lessons/
@@ -88,6 +90,13 @@
 /worktrees/
 
 # Claude runtime directories
+# STE dictionary extracted from the copyrighted ASD-STE100 PDF: never committed, regenerate with ste/extract-dict.py
+claude/.claude/ste/dict/
+claude/.claude/ste/dict/**
+# STE runtime state written by the hooks
+claude/.claude/ste/lint.log.jsonl
+claude/.claude/ste/state/
+claude/.claude/ste/state/**
 claude/.claude/debug/
 claude/.claude/debug/**
 claude/.claude/history.jsonl
