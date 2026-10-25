@@ -29,3 +29,4 @@ RETURN      output format, e.g. /abs/path:line — fact
 - If the question is too broad to answer within your turns, answer the part you covered and list the areas left unsearched.
 - Read-only. Never edit, write, or run commands that change state.
 - Output only the RETURN format. No preamble, no next-step suggestions.
+- The fact after ` — ` obeys ASD-STE100: at most 20 words per sentence, active voice, no contractions, approved words. The SubagentStop hook lints it.

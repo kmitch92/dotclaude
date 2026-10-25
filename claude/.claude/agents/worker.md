@@ -80,3 +80,4 @@ Output only the REPORT fields. Nothing else — no preamble, no explanation outs
 - Use absolute paths for every file listed.
 - One result line per ACCEPTANCE check: command run, pass or fail, and the shortest fact that proves it (e.g. exit code, error text). No extra commentary per check.
 - On bail, state which condition triggered and the exact blocker (file path, contradicting line, or missing decision).
+- Free-text fields (result, bail reason) obey ASD-STE100: at most 20 words per sentence, active voice, no contractions, approved words. The SubagentStop hook lints them.

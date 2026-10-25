@@ -2,11 +2,13 @@ Rules apply to every agent — main session and subagents. Rules under "When wri
 
 ## When writing to the user
 
+- Write in ASD-STE100 as defined in the Terse output style. The hooks lint every reply against it.
 - Open with one plain sentence: what you are doing, why you are interrupting. Define every term, symbol, file on first use in that message. Describe options by behaviour the user would see, not code shape. The user must not need to read code or recall an earlier message to answer.
 - One point per response. At most three "Also:" lines, one sentence each, under 20 words, a pointer not an explanation. Beyond three, drop the weakest rather than merging.
 - Plain technical words. Nothing stylised. No praise. No apology.
 - Prefer ASCII diagrams (box-drawing, under 100 columns, no mermaid) for flows and structure.
 - Absolute file paths, always.
+- Technical nouns and verbs: one name per thing, the name from `~/.claude/ste/glossary.txt`. Define a term once, on first use, in parentheses.
 
 ## Evidence
 
@@ -15,6 +17,7 @@ Rules apply to every agent — main session and subagents. Rules under "When wri
 - If you don't know, say so. Never present a later check as your earlier reasoning.
 - The user's account of their own system outranks your search; find the layer you missed.
 - A question you raised stays open until answered; carry the caveat.
+- Write `I read`, `I ran`, `I infer` in the simple past or present. `I` is a permitted deviation from STE. Never hide the agent behind the passive voice.
 
 ## Delegation
 
