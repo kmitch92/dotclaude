@@ -1,0 +1,24 @@
+id	ste_rule	class	scope	message	fix
+SENTENCE-LENGTH	5.1/6.3	block	all	Sentence too long	20 words for an instruction, 25 otherwise. Split it.
+CONTRACTION	4.2	block	all	Contraction	Write the words in full: do not, it is.
+COMPLEX-VERB	3.2/3.4	block	all	Perfect or progressive verb form	Use simple past, simple present or simple future: changed, changes, will change.
+USING	3.5	block	all	using	Write use (verb) or with (preposition).
+PASSIVE-BY	3.6	block	all	Passive voice with by	Active voice: name the agent as the subject.
+UNAPPROVED	1.1/9.3	block	all	Unapproved word with a dictionary alternative	Use the alternative shown.
+BANNED	1.10	block	all	Banned register word	Say what property you mean, or delete the word.
+SEMICOLON	8.1	block	all	Semicolon	Full stop.
+LATIN	GR-6	block	all	Latin abbreviation	for example, that is, and so on, compared with, through.
+PASSIVE	3.6	warn	all	Passive voice without by	State or action? If someone acts, name them.
+ING-FORM	3.5	warn	all	-ing form after a preposition or at sentence start	when you run, not when running.
+NOUN-CLUSTER	2.1	warn	all	Four or more nouns in a row	Split with of/for or hyphenate.
+ONE-INSTRUCTION	5.2	warn	all	Two instructions in one sentence	One step per sentence.
+IMPERATIVE	5.3	warn	all	Procedure step not in the imperative	Start the step with the verb.
+PARAGRAPH-LENGTH	6.5/6.6	warn	main	More than six sentences in a paragraph	Split the paragraph by topic.
+THIS-PRONOUN	GR-3/4	warn	all	Sentence starts with This/It/That + verb	Write this + noun.
+POSSESSIVE	GR-8	warn	all	Possessive 's	Write of: the output of the hook.
+SAFETY	7.2	warn	all	WARNING/CAUTION not followed by a command or condition	Start with the command or condition.
+UNKNOWN	1.1	warn	all	Word not in dictionary or glossary	Add to glossary.txt or replace.
+POS	1.2	warn	all	Approved word used as the wrong part of speech	check, test, damage, need, fit, insert are nouns in STE.
+PROSE-WORDS	terse	warn	main	Prose over the budget	One point per response: state it, stop.
+ALSO-COUNT	terse	warn	main	More than three Also: lines	At most three.
+ALSO-LENGTH	terse	warn	main	Also: line over 20 words	One sentence under 20 words, a pointer not an explanation.

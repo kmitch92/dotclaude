@@ -1,0 +1,77 @@
+# LLM register words absent from the STE dictionary, so UNAPPROVED cannot catch them. Words the dictionary already maps (ensure, utilize, however, should, may, ...) are NOT listed here.
+might	state the fact, or write I recommend
+could	state the fact, or write I recommend
+perhaps	state the fact, or write I recommend
+probably	state the fact, or write I recommend
+likely	state the fact, or write I recommend
+typically
+simple	delete
+simply	delete
+currently	now
+actually
+really
+quite
+basically
+essentially
+seem
+seems
+seemed
+offer
+involve
+finally
+rather
+additionally
+overall
+robust
+comprehensive
+seamless
+seamlessly
+leverage
+straightforward
+crucial
+streamline
+enhance
+delve
+honestly
+genuinely
+obviously
+of course
+in order to	to
+note that
+keep in mind
+worth noting
+feel free
+happy to
+go ahead
+let's
+great
+excellent
+perfect
+absolutely
+certainly
+definitely
+effectively
+efficiently
+elegant
+modern
+powerful
+flexible
+scalable
+maintainable
+optimal
+ideal
+best practice
+numerous	many or the number
+multiple	many or the number
+key		# adjective sense only; the noun is in glossary.txt
+core
+holistic
+nuanced
+intricate
+ultimately
+moreover
+furthermore
+notably
+importantly
+interestingly
+arguably
