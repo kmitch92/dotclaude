@@ -1,0 +1,10 @@
+{"ts":"2026-10-20T10:00:00Z","session":"s1","event":"lint","scope":"main","prose_words":95,"rc":2,"block":[{"id":"UNAPPROVED","text":"ensure","hint":"MAKE SURE(v)"}],"warn":[{"id":"UNKNOWN","text":"directory"}],"counts":{"UNAPPROVED":1,"UNKNOWN":1}}
+{"ts":"2026-10-20T10:01:00Z","session":"s1","event":"lint","scope":"main","prose_words":40,"rc":0,"block":[],"warn":[],"counts":{}}
+{"ts":"2026-10-20T10:02:00Z","session":"s1","event":"lint","scope":"main","prose_words":130,"rc":1,"block":[{"id":"UNAPPROVED","text":"ensure","hint":"MAKE SURE(v)"},{"id":"UNAPPROVED","text":"ensure","hint":"MAKE SURE(v)"}],"warn":[{"id":"UNKNOWN","text":"directory"}],"counts":{"UNAPPROVED":2,"UNKNOWN":1}}
+{"ts":"2026-10-20T10:03:00Z","session":"s1","event":"lint","scope":"main","prose_words":60,"rc":0,"block":[],"warn":[{"id":"UNKNOWN","text":"default"}],"counts":{"UNKNOWN":1}}
+{"ts":"2026-10-20T10:04:00Z","session":"s1","event":"lint","scope":"main","prose_words":200,"rc":1,"block":[{"id":"UNAPPROVED","text":"utilize","hint":"USE(v)"}],"warn":[],"counts":{"UNAPPROVED":1}}
+{"ts":"2026-10-20T10:05:00Z","session":"s2","event":"lint","scope":"main","prose_words":80,"rc":2,"block":[],"warn":[],"counts":{}}
+{"ts":"2026-10-20T10:06:00Z","session":"a1","event":"lint","scope":"sub","prose_words":50,"rc":1,"block":[],"warn":[],"counts":{}}
+{"ts":"2026-10-20T10:07:00Z","session":"a2","event":"lint","scope":"sub","prose_words":70,"rc":1,"block":[],"warn":[],"counts":{}}
+{"ts":"2026-10-20T10:08:00Z","event":"gate-error","session":"s1","error":"linter missing"}
+{"ts":"2026-10-20T10:09:00Z","event":"gate-error","session":"s3","error":"linter missing"}
