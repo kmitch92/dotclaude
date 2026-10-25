@@ -32,12 +32,15 @@ EPHEMERAL_DIRS=(
   paste-cache
   image-cache
   ide
+  # ste/dict is gitignored but NOT ephemeral: it needs the PDF to regenerate.
+  ste/state
 )
 
 EPHEMERAL_FILES=(
   history.jsonl
   stats-cache.json
   .credentials.json
+  ste/lint.log.jsonl
 )
 
 DRY_RUN=false
