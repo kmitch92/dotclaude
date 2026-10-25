@@ -97,6 +97,9 @@ claude/.claude/ste/dict/**
 claude/.claude/ste/lint.log.jsonl
 claude/.claude/ste/state/
 claude/.claude/ste/state/**
+# Python bytecode cache
+**/__pycache__/
+**/*.pyc
 claude/.claude/debug/
 claude/.claude/debug/**
 claude/.claude/history.jsonl
