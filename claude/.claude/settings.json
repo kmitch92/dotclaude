@@ -8,7 +8,8 @@
     "MCP_TOOL_TIMEOUT": "60000",
     "MAX_MCP_OUTPUT_TOKENS": "5000",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-    "DISABLE_AUTOUPDATER": "1"
+    "DISABLE_AUTOUPDATER": "1",
+    "STE_GATE": "warn"
   },
   "attribution": {
     "commit": "",
@@ -132,13 +133,29 @@
         ]
       }
     ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/bin/claude-ste-gate.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "SubagentStop": [
       {
-        "matcher": "worker|scout",
+        "matcher": "^(worker|scout)$",
         "hooks": [
           {
             "type": "command",
             "command": "~/.claude/hooks/agent-cap.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/bin/claude-ste-subagent-gate.sh",
+            "timeout": 10
           }
         ]
       }
