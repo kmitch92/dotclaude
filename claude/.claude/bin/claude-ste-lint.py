@@ -398,6 +398,28 @@ def parse_alternatives(alt_str):
     return [a.strip() for a in alt_str.split('|') if a.strip()]
 
 
+# POS pick order: a word in glossary.txt/approved.tsv can carry more than
+# one part-of-speech tag (e.g. "lint" is both v and n, "retry" is both v
+# and n), stored as a set per word (load_glossary_style). Reading that set
+# with next(iter(...)) picked an arbitrary tag that changed with Python's
+# per-run hash seed (PYTHONHASHSEED), which flipped IMPERATIVE's verdict on
+# "lints"/"retry" between runs. Fixed rule: verb first, then noun, then
+# adjective, then adverb, then any other tag, alphabetically inside a tie.
+POS_PICK_ORDER = ('v', 'n', 'adj', 'adv')
+
+
+def pick_pos(poses):
+    """Deterministically choose one part-of-speech tag from a set of tags.
+
+    See POS_PICK_ORDER for the fixed rule this applies.
+    """
+    def key(p):
+        if p in POS_PICK_ORDER:
+            return (0, POS_PICK_ORDER.index(p))
+        return (1, p)
+    return min(poses, key=key)
+
+
 def classify_for_dict_checks(data, word):
     """Resolve a single word for BANNED/UNAPPROVED purposes.
 
@@ -427,12 +449,12 @@ def classify_for_dict_checks(data, word):
 
     for cand in exempt_candidates:
         if cand in data.glossary:
-            pos = next(iter(data.glossary[cand]))
+            pos = pick_pos(data.glossary[cand])
             return ('glossary', pos, None)
 
     for cand in exempt_candidates:
         if cand in data.approved:
-            pos = next(iter(data.approved[cand]))
+            pos = pick_pos(data.approved[cand])
             return ('approved', pos, None)
 
     for cand in strict_candidates:
@@ -462,10 +484,10 @@ def is_known_any(data, word):
 
 def lookup_phrase(data, phrase):
     if phrase in data.glossary_phrases:
-        pos = next(iter(data.glossary_phrases[phrase]))
+        pos = pick_pos(data.glossary_phrases[phrase])
         return ('glossary', pos, None)
     if phrase in data.approved_phrases:
-        pos = next(iter(data.approved_phrases[phrase]))
+        pos = pick_pos(data.approved_phrases[phrase])
         return ('approved', pos, None)
     if phrase in data.banned_phrases:
         return ('banned', None, data.banned_phrases[phrase])

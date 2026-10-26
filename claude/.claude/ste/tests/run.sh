@@ -333,6 +333,74 @@ if ! section_lint_resilience; then
 fi
 
 # ---------------------------------------------------------------------------
+# Section: lint-determinism
+# ---------------------------------------------------------------------------
+section_lint_determinism() {
+    local -a files=(
+        "/home/kiel/dotclaude/README.md"
+        "/home/kiel/dotclaude/claude/.claude/CLAUDE.md"
+        "/home/kiel/dotclaude/claude/.claude/skills/commit/SKILL.md"
+    )
+    local -a seeds=(0 1 7 42 1000)
+
+    if [[ ! -f "${LINTER}" ]]; then
+        echo "FAIL lint-determinism: linter missing at ${LINTER}"
+        return 1
+    fi
+
+    local status=0
+    local f seed first_seed first_out out
+
+    for f in "${files[@]}"; do
+        if [[ ! -f "${f}" ]]; then
+            echo "FAIL lint-determinism: file missing at ${f}"
+            status=1
+            continue
+        fi
+
+        first_seed=""
+        first_out=""
+        for seed in "${seeds[@]}"; do
+            set +e
+            out="$(PYTHONHASHSEED="${seed}" python3 "${LINTER}" --text "${f}" --budget 100000 --format json 2>/dev/null | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+items = sorted(
+    "%s:%s" % (x["id"], x["text"])
+    for x in d.get("block", []) + d.get("warn", [])
+)
+for i in items:
+    print(i)
+')"
+            set -e
+
+            if [[ -z "${first_seed}" ]]; then
+                first_seed="${seed}"
+                first_out="${out}"
+                continue
+            fi
+            if [[ "${out}" != "${first_out}" ]]; then
+                echo "FAIL lint-determinism: ${f} differs between seed ${first_seed} and seed ${seed}"
+                diff <(printf '%s\n' "${first_out}") <(printf '%s\n' "${out}") || true
+                status=1
+            fi
+        done
+    done
+
+    if [[ "${status}" -eq 0 ]]; then
+        echo "PASS lint-determinism"
+        return 0
+    else
+        echo "FAIL lint-determinism"
+        return 1
+    fi
+}
+
+if ! section_lint_determinism; then
+    OVERALL_STATUS=1
+fi
+
+# ---------------------------------------------------------------------------
 # (later sections can be appended below this line)
 # ---------------------------------------------------------------------------
 
