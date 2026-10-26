@@ -4,22 +4,25 @@
 # Contract: reads hook JSON on stdin ({session_id, transcript_path, cwd,
 # hook_event_name}). Emits exactly one JSON object on stdout:
 # {"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"<text>"}}.
-# additionalContext is three parts joined by newlines:
+# additionalContext is built from:
 #   1. the static STATIC_REMINDER sentence block (unchanged, starts "Style
-#      reminder: full rules in ~/.claude/output-styles/terse.md.")
+#      reminder: ~/.claude/output-styles/terse.md."), always exactly one
+#      line.
 #   2. a previous-reply report from STE_LINT_BIN: if STE_STATE_DIR/<session_id>.json
 #      exists, its stdout is `LINTER --state <file> --format model`; else if
 #      transcript_path exists, `LINTER --transcript <path> --last-assistant
 #      --format model --scope main`; on linter missing/not-executable/exit
-#      code outside 0/1/2, this part is empty (no error text leaks into context)
-#   3. an STE reminder built from rules.tsv (path from STE_RULES): heading
-#      "STE block-class checks:" then one "ID: fix" line per block-class row,
-#      in file order; warn-class rows are not listed.
+#      code outside 0/1, this part is empty (no error text leaks into context).
+#      That report is then collapsed: rule ids (from rules.tsv) are counted
+#      across its lines, sorted by count descending, and only the top 3 are
+#      printed, one line each, as "<ID> x<count>: <fix from rules.tsv>". A
+#      clean/empty report adds nothing.
+#   3. the whole additionalContext is capped at 6 lines total.
 # Always exits 0 and prints valid JSON, even on empty/invalid stdin.
 #
 # Stubbed env: HOME is a throwaway dir. A fake linter at $WORK/fakelint.sh
 # records its argv to $WORK/lint.argv and behaves per env FAKE_RC / FAKE_OUT.
-# A rules.tsv fixture with 2 block rows and 1 warn row lives at $WORK/rules.tsv.
+# A rules.tsv fixture with 7 ids lives at $WORK/rules.tsv.
 
 set -uo pipefail
 
@@ -80,6 +83,15 @@ assert_valid_json() {
   fi
 }
 
+assert_le() {
+  local actual="$1" max="$2" msg="$3"
+  if [ "$actual" -le "$max" ]; then
+    pass "$msg"
+  else
+    fail "$msg (expected <= $max, got $actual)"
+  fi
+}
+
 HOME_DIR="$(mktemp -d "$WORK/home.XXXXXX")"
 CWD="$HOME_DIR/proj"
 mkdir -p "$CWD"
@@ -100,13 +112,17 @@ FAKE
 chmod +x "$FAKELINT"
 
 printf 'id\tste_rule\tclass\tscope\tmessage\tfix\n' > "$RULES_FILE"
-printf 'FIX-ONE\t1.1\tblock\tall\tMessage one\tFix instruction one.\n' >> "$RULES_FILE"
-printf 'WARN-ONE\t9.9\twarn\tall\tWarn message\tWarn fix text.\n' >> "$RULES_FILE"
-printf 'FIX-TWO\t2.2\tblock\tmain\tMessage two\tFix instruction two.\n' >> "$RULES_FILE"
+printf 'ID-A\t1.1\tblock\tall\tMessage A\tFix A.\n' >> "$RULES_FILE"
+printf 'ID-B\t1.2\tblock\tall\tMessage B\tFix B.\n' >> "$RULES_FILE"
+printf 'ID-C\t1.3\twarn\tall\tMessage C\tFix C.\n' >> "$RULES_FILE"
+printf 'ID-D\t1.4\twarn\tall\tMessage D\tFix D.\n' >> "$RULES_FILE"
+printf 'ID-E\t1.5\twarn\tall\tMessage E\tFix E.\n' >> "$RULES_FILE"
+printf 'ID-F\t1.6\twarn\tall\tMessage F\tFix F.\n' >> "$RULES_FILE"
+printf 'ID-G\t1.7\twarn\tall\tMessage G\tFix G.\n' >> "$RULES_FILE"
 
 SESSION_ID="SID-TERSE-1"
 
-STATIC_REMINDER="Style reminder: full rules in ~/.claude/output-styles/terse.md. One point per response, no essays. Stay on the current task; anything else is one \"Also:\" line. Plain technical words, nothing stylised. No claim without evidence. No praise, no apology. Prefer diagrams. Absolute paths. Worrying that a reply is running long is itself the signal to stop and ask what you are actually trying to say, and what the task in front of you is. Finding the signal in your own noise is your job, not the developer's."
+STATIC_REMINDER="Style reminder: ~/.claude/output-styles/terse.md. One point per reply. Lead with the outcome. Evidence for every claim."
 
 hook_json() {
   local sid="$1" transcript="$2"
@@ -155,18 +171,17 @@ else
   fail "script exists and is executable (missing or not executable: $SCRIPT)"
 fi
 
-echo "== case 1: state file present => queries linter with --state, no --transcript =="
+echo "== case 1: state file present => queries linter with --state, no --transcript; rc 3 yields no previous-reply feedback =="
 rm -rf "$STATE_DIR"
 mkdir -p "$STATE_DIR"
 STATE_FILE="$STATE_DIR/$SESSION_ID.json"
-echo '{"rc":2,"gated":true,"output":"you used a banned word"}' > "$STATE_FILE"
+echo '{"rc":3,"output":"linter failure"}' > "$STATE_FILE"
 TRANSCRIPT="$WORK/transcript_case1.jsonl"
 : > "$TRANSCRIPT"
-FAKE_RC=0 FAKE_OUT='previous reply: banned word on line 3' run_hook "$(hook_json "$SESSION_ID" "$TRANSCRIPT")"
+FAKE_RC=3 FAKE_OUT='ID-A: weird output from a failing linter run' run_hook "$(hook_json "$SESSION_ID" "$TRANSCRIPT")"
 assert_eq "$RC" "0" "case1: exits 0"
 assert_valid_json "$OUT" "case1: output is valid JSON"
-assert_starts_with "$CTX" "$STATIC_REMINDER" "case1: additionalContext starts with static reminder"
-assert_contains "$CTX" "previous reply: banned word on line 3" "case1: additionalContext contains FAKE_OUT"
+assert_eq "$CTX" "$STATIC_REMINDER" "case1: additionalContext is only the static reminder (rc 3 => no feedback)"
 if [ -f "$ARGV_FILE" ]; then
   ARGV_CONTENT="$(cat "$ARGV_FILE")"
   assert_contains "$ARGV_CONTENT" "--state" "case1: argv contains --state"
@@ -182,10 +197,10 @@ rm -rf "$STATE_DIR"
 mkdir -p "$STATE_DIR"
 TRANSCRIPT="$WORK/transcript_case2.jsonl"
 : > "$TRANSCRIPT"
-FAKE_RC=0 FAKE_OUT='transcript-derived report' run_hook "$(hook_json "$SESSION_ID" "$TRANSCRIPT")"
+FAKE_RC=0 FAKE_OUT='ID-B: transcript-derived hit' run_hook "$(hook_json "$SESSION_ID" "$TRANSCRIPT")"
 assert_eq "$RC" "0" "case2: exits 0"
 assert_valid_json "$OUT" "case2: output is valid JSON"
-assert_contains "$CTX" "transcript-derived report" "case2: additionalContext contains FAKE_OUT"
+assert_contains "$CTX" "ID-B x1: Fix B." "case2: additionalContext contains collapsed summary line"
 if [ -f "$ARGV_FILE" ]; then
   ARGV_CONTENT="$(cat "$ARGV_FILE")"
   assert_contains "$ARGV_CONTENT" "--transcript $TRANSCRIPT --last-assistant" "case2: argv contains --transcript <path> --last-assistant"
@@ -199,54 +214,95 @@ echo "== case 3: state absent, transcript absent => no linter invocation =="
 rm -rf "$STATE_DIR"
 mkdir -p "$STATE_DIR"
 NO_TRANSCRIPT="$WORK/does-not-exist.jsonl"
-FAKE_RC=0 FAKE_OUT='should not appear' run_hook "$(hook_json "$SESSION_ID" "$NO_TRANSCRIPT")"
+FAKE_RC=0 FAKE_OUT='ID-A: should not appear' run_hook "$(hook_json "$SESSION_ID" "$NO_TRANSCRIPT")"
 assert_eq "$RC" "0" "case3: exits 0"
 assert_valid_json "$OUT" "case3: output is valid JSON"
 assert_eq "$([ -f "$ARGV_FILE" ] && echo present || echo absent)" "absent" "case3: lint.argv not created"
-assert_starts_with "$CTX" "$STATIC_REMINDER" "case3: additionalContext starts with static reminder"
-assert_contains "$CTX" "STE block-class checks:" "case3: additionalContext contains rules block heading"
+assert_eq "$CTX" "$STATIC_REMINDER" "case3: additionalContext is only the static reminder"
 
-echo "== case 4: rules block lists block-class rows, not warn-class rows =="
-assert_contains "$CTX" "FIX-ONE: Fix instruction one." "case4: contains FIX-ONE id and fix"
-assert_contains "$CTX" "FIX-TWO: Fix instruction two." "case4: contains FIX-TWO id and fix"
-assert_not_contains "$CTX" "WARN-ONE" "case4: does not contain warn-class row id"
-
-echo "== case 5: linter missing => resilient, no error text leaks =="
+echo "== case 4: linter missing => resilient, no error text leaks =="
 rm -rf "$STATE_DIR"
 mkdir -p "$STATE_DIR"
 STATE_FILE="$STATE_DIR/$SESSION_ID.json"
 echo '{"rc":0,"gated":false,"output":""}' > "$STATE_FILE"
-TRANSCRIPT="$WORK/transcript_case5.jsonl"
+TRANSCRIPT="$WORK/transcript_case4.jsonl"
 : > "$TRANSCRIPT"
 run_hook_with_lintbin "$(hook_json "$SESSION_ID" "$TRANSCRIPT")" "/nonexistent/claude-ste-lint.py"
-assert_eq "$RC" "0" "case5: exits 0"
-assert_valid_json "$OUT" "case5: output is valid JSON"
-assert_starts_with "$CTX" "$STATIC_REMINDER" "case5: additionalContext starts with static reminder"
-assert_not_contains "$OUT" "No such file" "case5: no 'No such file' text leaks into output"
+assert_eq "$RC" "0" "case4: exits 0"
+assert_valid_json "$OUT" "case4: output is valid JSON"
+assert_starts_with "$CTX" "$STATIC_REMINDER" "case4: additionalContext starts with static reminder"
+assert_not_contains "$OUT" "No such file" "case4: no 'No such file' text leaks into output"
 
-echo "== case 6: fake linter exits 3 => its output is discarded =="
+echo "== case 5: fake linter exits 3 => its output is discarded =="
 rm -rf "$STATE_DIR"
 mkdir -p "$STATE_DIR"
-TRANSCRIPT="$WORK/transcript_case6.jsonl"
+TRANSCRIPT="$WORK/transcript_case5.jsonl"
 : > "$TRANSCRIPT"
-FAKE_RC=3 FAKE_OUT='weird crash output' run_hook "$(hook_json "$SESSION_ID" "$TRANSCRIPT")"
+FAKE_RC=3 FAKE_OUT='ID-A: weird crash output' run_hook "$(hook_json "$SESSION_ID" "$TRANSCRIPT")"
+assert_eq "$RC" "0" "case5: exits 0"
+assert_not_contains "$CTX" "weird crash output" "case5: FAKE_OUT from rc=3 does not appear"
+assert_eq "$CTX" "$STATIC_REMINDER" "case5: additionalContext is only the static reminder"
+
+echo "== case 6: empty stdin =="
+run_hook_empty_stdin
 assert_eq "$RC" "0" "case6: exits 0"
-assert_not_contains "$CTX" "weird crash output" "case6: FAKE_OUT from rc=3 does not appear"
+assert_valid_json "$OUT" "case6: output is valid JSON"
 assert_starts_with "$CTX" "$STATIC_REMINDER" "case6: additionalContext starts with static reminder"
 
-echo "== case 7: empty stdin =="
-run_hook_empty_stdin
-assert_eq "$RC" "0" "case7: exits 0"
-assert_valid_json "$OUT" "case7: output is valid JSON"
-assert_starts_with "$CTX" "$STATIC_REMINDER" "case7: additionalContext starts with static reminder"
-
-echo "== case 8: top-level shape is exactly hookSpecificOutput with hookEventName/additionalContext =="
+echo "== case 7: top-level shape is exactly hookSpecificOutput with hookEventName/additionalContext =="
 TOP_KEYS="$(printf '%s' "$OUT" | jq -c 'keys')"
-assert_eq "$TOP_KEYS" '["hookSpecificOutput"]' "case8: top level has only hookSpecificOutput"
+assert_eq "$TOP_KEYS" '["hookSpecificOutput"]' "case7: top level has only hookSpecificOutput"
 INNER_KEYS="$(printf '%s' "$OUT" | jq -c '.hookSpecificOutput | keys')"
-assert_eq "$INNER_KEYS" '["additionalContext","hookEventName"]' "case8: hookSpecificOutput has only hookEventName/additionalContext"
+assert_eq "$INNER_KEYS" '["additionalContext","hookEventName"]' "case7: hookSpecificOutput has only hookEventName/additionalContext"
 EVENT_NAME="$(printf '%s' "$OUT" | jq -r '.hookSpecificOutput.hookEventName')"
-assert_eq "$EVENT_NAME" "UserPromptSubmit" "case8: hookEventName == UserPromptSubmit"
+assert_eq "$EVENT_NAME" "UserPromptSubmit" "case7: hookEventName == UserPromptSubmit"
+
+echo "== case 8: clean previous reply (no ids in report) => only the static reminder line =="
+rm -rf "$STATE_DIR"
+mkdir -p "$STATE_DIR"
+TRANSCRIPT="$WORK/transcript_case8.jsonl"
+: > "$TRANSCRIPT"
+FAKE_RC=0 FAKE_OUT='' run_hook "$(hook_json "$SESSION_ID" "$TRANSCRIPT")"
+assert_eq "$RC" "0" "case8: exits 0"
+assert_eq "$CTX" "$STATIC_REMINDER" "case8: additionalContext equals the static reminder only"
+LINE_COUNT="$(printf '%s\n' "$CTX" | wc -l | tr -d ' ')"
+assert_eq "$LINE_COUNT" "1" "case8: additionalContext is exactly one line"
+
+echo "== case 9: 3 distinct ids print in descending count order =="
+rm -rf "$STATE_DIR"
+mkdir -p "$STATE_DIR"
+TRANSCRIPT="$WORK/transcript_case9.jsonl"
+: > "$TRANSCRIPT"
+FAKE_OUT9="$(for i in $(seq 1 2); do echo "ID-C: hit"; done; for i in $(seq 1 5); do echo "ID-A: hit"; done; for i in $(seq 1 3); do echo "ID-B: hit"; done)"
+FAKE_RC=0 FAKE_OUT="$FAKE_OUT9" run_hook "$(hook_json "$SESSION_ID" "$TRANSCRIPT")"
+assert_eq "$RC" "0" "case9: exits 0"
+SUMMARY_LINES="$(printf '%s\n' "$CTX" | tail -n +2)"
+EXPECTED_ORDER="$(printf 'ID-A x5: Fix A.\nID-B x3: Fix B.\nID-C x2: Fix C.')"
+assert_eq "$SUMMARY_LINES" "$EXPECTED_ORDER" "case9: ids print highest-count first"
+
+echo "== case 10: 40 hits across 7 ids cap the output at 6 lines =="
+rm -rf "$STATE_DIR"
+mkdir -p "$STATE_DIR"
+TRANSCRIPT="$WORK/transcript_case10.jsonl"
+: > "$TRANSCRIPT"
+FAKE_OUT10="$(
+  for id in ID-A ID-B ID-C ID-D ID-E ID-F ID-G; do :; done
+  {
+    for i in $(seq 1 10); do echo "ID-A: hit"; done
+    for i in $(seq 1 8); do echo "ID-B: hit"; done
+    for i in $(seq 1 7); do echo "ID-C: hit"; done
+    for i in $(seq 1 6); do echo "ID-D: hit"; done
+    for i in $(seq 1 5); do echo "ID-E: hit"; done
+    for i in $(seq 1 3); do echo "ID-F: hit"; done
+    for i in $(seq 1 1); do echo "ID-G: hit"; done
+  }
+)"
+FAKE_RC=0 FAKE_OUT="$FAKE_OUT10" run_hook "$(hook_json "$SESSION_ID" "$TRANSCRIPT")"
+assert_eq "$RC" "0" "case10: exits 0"
+LINE_COUNT10="$(printf '%s\n' "$CTX" | wc -l | tr -d ' ')"
+assert_le "$LINE_COUNT10" "6" "case10: additionalContext is 6 lines or fewer"
+assert_contains "$CTX" "ID-A x10: Fix A." "case10: top id ID-A is present"
+assert_not_contains "$CTX" "ID-G" "case10: lowest id ID-G (4th ranked) is dropped"
 
 echo
 echo "== summary: $pass_count passed, $fail_count failed =="
