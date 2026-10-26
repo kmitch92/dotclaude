@@ -98,8 +98,9 @@ alternative), 196 verb-form rows, 39 recurring errors.
 ### Checks
 
 IDs, classes and corrections for each STE check live in `ste/rules.tsv`.
-A `block` class refuses a reply. A `warn` class gets reported on the next
-prompt.
+A `block` class marks a hard violation. A `warn` class marks a soft
+violation. The gate never refuses a reply for the two classes. The next
+prompt shows the result.
 
 Block: SENTENCE-LENGTH, CONTRACTION, COMPLEX-VERB, `USING`, PASSIVE-BY,
 UNAPPROVED, BANNED, SEMICOLON, LATIN.
@@ -121,8 +122,7 @@ files have the word.
 Run `bin/claude-ste-report.sh [--days N]`. Each metric reports one fact:
 
 - lints: the total count of lint runs.
-- block rate: the share of replies the gate refuses.
-- retry rate: the share of refused replies that a subsequent reply repaired.
+- hit rate: the share of replies that broke a must-fix rule.
 - gate errors: the number of times the linter itself failed to run.
 - top ids: the rule IDs that fire most frequently.
 - top unapproved: the unapproved words that fire most frequently, each with

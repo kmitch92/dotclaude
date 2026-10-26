@@ -9,12 +9,8 @@
 #
 # Metrics, in order:
 #   lints          total "lint" events (any scope).
-#   block rate     share of lint events with rc==2 (hard violation) —
-#                  how often the linter would block a Stop.
-#   retry rate     among main-scope rc==2 events, the share followed by a
-#                  later main-scope lint event in the same session — how
-#                  often a block was survived by a retry instead of
-#                  getting stuck.
+#   hit rate       share of lint events with rc==2 (hard violation) — the
+#                  share of replies that broke at least one must-fix rule.
 #   gate errors    count of "gate-error" events — the linter could not
 #                  run at all (missing binary, bad exit code, ...).
 #   top ids        the rule ids (e.g. UNAPPROVED, UNKNOWN) that fire most
@@ -75,16 +71,9 @@ jq -nR -r --arg cutoff "$CUTOFF" '
   | ($all | map(select(.event == "lint"))) as $lints
   | ($lints | length) as $lint_count
   | ($lints | map(select(.rc == 2)) | length) as $rc2_count
-  | (if $lint_count == 0 then 0 else (($rc2_count * 100 / $lint_count) | round0) end) as $block_rate
+  | (if $lint_count == 0 then 0 else (($rc2_count * 100 / $lint_count) | round0) end) as $hit_rate
 
   | ($lints | map(select(.scope == "main"))) as $main
-  | ($main | map(select(.rc == 2))) as $rc2main
-  | ($rc2main | length) as $rc2main_count
-  | ($rc2main
-     | map(. as $item | ($main | any(.session == $item.session and .ts > $item.ts)))
-     | map(select(.))
-     | length) as $retried_count
-  | (if $rc2main_count == 0 then 0 else (($retried_count * 100 / $rc2main_count) | round0) end) as $retry_rate
 
   | ($all | map(select(.event == "gate-error")) | length) as $gate_errors
 
@@ -114,8 +103,7 @@ jq -nR -r --arg cutoff "$CUTOFF" '
   | ($pw | length) as $pwn
 
   | "lints: \($lint_count)",
-    "block rate: \($block_rate)%",
-    "retry rate: \($retry_rate)%",
+    "hit rate: \($hit_rate)%",
     "gate errors: \($gate_errors)",
     "top ids:",
     ($top_ids[] | "  \(.key) \(.value)"),

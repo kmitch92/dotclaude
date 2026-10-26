@@ -5,9 +5,7 @@
 # $STE_LOG or $HOME/.claude/ste/lint.log.jsonl. --days N keeps only lines
 # with ts within the last N days relative to now. Plain text output, in
 # order: "lints: <n>" (count of event=="lint" lines, any scope);
-# "block rate: <pct>%" (rc==2 lint events / all lint events, integer
-# percent); "retry rate: <pct>%" (among main-scope lint events with rc==2,
-# share followed by a later main-scope lint event, same session, integer
+# "hit rate: <pct>%" (rc==2 lint events / all lint events, integer
 # percent); "gate errors: <n>" (count of event=="gate-error" lines); "top
 # ids:" then up to 10 lines "  <ID> <count>" sorted desc by count (summed
 # over every event's "counts" object); "top unapproved:" then up to 20
@@ -19,14 +17,11 @@
 # count is even). Missing or empty log -> "lints: 0", exit 0.
 #
 # Fixture: claude/.claude/ste/tests/fixtures/lint.log.sample.jsonl, 10
-# lines: 6 main lint events (sessions s1 x5, s2 x1; s1's first event is
-# rc 2 and is followed by four later main events in s1, so it counts as
-# retried; s2's lone event is rc 2 with no later main event in s2, so it
-# does not), 2 sub lint events (rc 1), 2 gate-error lines. Hand-computed
-# expectations (see REPORT for the full derivation):
+# lines: 6 main lint events (sessions s1 x5, s2 x1), 2 sub lint events
+# (rc 1), 2 gate-error lines. Hand-computed expectations (see REPORT for
+# the full derivation):
 #   lints: 8
-#   block rate: 25%   (rc==2 count 2 / lints 8)
-#   retry rate: 50%   (1 of 2 main rc==2 events retried)
+#   hit rate: 25%   (rc==2 count 2 / lints 8)
 #   gate errors: 2
 #   top ids first line:        UNAPPROVED 4
 #   top unapproved line:       ensure 3 -> MAKE SURE(v)
@@ -100,8 +95,7 @@ echo "== case 3: fixture log, full summary =="
 run_report --log "$FIXTURE"
 assert_eq "$RC" "0" "case3: exits 0"
 assert_contains "$OUT" "lints: 8" "case3: lints 8"
-assert_contains "$OUT" "block rate: 25%" "case3: block rate 25%"
-assert_contains "$OUT" "retry rate: 50%" "case3: retry rate 50%"
+assert_contains "$OUT" "hit rate: 25%" "case3: hit rate 25%"
 assert_contains "$OUT" "gate errors: 2" "case3: gate errors 2"
 assert_contains "$OUT" "top ids:" "case3: has top ids section"
 assert_contains "$OUT" "  UNAPPROVED 4" "case3: top ids includes UNAPPROVED 4"
