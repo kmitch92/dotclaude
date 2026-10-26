@@ -3,7 +3,7 @@
 # lint log into a plain-text report. The log is a JSONL file (one JSON
 # event object per line) written by claude-ste-gate.sh and the linter it
 # calls: "lint" events (one per Stop-hook run, with scope "main" or "sub",
-# rc 0/1/2, block/warn word lists, a per-id counts object, and a
+# rc 0/1/3, block/warn word lists, a per-id counts object, and a
 # prose_words count) and "gate-error" events (the linter itself failed to
 # run).
 #
@@ -13,19 +13,18 @@
 #                  share of replies that broke at least one must-fix rule.
 #   gate errors    count of "gate-error" events — the linter could not
 #                  run at all (missing binary, bad exit code, ...).
-#   top ids        the rule ids (e.g. UNAPPROVED, UNKNOWN) that fire most
+#   register hits  one count each for NARRATION, FILLER-OPEN and SLOP —
+#                  the three register faults the user cares about most.
+#   top ids        the rule ids (e.g. SLOP, NARRATION) that fire most
 #                  often, summed from every event's "counts" object.
-#   top unapproved words with the id UNAPPROVED, grouped by word, with
-#                  the hint (suggested replacement) from the most recent
-#                  occurrence of that word.
-#   top unknown    words with the id UNKNOWN, grouped by word — words the
-#                  linter does not recognise at all.
+#   top slop       phrases with the id SLOP, grouped by phrase, with the
+#                  hint (what to do instead) from the most recent
+#                  occurrence of that phrase.
 #   prose words    min/median/max word count of main-scope replies.
 #
-# This report is the evidence for tuning claude/.claude/ste/glossary.txt
-# (approved replacements for banned or unknown words) and
-# claude/.claude/ste/banned.txt (words to flag): frequent "top unapproved"
-# or "top unknown" entries are candidates to add there.
+# This report is the evidence for tuning claude/.claude/ste/phrases.tsv
+# (the phrase list behind NARRATION, FILLER-OPEN and SLOP): frequent "top
+# slop" entries are candidates to add or adjust there.
 #
 # Usage: claude-ste-report.sh [--log PATH] [--days N]
 #   --log PATH   JSONL log to read (default: $STE_LOG or
@@ -80,24 +79,16 @@ jq -nR -r --arg cutoff "$CUTOFF" '
   | (reduce ($all[] | (.counts // {}) | to_entries[]) as $e
        ({}; .[$e.key] = (.[$e.key] // 0) + $e.value)) as $id_counts
   | ($id_counts | to_entries | sort_by([-.value, .key]) | .[0:10]) as $top_ids
+  | ([$id_counts["NARRATION"] // 0, $id_counts["FILLER-OPEN"] // 0, $id_counts["SLOP"] // 0]) as $register_hits
 
   | ($lints
-     | map(. as $ev | ($ev.block // []) | map(select(.id == "UNAPPROVED") | {text: .text, hint: .hint, ts: $ev.ts}))
-     | add // []) as $unapproved_entries
-  | ($unapproved_entries
+     | map(. as $ev | (($ev.warn // []) + ($ev.block // [])) | map(select(.id == "SLOP") | {text: .text, hint: .hint, ts: $ev.ts}))
+     | add // []) as $slop_entries
+  | ($slop_entries
      | group_by(.text)
      | map({text: .[0].text, count: length, hint: (max_by(.ts).hint)})
      | sort_by([-.count, .text])
-     | .[0:20]) as $top_unapproved
-
-  | ($lints
-     | map(. as $ev | ($ev.warn // []) | map(select(.id == "UNKNOWN") | {text: .text}))
-     | add // []) as $unknown_entries
-  | ($unknown_entries
-     | group_by(.text)
-     | map({text: .[0].text, count: length})
-     | sort_by([-.count, .text])
-     | .[0:20]) as $top_unknown
+     | .[0:20]) as $top_slop
 
   | ($main | map(.prose_words) | sort) as $pw
   | ($pw | length) as $pwn
@@ -105,12 +96,14 @@ jq -nR -r --arg cutoff "$CUTOFF" '
   | "lints: \($lint_count)",
     "hit rate: \($hit_rate)%",
     "gate errors: \($gate_errors)",
+    "register hits:",
+    "  NARRATION \($register_hits[0])",
+    "  FILLER-OPEN \($register_hits[1])",
+    "  SLOP \($register_hits[2])",
     "top ids:",
     ($top_ids[] | "  \(.key) \(.value)"),
-    "top unapproved:",
-    ($top_unapproved[] | "  \(.text) \(.count) -> \(.hint)"),
-    "top unknown:",
-    ($top_unknown[] | "  \(.text) \(.count)"),
+    "top slop:",
+    ($top_slop[] | "  \(.text) \(.count) -> \(.hint)"),
     (if $pwn == 0 then empty else
        ($pw[0]) as $min
        | ($pw[$pwn - 1]) as $max
