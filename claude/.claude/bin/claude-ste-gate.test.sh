@@ -5,12 +5,13 @@
 # hook_event_name, stop_hook_active, last_assistant_message}), pipes
 # last_assistant_message to the linter (STE_LINT_BIN) on stdin as
 # `LINTER --text - --scope main --format model --log --session <id>`.
-# Linter exit code: 0 clean, 1 warn, 2 block. The gate never prints to
+# Linter exit code: 0 clean, 1 warn, 3 linter failure. The gate never prints to
 # stdout and never blocks the Stop event, for any rc or stop_hook_active
 # value. Writes STE_STATE_DIR/<session_id>.json with {"rc", "output"}
-# matching the linter's result. On linter missing/crash (exit code other
-# than 0/1/2, or not executable), exits 0, prints nothing, appends one
-# JSON line with an "error" key to STE_LOG. Invalid/empty stdin: exit 0,
+# matching the linter's result, for rc 0, 1, or 3 alike. On linter
+# missing/crash (exit code other than 0/1/3, or not executable), exits 0,
+# prints nothing, appends one JSON line with an "error" key to STE_LOG. No
+# rule blocks, so a block classification never occurs. Invalid/empty stdin: exit 0,
 # nothing on stdout. Never exits non-zero.
 #
 # Stubbed env: HOME is a throwaway dir. A fake linter at $WORK/fakelint.sh
@@ -120,16 +121,16 @@ else
   fail "script exists and is executable (missing or not executable: $SCRIPT)"
 fi
 
-echo "== case 1: rc 2, stop_hook_active false => records, never blocks =="
+echo "== case 1: rc 1, stop_hook_active false => records, never blocks =="
 rm -rf "$STATE_DIR" "$LOG_FILE"
-FAKE_RC=2 FAKE_OUT='you used a banned word' run_gate "$(hook_json false "$MSG")"
+FAKE_RC=1 FAKE_OUT='a warning only' run_gate "$(hook_json false "$MSG")"
 assert_eq "$RC" "0" "case1: exits 0"
 assert_eq "$OUT" "" "case1: stdout empty"
 STATE_FILE="$STATE_DIR/$SESSION_ID.json"
 if [ -f "$STATE_FILE" ]; then
   pass "case1: state file exists"
-  assert_eq "$(jq -r '.rc' "$STATE_FILE")" "2" "case1: state .rc == 2"
-  assert_eq "$(jq -r '.output' "$STATE_FILE")" "you used a banned word" "case1: state .output == FAKE_OUT"
+  assert_eq "$(jq -r '.rc' "$STATE_FILE")" "1" "case1: state .rc == 1"
+  assert_eq "$(jq -r '.output' "$STATE_FILE")" "a warning only" "case1: state .output == FAKE_OUT"
 else
   fail "case1: state file exists (missing: $STATE_FILE)"
 fi
@@ -147,15 +148,15 @@ else
   fail "case1: lint.stdin recorded (missing: $WORK/stdin)"
 fi
 
-echo "== case 2: rc 2, stop_hook_active true => same result, stop_hook_active makes no difference =="
+echo "== case 2: rc 1, stop_hook_active true => same result, stop_hook_active makes no difference =="
 rm -rf "$STATE_DIR" "$LOG_FILE"
-FAKE_RC=2 FAKE_OUT='banned word' run_gate "$(hook_json true "$MSG")"
+FAKE_RC=1 FAKE_OUT='a flagged phrase' run_gate "$(hook_json true "$MSG")"
 assert_eq "$RC" "0" "case2: exits 0"
 assert_eq "$OUT" "" "case2: stdout empty"
 STATE_FILE="$STATE_DIR/$SESSION_ID.json"
 if [ -f "$STATE_FILE" ]; then
-  assert_eq "$(jq -r '.rc' "$STATE_FILE")" "2" "case2: state .rc == 2"
-  assert_eq "$(jq -r '.output' "$STATE_FILE")" "banned word" "case2: state .output == FAKE_OUT"
+  assert_eq "$(jq -r '.rc' "$STATE_FILE")" "1" "case2: state .rc == 1"
+  assert_eq "$(jq -r '.output' "$STATE_FILE")" "a flagged phrase" "case2: state .output == FAKE_OUT"
 else
   fail "case2: state file exists (missing: $STATE_FILE)"
 fi
@@ -200,15 +201,33 @@ else
   fail "case5: log file exists (missing: $LOG_FILE)"
 fi
 
-echo "== case 6: fake linter exits 3 => resilient =="
+echo "== case 6: fake linter exits 3 (linter failure) => accepted, state written, no error =="
 rm -rf "$STATE_DIR" "$LOG_FILE"
 FAKE_RC=3 FAKE_OUT='weird' run_gate "$(hook_json false "$MSG")"
 assert_eq "$RC" "0" "case6: exits 0"
 assert_eq "$OUT" "" "case6: stdout empty"
-if [ -f "$LOG_FILE" ]; then
-  assert_contains "$(cat "$LOG_FILE")" "error" "case6: log line contains error key"
+STATE_FILE="$STATE_DIR/$SESSION_ID.json"
+if [ -f "$STATE_FILE" ]; then
+  pass "case6: state file exists"
+  assert_eq "$(jq -r '.rc' "$STATE_FILE")" "3" "case6: state .rc == 3"
 else
-  fail "case6: log file exists (missing: $LOG_FILE)"
+  fail "case6: state file exists (missing: $STATE_FILE)"
+fi
+if [ -f "$LOG_FILE" ]; then
+  fail "case6: log file NOT written for rc 3 (unexpectedly found: $LOG_FILE)"
+else
+  pass "case6: log file NOT written for rc 3"
+fi
+
+echo "== case 6b: fake linter exits 2 (now unexpected) => resilient, logs error =="
+rm -rf "$STATE_DIR" "$LOG_FILE"
+FAKE_RC=2 FAKE_OUT='weird' run_gate "$(hook_json false "$MSG")"
+assert_eq "$RC" "0" "case6b: exits 0"
+assert_eq "$OUT" "" "case6b: stdout empty"
+if [ -f "$LOG_FILE" ]; then
+  assert_contains "$(cat "$LOG_FILE")" "error" "case6b: log line contains error key"
+else
+  fail "case6b: log file exists (missing: $LOG_FILE)"
 fi
 
 echo "== case 7: empty stdin => exit 0, nothing on stdout =="

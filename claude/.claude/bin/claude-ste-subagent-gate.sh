@@ -7,10 +7,9 @@
 #
 # This script shares all logic with claude-ste-gate.sh by execing it with
 # STE_SCOPE=sub set. See claude-ste-gate.sh for the full contract: env
-# overrides (STE_LINT_BIN, STE_STATE_DIR, STE_LOG, STE_GATE), the
-# one-retry property (stop_hook_active true => never block), the
-# STE_GATE=warn switch to disable blocking, and the resilient handling of
-# a missing/crashing linter or invalid stdin. Always exits 0.
+# overrides (STE_LINT_BIN, STE_STATE_DIR, STE_LOG) and the resilient
+# handling of a missing/crashing linter or invalid stdin. The gate only
+# measures and records; it never refuses the event. Always exits 0.
 
 set -uo pipefail
 

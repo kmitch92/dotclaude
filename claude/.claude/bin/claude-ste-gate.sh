@@ -3,8 +3,8 @@
 # linter (Simplified Technical English checker) and records the result.
 #
 # The gate only measures and records; it never refuses the Stop event. A
-# forced rewrite costs a second full reply, so instead of blocking, the
-# gate writes the linter's rc and output to a state file for the next
+# forced rewrite costs a second full reply, so the gate does not block.
+# It writes the linter's rc and output to a state file for the next
 # prompt's reminder hook to read.
 #
 # Env overrides:
@@ -22,7 +22,7 @@
 # Contract: reads hook JSON from stdin (session_id, agent_id,
 # last_assistant_message). Pipes last_assistant_message to the linter as:
 #   STE_LINT_BIN --text - --scope <scope> --format model --log --session <id>
-# Linter exit code: 0 clean, 1 warn, 2 block. Writes
+# Linter exit code: 0 clean, 1 warn, 3 linter failure. Writes
 # STE_STATE_DIR/<id>.json with {rc, output, ts, scope}. Never prints
 # anything to stdout. If the linter is missing, not executable, or exits
 # with an unexpected code, one error line is appended to STE_LOG and no
@@ -77,7 +77,7 @@ out="$(printf '%s' "$last_assistant_message" | "$STE_LINT_BIN" --text - --scope 
 rc=$?
 
 case "$rc" in
-  0|1|2) ;;
+  0|1|3) ;;
   *) log_error "$id" "linter exited with unexpected code $rc" ;;
 esac
 

@@ -7,7 +7,8 @@
 # agent_type}), pipes last_assistant_message to the linter (STE_LINT_BIN) on
 # stdin as `LINTER --text - --scope sub --format model --log --session
 # <agent_id>` (agent_id, not session_id, is used as the id). Linter exit
-# code: 0 clean, 1 warn, 2 block. The gate never prints to stdout and never
+# code: 0 clean, 1 warn, 3 linter failure. No rule blocks, so a block
+# classification never occurs. The gate never prints to stdout and never
 # blocks the SubagentStop event, for any rc or stop_hook_active value.
 # Writes STE_STATE_DIR/<agent_id>.json (NOT session_id.json) with
 # {"rc", "output"}. Never exits non-zero.
@@ -103,17 +104,17 @@ else
   fail "script exists and is executable (missing or not executable: $SCRIPT)"
 fi
 
-echo "== case 1: rc 2, stop_hook_active false => records, never blocks =="
+echo "== case 1: rc 1, stop_hook_active false => records, never blocks =="
 rm -rf "$STATE_DIR" "$LOG_FILE"
-FAKE_RC=2 FAKE_OUT='you used a banned word' run_gate "$(hook_json false "$MSG")"
+FAKE_RC=1 FAKE_OUT='a warning only' run_gate "$(hook_json false "$MSG")"
 assert_eq "$RC" "0" "case1: exits 0"
 assert_eq "$OUT" "" "case1: stdout empty"
 STATE_FILE="$STATE_DIR/$AGENT_ID.json"
 SESSION_STATE_FILE="$STATE_DIR/$SESSION_ID.json"
 if [ -f "$STATE_FILE" ]; then
   pass "case1: state file is named agent_id.json"
-  assert_eq "$(jq -r '.rc' "$STATE_FILE")" "2" "case1: state .rc == 2"
-  assert_eq "$(jq -r '.output' "$STATE_FILE")" "you used a banned word" "case1: state .output == FAKE_OUT"
+  assert_eq "$(jq -r '.rc' "$STATE_FILE")" "1" "case1: state .rc == 1"
+  assert_eq "$(jq -r '.output' "$STATE_FILE")" "a warning only" "case1: state .output == FAKE_OUT"
 else
   fail "case1: state file is named agent_id.json (missing: $STATE_FILE)"
 fi
@@ -136,15 +137,15 @@ else
   fail "case1: lint.stdin recorded (missing: $WORK/stdin)"
 fi
 
-echo "== case 2: rc 2, stop_hook_active true => same result, stop_hook_active makes no difference =="
+echo "== case 2: rc 1, stop_hook_active true => same result, stop_hook_active makes no difference =="
 rm -rf "$STATE_DIR" "$LOG_FILE"
-FAKE_RC=2 FAKE_OUT='banned word' run_gate "$(hook_json true "$MSG")"
+FAKE_RC=1 FAKE_OUT='a flagged phrase' run_gate "$(hook_json true "$MSG")"
 assert_eq "$RC" "0" "case2: exits 0"
 assert_eq "$OUT" "" "case2: stdout empty"
 STATE_FILE="$STATE_DIR/$AGENT_ID.json"
 if [ -f "$STATE_FILE" ]; then
-  assert_eq "$(jq -r '.rc' "$STATE_FILE")" "2" "case2: state .rc == 2"
-  assert_eq "$(jq -r '.output' "$STATE_FILE")" "banned word" "case2: state .output == FAKE_OUT"
+  assert_eq "$(jq -r '.rc' "$STATE_FILE")" "1" "case2: state .rc == 1"
+  assert_eq "$(jq -r '.output' "$STATE_FILE")" "a flagged phrase" "case2: state .output == FAKE_OUT"
 else
   fail "case2: state file exists (missing: $STATE_FILE)"
 fi
