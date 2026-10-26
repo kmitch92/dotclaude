@@ -515,6 +515,50 @@ def is_function_word(data, norm):
 # P1: code/url/path substitution, P2: line filtering
 # ---------------------------------------------------------------------------
 
+FRONTMATTER_DESC_RE = re.compile(r'^\s*description:\s*(.*)$')
+
+
+def strip_frontmatter(text):
+    """Drop YAML frontmatter (a line of three dashes, key/value lines, a
+    second line of three dashes) when it opens the file, next to P2's rule
+    for dropping a heading or a table row (_is_dropped_line). A config
+    value is not prose, so every key/value line is blanked out here before
+    P1/P2 run -- except the value after "description:", which Claude Code
+    shows to a model, so it stays prose and keeps going through the normal
+    checks. Detection only counts the very start of the file: leading blank
+    lines and whole-line HTML comments (the fixture contract's own
+    "<!-- expect: ... -->" header) are skipped first, then the next line
+    must be exactly "---". A "---" later in the file is a horizontal rule,
+    already dropped by _is_dropped_line -- see tests/fixtures/lint/
+    warn-fp-frontmatter.md.
+    """
+    lines = text.split('\n')
+    n = len(lines)
+    i = 0
+    while i < n:
+        stripped = lines[i].strip()
+        if not stripped:
+            i += 1
+            continue
+        if stripped.startswith('<!--') and stripped.endswith('-->'):
+            i += 1
+            continue
+        break
+    if i >= n or lines[i].strip() != '---':
+        return text
+    open_idx = i
+    close_idx = None
+    for j in range(open_idx + 1, n):
+        if lines[j].strip() == '---':
+            close_idx = j
+            break
+    if close_idx is None:
+        return text
+    for k in range(open_idx + 1, close_idx):
+        m = FRONTMATTER_DESC_RE.match(lines[k])
+        lines[k] = m.group(1) if m else ''
+    return '\n'.join(lines)
+
 
 def p1_substitute(text):
     text = FENCE_RE.sub(' ', text)
@@ -1473,7 +1517,8 @@ def main(argv=None):
         if args.scope == 'sub':
             lint_text = extract_scope_sub(text)
 
-        pre = p1_substitute(lint_text)
+        pre = strip_frontmatter(lint_text)
+        pre = p1_substitute(pre)
         pre = p2_filter(pre)
         doc = build_doc(data, pre)
         violations = run_checks(data, doc, args)
