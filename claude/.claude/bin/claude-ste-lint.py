@@ -1204,7 +1204,7 @@ def run_checks(data, doc, args):
     pl_rule = check_scope_ok('PARAGRAPH-LENGTH')
     if pl_rule is not None:
         for p in doc.paragraphs:
-            n = len(p.sentences)
+            n = sum(1 for s in p.sentences if not s.is_list_item)
             if n > 6:
                 violations.append({
                     'id': 'PARAGRAPH-LENGTH', 'cls': pl_rule['class'],

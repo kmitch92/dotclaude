@@ -1,65 +1,93 @@
 ---
 name: commit
-description: Create atomic, conventional-format commits from pending changes
+description: Make atomic, conventional-format commits from pending changes.
 disable-model-invocation: true
 allowed-tools: Bash(git:*), Bash(~/.claude/skills/commit/preflight.sh:*), Read, Grep, Glob
 ---
 
-Create atomic commits for all pending changes. One logical change per commit.
+Make atomic commits for all pending changes. Put one logical change in each commit.
 
 ## Pre-flight (mandatory)
 
-- Run `~/.claude/skills/commit/preflight.sh` first, before any planning or staging.
+- Run `~/.claude/skills/commit/preflight.sh` before you plan or stage files.
 - Exit 0: continue.
 - Exit 2: stop and report.
-- Exit 1 or 3: investigate, don't stop on sight.
-  - Exit 1 means at least one LARGE / JUNK / SECRET / BINARY finding. Exit 3 means only SUSPECT findings — low-confidence hits (generic key/token assignment, or a JWT/private-key block) found in a test, spec, or fixture path.
-  - For every SECRET and SUSPECT line, read the flagged line with 3 lines of context before deciding.
-  - A value is a fixture when it is obviously synthetic (repeated or sequential characters, words like fake/example/test, decodes to a sample payload), is built by interpolation, or lives in a test/fixture file and is used only to drive assertions.
-  - Record a one-line verdict per finding for the final report: `fixture` or `real`.
-  - SUSPECT judged fixture: commit it. SUSPECT judged real: treat it as SECRET.
-  - SECRET judged real on a path in the planned commits: stop, create no commit, report, wait for the user.
-  - SECRET judged real on a path NOT in the plan (an unrelated untracked or modified file): exclude that path, report it, continue with the plan.
-  - SECRET judged fixture: say so with the evidence — a high-precision pattern can still be a doctored sample — and ask the user before committing that path.
-  - LARGE / JUNK / BINARY: excluded from every commit as now. For each, propose the exact `.gitignore` line that would cover the path (do not add it unless the user agrees).
+- Exit 1 or 3: check the result closely. Do not stop at the first look.
+  - Exit 1 means one or more LARGE, JUNK, SECRET, or BINARY results.
+  - Exit 3 means only SUSPECT results.
+  - A SUSPECT result is a low-confidence hit.
+    - The hit can be a generic assignment of a key or a token.
+    - Or it can be a JWT block or a private-key block.
+    - Each SUSPECT result sits in a test, a spec, or a fixture path.
+  - For each SECRET and SUSPECT line, read the flagged line with 3 lines of context before you judge it.
+  - A value is a fixture in one of four conditions:
+    - It has a repeated or sequential pattern of characters.
+    - It has a word like `fake`, `example`, or `test`.
+    - It decodes to a sample payload.
+    - A test builds the value through interpolation.
+    - The test uses the value only for an assertion.
+  - Record one verdict for each result, in one line, for the end report: `fixture` or `real`.
+  - SUSPECT judged `fixture`: commit it.
+  - SUSPECT judged `real`: apply the SECRET rule to it.
+  - SECRET judged `real` on a path in the planned commits:
+    - Stop.
+    - Make no commit.
+    - Report it.
+    - Wait for the word from the user.
+  - SECRET judged `real` on a path that is not in the plan — an unrelated untracked file, or a modified file:
+    - Exclude that path.
+    - Report it.
+    - Continue with the plan.
+  - SECRET judged `fixture`: say so, with the sign that shows it.
+    - A high-precision pattern is not always correct.
+    - The pattern can be a changed sample.
+    - Tell the user, before you commit that path.
+  - LARGE, JUNK, and BINARY results: exclude them from each commit, as now.
+    - For each one, propose the correct `.gitignore` line.
+    - That line can include the path.
+    - Do not add the line unless the user agrees.
 - Never work around the script (no `git add -f`, no renaming to dodge a pattern).
-- `--staged` checks only what is currently staged.
+- `--staged` checks only the paths you stage now.
 
 ## Process
 
 1. Run `~/.claude/skills/commit/preflight.sh` (see Pre-flight above).
 2. Run `git status` and `git diff` (plus `git diff --staged`) to see everything pending.
-3. Group changes into logical commits. Draft the full plan before touching git:
+3. Sort changes into logical commits. Draft the full plan before you touch git:
    ```
    1. feat(api): add user authentication endpoint
    2. test(api): add authentication tests
    3. docs(api): document authentication flow
    ```
-4. If the plan has more than 5 commits, show it and wait for confirmation before executing.
-5. Execute one commit at a time, in order. Before each commit, run `~/.claude/skills/commit/preflight.sh --staged`.
-   - Exit 1: unstage the flagged paths with `git restore --staged <path>`, show the findings, and skip them — except a SECRET path the user explicitly approved during pre-flight, which stays staged.
-   - Exit 3: apply the verdicts already recorded during pre-flight investigation — no re-investigation needed.
-6. Report every commit SHA created and state they are local-only (not pushed).
+4. Show the plan to the user when it holds more than 5 commits.
+5. Wait for the word from the user before you continue.
+6. Run one commit at a time, in the sequence of the plan. Run `~/.claude/skills/commit/preflight.sh --staged` before each commit.
+   - Exit 1:
+     - Unstage the flagged paths with `git restore --staged <path>`.
+     - Show the results, and skip those paths.
+     - Keep staged only a SECRET path the user approved during pre-flight.
+   - Exit 3: apply the verdicts from the pre-flight check. Do not check the paths a second time.
+7. Give the commit SHA for each one you made. Say that each one is local-only, not pushed.
 
 ## Atomicity
 
-One commit = one logical change. If the message needs "and", "also", or a comma, split it.
+One commit holds one logical change. Break the commit apart when the message must use "and", "also", or a comma.
 
-- New file → its own commit, unless it's part of one feature.
-- Config, docs, tests, implementation, refactor → separate commits.
-- Feature + its own tests → acceptable together if it stays small.
-- Never bundle unrelated changes, "various improvements", or generic messages.
+- Put a new file in its own commit, unless some new files add one new function together.
+- Keep config, docs, tests, and code in different commits from a refactor.
+- A commit that adds a new function can hold its own tests too, when the commit stays small.
+- Never put unrelated changes in one commit. Never write "various improvements", or a different generic message.
 
 ## File-count limits
 
-- 1–3 files: ideal.
-- 5 files: soft cap — justify in the commit body.
-- 10 files: hard cap — ask the user before proceeding.
-- Never exceed 10 without splitting further.
+- 1–3 files: good to go.
+- 5 files: a soft limit. Give the cause in the commit body.
+- 10 files: a hard limit. Tell the user before you continue.
+- Keep each commit at 10 files or fewer. Divide a larger change into more commits.
 
 ## When changes can't be split cleanly
 
-Use `git add -p <file>` to stage specific hunks. A non-working intermediate commit is an acceptable trade for granular history. If even patch staging can't separate the change (the same line serves two purposes), stop, explain why, and ask the user.
+Use `git add -p <file>` to stage chosen hunks. A commit that does not run on its own, as a middle step, is a fair trade for a clean, granular history. When patch staging cannot divide the change too — the same line does two jobs — stop. Tell the user why. Wait for the word from the user.
 
 ## Staging
 
@@ -73,20 +101,28 @@ type(scope): imperative description
 optional body — explains WHY, lines ≤72 chars
 ```
 
-- Types: feat, fix, docs, style, refactor, perf, test, chore, ci.
-- Imperative mood, lowercase after the colon, no period, subject ≤50 chars.
-- Breaking changes: `!` after type/scope, or a `BREAKING CHANGE:` footer.
+- The commit types are `feat`, `fix`, and `docs`.
+- They are also `style`, `refactor`, and `perf`.
+- They are also `test`, `chore`, and `ci`.
+- Write the description in the imperative mood.
+- Use lowercase right after the colon.
+- Do not end with a period.
+- Keep the subject at 50 characters or fewer.
+- A breaking change: add `!` after the type or scope, or add a `BREAKING CHANGE:` footer.
 
 ## Never commit
 
-The pre-flight script is the enforced list: LARGE, JUNK, SECRET, BINARY, and SUSPECT findings. It cannot judge two things: generated files you can regenerate, and a lockfile change that was not an intentional dependency bump — exclude those by hand.
+The pre-flight script checks for these types: LARGE, JUNK, SECRET, BINARY, and SUSPECT results. It cannot judge two things. One: a file you can build again, from the same source. Two: a lockfile change that does not come from an actual change in a dependency. Exclude those two by hand.
 
 ## Never
 
-- `git push` (with or without `-u`), setting upstream, or opening a PR — the user does both.
+- Never run `git push` (with or without `-u`).
+  - Never set the upstream branch.
+  - Never open a PR.
+  - The user does each of these tasks.
 - `git commit --amend`, `rebase`, `reset --hard` that discards commits, or force-push.
 
 ## Report
 
-List every commit SHA created and state they are local-only.
-Pre-flight: <N> findings, <M> paths excluded, <K> suspects cleared as fixtures (or: clean).
+Record each commit SHA you made. State that each one is local-only.
+Pre-flight: <N> results, <M> paths excluded, <K> SUSPECT results cleared as fixtures (or: clean).

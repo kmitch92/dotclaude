@@ -1,42 +1,48 @@
 ---
 name: typescript
-description: TypeScript and Zod rules and preferences. Read by workers when a task brief lists this file.
+description: Give the TypeScript and Zod rules and preferences. Workers read this file when a task brief names it.
 disable-model-invocation: true
 ---
 
 ## Compiler
 
 - Strict mode always on: `strict`, `noUncheckedIndexedAccess`, `noImplicitOverride`, `exactOptionalPropertyTypes`, `noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`, `noFallthroughCasesInSwitch`.
-- Never weaken strictness to work around an error — fix the type.
+- Never weaken strictness to work around an error. Repair the type.
 
 ## Type definitions
 
-- Prefer `type` over `interface` in all cases — supports unions, intersections, mapped types.
-- Never write `interface X extends z.infer<Schema>` — silently drops fields on a mapped/branded schema. Use `type X = Y & {...}` instead.
-- Use branded types for domain IDs so semantically different IDs can't be passed to the wrong function.
+- Use `type`, not `interface`. A `type` can be a union, an intersection, or a mapped type.
+- Never write `interface X extends z.infer<Schema>`. That pattern drops fields from a mapped or branded schema, with no warning.
+- Write `type X = Y & {...}` as the alternative.
+- Use branded types for domain IDs. The compiler stops a mismatched ID from reaching the incorrect function.
 - Use discriminated unions for state machines, result types, and variant data.
-- Prefer utility types (`Pick`, `Omit`, `Partial`, `Required`, `Record`, `NonNullable`) over hand-rolled equivalents.
+- Prefer utility types (`Pick`, `Omit`, `Partial`, `Required`, `Record`, `NonNullable`). Do not hand-roll the same type.
 
 ## Schemas (Zod)
 
-- Define the schema first; derive the type with `z.infer<typeof Schema>`. Never define a type separately from its schema.
-- If the project has `src/common/schemas/`, all entity schemas live there — never redefine elsewhere.
-- Follow any project-specific rule in `AGENTS.md` in the schemas directory before changing a schema.
-- Compose schemas with `.extend()`, `.merge()`, `.pick()` rather than duplicating fields.
-- In tests, import schemas/types from source and build test data by parsing overrides through the real schema — never redefine inline.
-- Narrow `unknown` with a schema-backed type guard (`Schema.safeParse(value).success`), not a type assertion.
+- Write the schema first. Derive the type from it with `z.infer<typeof Schema>`.
+- Never write a type on its own, apart from the schema.
+- If the project has `src/common/schemas/`, keep each entity schema there. Never redefine a schema anywhere else.
+- Check `AGENTS.md` in the schemas directory for a project rule. Follow it before you change a schema.
+- Compose schemas with `.extend()`, `.merge()`, `.pick()`. Do not duplicate fields by hand.
+- In a test, import the schema and the type from the source.
+- Parse each override through that schema to build the test data. Never redefine the schema inline.
+- Narrow `unknown` with a schema-backed type check (`Schema.safeParse(value).success`), not a type assertion.
 
 ## Never use `any`
 
-- Use `unknown` plus a type guard or schema parse instead.
-- Never use `@ts-ignore` or a type assertion (`as T`) to bypass a type error — fix or validate instead.
+- Use `unknown`, with a type check or a schema parse.
+- Never use `@ts-ignore` or a type assertion (`as T`) to bypass a type error. Repair the type, or validate it.
 
 ## Immutability & purity
 
-- No data mutation — `readonly` arrays/properties, spread updates rather than in-place edits.
-- Prefer pure functions: same input, same output, no side effects, where the problem allows it.
+- Do not mutate data. Use `readonly` arrays and properties.
+- Apply updates with a copy, not an edit of the initial data.
+- Prefer pure functions. The same input must give the same output.
+- A pure function has no side effect, if the problem lets it.
 
 ## Effect-TS
 
-- Use for complex error handling, structured concurrency, dependency injection, or complex async pipelines.
-- Skip for simple CRUD or small utilities.
+- Use Effect-TS for a complex error, or for structured concurrency.
+- Use Effect-TS to give a dependency to a function, or for a complex async pipeline.
+- Skip Effect-TS for plain CRUD work, or for a small utility.

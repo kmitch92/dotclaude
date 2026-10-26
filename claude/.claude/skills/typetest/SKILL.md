@@ -1,15 +1,15 @@
 ---
 name: typetest
-description: Sweep the project for TypeScript errors, test failures, and coverage gaps, then fix them incrementally until targets are met
+description: Check the full project for a TypeScript error, a test failure, or a hole in the coverage. Repair each one, one step at a time, until the targets are met.
 disable-model-invocation: true
 allowed-tools: Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Bash(tsc:*), Read, Write, Edit, Grep, Glob
 ---
 
-Sweep the whole project for TypeScript errors and test failures, then fix them incrementally. This skill's purpose is a full-project sweep, so it deliberately runs the full type-check and full test suite — the one exception to "targeted tests only".
+Check the full project for a TypeScript error and a test failure. Repair each one, one step at a time. This skill checks the full project in a single run, on purpose. It runs the full type-check and the full test suite. The rule of "targeted tests only" has one exception here.
 
 ## 1. Discover
 
-Detect the package manager from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm).
+Find the package manager from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm).
 
 ```bash
 <pkg-manager> run type-check || npx tsc --noEmit
@@ -17,38 +17,38 @@ Detect the package manager from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.l
 <pkg-manager> test -- --coverage
 ```
 
-Record every TypeScript error (file, line, code, message), every test failure (file, name, reason), and every coverage gap (uncovered files/functions). List TypeScript errors before test failures — fix order follows this priority.
+Record each TypeScript error: the file, the line, the code, and the message. Record each test failure: the file, the name, and the cause. Record each hole in the coverage: the file or function with no coverage. Show the TypeScript errors before the test failures. Repair a TypeScript error before you repair a test failure, always.
 
-## 2. Fix TypeScript errors first
+## 2. Repair TypeScript errors first
 
-Type errors cause cascading test failures, so clear them before touching tests.
+A type error can cause a test to fail. Clear each type error before you touch a test.
 
-For each error: read the file, find the root cause, fix it — no `any`, use `unknown` with type guards; import real schemas, never redefine them; stay strict-mode compliant. Verify with `npx tsc --noEmit` after each fix, one at a time, not batched.
+For each error, read the file and find the root cause. Repair the error. Do not use `any`. Use `unknown` with a type check. Import the actual schema. Never redefine it. Stay strict-mode compliant. Make sure with `npx tsc --noEmit` after each repair, one at a time, never in a batch.
 
-## 3. Fix test failures
+## 3. Repair test failures
 
-For each failure: read the test, diagnose (missing implementation, wrong expectation, type mismatch from step 2, stale mock, async bug), apply the smallest correct fix, verify by running that one test.
+For each failure, read the test. Find the cause. The cause can be code not written, an incorrect expectation, a type mismatch from step 2, a stale mock, or an async bug. Apply the smallest correct repair. Make sure of it: run that one test.
 
 ## 4. Improve coverage
 
-Target 100%. For each uncovered file/function, write tests for real behavior — happy path, edge cases, errors — then re-run coverage and confirm the number moved.
+Target 100%. For each file or function with no coverage, write a test for actual behavior: the happy path, an edge condition, or an error. Run the coverage check again. Make sure the number changed.
 
-## 5. Verify and report
+## 5. Make sure, and report
 
-Run the full type-check and full test suite again. Report, as deltas from the start of this run:
+Run the full type-check and full test suite again. Report these changes from the start of this run.
 - TypeScript errors: X → Y
 - Test failures: X → Y
 - Coverage: X% → Y%
 
-**Exit only if at least one metric improved** (or is already at target: 0 errors, 0 failures, 100% coverage). If nothing moved, the task isn't done — go back and fix something.
+**Exit only if one metric or more got better** (or the project is now at the target: 0 errors, 0 failures, 100% coverage). If nothing changed, the task is not done. Go back. Repair something else.
 
 ## Rules
 
-- TypeScript before tests, always.
-- Verify after every single fix, not in batches.
-- No `any` — `unknown` plus type guards.
-- Import schemas, never redefine them.
-- Blocked on one issue? Fix a different one — always make progress somewhere.
-- Smallest fix that resolves the issue; don't refactor unrelated code.
-- "Pre-existing" is not an excuse — fix it anyway.
-- Repeated runs must converge toward 0 errors, 0 failures, 100% coverage.
+- Repair TypeScript before you repair a test, always.
+- Make sure after each repair, one at a time, never in a batch.
+- Do not use `any`. Use `unknown` with a type check.
+- Import the schema. Never redefine it.
+- When one issue stops you, repair a different one. Always keep moving.
+- Apply the smallest repair that resolves the issue. Do not refactor unrelated code.
+- Do not call "pre-existing" an excuse. Repair it anyway.
+- Make each repeated run converge to 0 errors, 0 failures, 100% coverage.

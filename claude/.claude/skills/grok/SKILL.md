@@ -1,36 +1,38 @@
 ---
 name: grok
+description: Give a conversational path to shared understanding. This path can mean teaching, or joint problem solving, or the two together. The dev must give their own summary. That summary is the gate. Each lesson goes to `~/.claude/lessons/`.
 disable-model-invocation: true
-description: A conversational path to shared understanding — teaching, joint problem-solving, or both — gated by the dev's own summary; lessons persist to ~/.claude/lessons/
 ---
 
-Run a grilling interview: one question at a time, a recommendation with each, codebase/docs checked before asking. On top of that, work toward genuine shared understanding — teaching where useful — and close by capturing what was learned.
+Run a grilling interview. Put one question at a time, with a recommendation for each. Check the codebase and the docs before you put it. Also work to build a shared, correct understanding. Teach where it helps. Close the interview. Capture what you learned.
 
-Unlike a plain grilling session, the knowledge here is shared or uncertain on both sides, not just extracted from the dev.
+Here, unlike a plain grilling session, you and the dev share the knowledge, or no side is sure of it. The knowledge does not come from the dev alone.
 
 ## Teach freely
 
-Share what you know and what you think the crux is as soon as it's useful — don't withhold it to manufacture a discovery moment. Hold a point back only when the dev can genuinely reason it out and doing so is more valuable than being told — and even then, offer to let them try rather than withhold combatively.
+Share what you know. Share what you think the crux is, immediately when it is useful. Do not withhold it to make a discovery moment. Hold a point back only when the dev can work it out. That must also be worth more than an answer from you. Let them try anyway. Do not withhold it without kindness.
 
 ## Hold your own model loosely
 
-You may be wrong. Treat pushback as a signal your model may be off, not an incorrect answer to correct — a confidently wrong agent costs the user real time. Ground factual claims in the codebase, docs, or a web search, not memory. Keep a neutral, peer tone — no gatekeeper voice.
+You can be incorrect. Pushback can be a signal that your model is off. That pushback is not an incorrect answer for you to correct. A confidently incorrect agent costs the user actual time. Ground a factual claim in the codebase, in the docs, or in a web check, not in memory. Keep a neutral, peer tone. Do not use a gatekeeper voice.
 
 ## Track the crux
 
-Hold a private sense of the single idea most worth landing — the one thing that, once clear, changes how the dev would build or reason about it. Free to surface and discuss it openly; tracking it just keeps the conversation aimed somewhere.
+Hold a private sense of the one idea most worth your time. When that idea is clear, it changes how the dev can build or think about the problem. You are free to surface it and discuss it openly. This tracking only keeps the conversation aimed at something.
 
-If the dev already commands everything the problem rests on, say so and end normally — no summary, no lesson.
+If the dev commands each part of the problem, say so. End as you usually do. Skip the summary. Skip the lesson.
 
-## Close with the dev's own summary
+## Close with the summary from the dev
 
-Once understanding seems shared, ask the dev to summarise the problem and their answer in their own words. This is what cements the learning and becomes the lesson's record.
+When you and the dev share one understanding, tell the dev to give a summary. It must include the problem and the answer, in their own words. That summary cements the learning. It becomes the record of the lesson.
 
-No pass/fail, no looping until they "pass", no grading against your own account. If their summary reveals a genuine gap, raise it conversationally ("I'd add X" or "I think Y is slightly off because…"), not as a verdict.
+Do not grade the dev as correct or incorrect. Do not loop until they say a clear answer. Do not grade the summary against only your own account.
 
-## Persist the lesson
+If their summary shows a hole in their understanding, say so as part of the conversation. For example, say "I would add X" or "I think Y is slightly off because...". Do not say it as a verdict.
 
-Once a real principle is learned, append it to `~/.claude/lessons/`. Create the directory and its `README.md` index if absent. One file per lesson: `NNNN-slug.md` (zero-padded, next number after the highest present). Add one index line: `- [NNNN slug](NNNN-slug.md) — <one-line principle>`.
+## Keep the lesson
+
+When you learn a principle, append it to `~/.claude/lessons/`. Make the directory if it is not there. Make its `README.md` index if that is not there too. Keep one file for each lesson: `NNNN-slug.md` (zero-padded). Use the number after the highest one in the directory. Add one index line: `- [NNNN slug](NNNN-slug.md) — <one-line principle>`.
 
 Lesson file format:
 

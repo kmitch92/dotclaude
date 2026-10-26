@@ -1,6 +1,6 @@
 ---
 name: trestart
-description: Restart this session in place — continue (not fork) the current Claude Code session in the same tmux pane, or relocate it to a new terminal window
+description: Continue this session in the same tmux pane, or move it to a new terminal window. Do not start a new one.
 disable-model-invocation: true
 allowed-tools: Bash(~/.claude/bin/claude-trestart.sh:*)
 ---
@@ -11,7 +11,13 @@ allowed-tools: Bash(~/.claude/bin/claude-trestart.sh:*)
 
 ## Task
 
-The restart script above has ALREADY executed — do not run it again.
+The script above ran. Do not run it again.
 
-- If the output starts with "RESTART OK": reply with one short sentence confirming the session is restarting in place, mentioning where (same tmux pane, or a new terminal window). Nothing else.
-- If the output starts with "RESTART FAILED": relay the error to the user in one or two sentences, including the manual `claude --resume ...` command from the error if present.
+- If the output starts with `RESTART OK`:
+  - Give one short sentence.
+  - State that the session continues.
+  - Name the location: the same tmux pane, or a new terminal window.
+  - Give no other text.
+- If the output starts with `RESTART FAILED`:
+  - Send the error to the user in one or two sentences.
+  - Include the manual `claude --resume ...` command when the error shows it.
