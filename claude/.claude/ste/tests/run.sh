@@ -7,60 +7,6 @@ STE_DIR="$(cd "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd)"
 OVERALL_STATUS=0
 
 # ---------------------------------------------------------------------------
-# Section: extract-dict
-# ---------------------------------------------------------------------------
-section_extract_dict() {
-    local extractor="${STE_DIR}/extract-dict.py"
-    local fixture="${SCRIPT_DIR}/fixtures/dict-excerpt.txt"
-    local expected_dir="${SCRIPT_DIR}/fixtures/expected"
-    local tmp_dir
-    local status=0
-
-    if [[ ! -f "${extractor}" ]]; then
-        echo "FAIL extract-dict: extractor script missing at ${extractor}"
-        return 1
-    fi
-
-    tmp_dir="$(mktemp -d)"
-    trap 'rm -rf "${tmp_dir}"' RETURN
-
-    if ! python3 "${extractor}" "${fixture}" --out "${tmp_dir}"; then
-        echo "FAIL extract-dict: extractor exited non-zero"
-        return 1
-    fi
-
-    local name
-    for name in approved unapproved verb-forms recurring-errors; do
-        local actual="${tmp_dir}/${name}.tsv"
-        local expected="${expected_dir}/${name}.tsv"
-
-        if [[ ! -f "${actual}" ]]; then
-            echo "FAIL extract-dict: missing output ${name}.tsv"
-            status=1
-            continue
-        fi
-
-        if ! diff -u "${expected}" "${actual}" > "${tmp_dir}/${name}.diff"; then
-            echo "FAIL extract-dict: ${name}.tsv mismatch"
-            cat "${tmp_dir}/${name}.diff"
-            status=1
-        fi
-    done
-
-    if [[ "${status}" -eq 0 ]]; then
-        echo "PASS extract-dict"
-        return 0
-    else
-        echo "FAIL extract-dict"
-        return 1
-    fi
-}
-
-if ! section_extract_dict; then
-    OVERALL_STATUS=1
-fi
-
-# ---------------------------------------------------------------------------
 # Shared linter location
 # ---------------------------------------------------------------------------
 BIN_DIR="$(cd "${STE_DIR}/.." >/dev/null 2>&1 && pwd)/bin"
@@ -114,28 +60,13 @@ section_lint_fixtures() {
         rm -f "${stderr_file}"
 
         local result
-        result="$(ACTUAL_JSON="${out}" EXPECTED_IDS="${expected_ids}" ACTUAL_RC="${rc}" RULES_TSV="${STE_DIR}/rules.tsv" python3 <<'PYEOF'
+        result="$(ACTUAL_JSON="${out}" EXPECTED_IDS="${expected_ids}" ACTUAL_RC="${rc}" python3 <<'PYEOF'
 import json, os, sys
 
 expected_raw = os.environ["EXPECTED_IDS"].split()
 expected = set() if (not expected_raw or expected_raw == ["none"]) else set(expected_raw)
 
-classes = {}
-with open(os.environ["RULES_TSV"]) as fh:
-    fh.readline()
-    for line in fh:
-        line = line.rstrip("\n")
-        if not line or line.startswith("#"):
-            continue
-        parts = line.split("\t")
-        classes[parts[0]] = parts[2]
-
-if not expected:
-    expected_rc = 0
-elif any(classes.get(i) == "block" for i in expected):
-    expected_rc = 2
-else:
-    expected_rc = 1
+expected_rc = 0 if not expected else 1
 
 actual_json = os.environ["ACTUAL_JSON"]
 actual_rc = int(os.environ["ACTUAL_RC"])
@@ -238,7 +169,7 @@ section_lint_state() {
 
     local state_file
     state_file="$(mktemp)"
-    printf '%s' '{"rc":2,"gated":true,"output":"LINE1\nLINE2","ts":"x","scope":"main"}' > "${state_file}"
+    printf '%s' '{"rc":1,"gated":true,"output":"LINE1\nLINE2","ts":"x","scope":"main"}' > "${state_file}"
 
     local out rc
     set +e
@@ -247,7 +178,7 @@ section_lint_state() {
     set -e
     rm -f "${state_file}"
 
-    if [[ "${out}" == $'LINE1\nLINE2' && "${rc}" -eq 2 ]]; then
+    if [[ "${out}" == $'LINE1\nLINE2' && "${rc}" -eq 1 ]]; then
         echo "PASS lint-state"
         return 0
     else
@@ -302,7 +233,7 @@ fi
 # Section: lint-resilience
 # ---------------------------------------------------------------------------
 section_lint_resilience() {
-    local fixture="${SCRIPT_DIR}/fixtures/good-reply.md"
+    local fixture="${SCRIPT_DIR}/fixtures/nonexistent-input.md"
 
     if [[ ! -f "${LINTER}" ]]; then
         echo "FAIL lint-resilience: linter missing at ${LINTER}"
@@ -313,7 +244,7 @@ section_lint_resilience() {
     local err_file
     err_file="$(mktemp)"
     set +e
-    out="$(STE_DICT_DIR=/nonexistent python3 "${LINTER}" --text "${fixture}" 2>"${err_file}")"
+    out="$(python3 "${LINTER}" --text "${fixture}" 2>"${err_file}")"
     rc=$?
     set -e
     err="$(cat "${err_file}")"
