@@ -64,6 +64,8 @@ BOX_CHARS = set("─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩
 ABBREV_SET = ("e.g.", "i.e.", "etc.", "vs.", "cf.", "n.b.", "et al.")
 
 LIST_ITEM_RE = re.compile(r'^(?:[-*•]\s+|\d+[.)]\s+)')
+BULLET_MARKER_RE = re.compile(r'^[-*•]\s+')
+NUMBERED_MARKER_RE = re.compile(r'^\d+[.)]\s+')
 ALSO_RE = re.compile(r'^Also:\s*')
 PROC_PREFIX_RE = re.compile(r'^(Do not|Always|Never|Then)\s+', re.IGNORECASE)
 
@@ -654,7 +656,37 @@ def split_into_sentences(text):
     return sentences
 
 
-def build_sentence_specs(lines):
+def compute_step_flags(text):
+    """IMPERATIVE's "is this list line a procedure step" flag, one per list
+    line, in document order. This is a global pass over every non-blank
+    line of the whole (already P1/P2-processed) text, deliberately not
+    scoped to one blank-line-separated block: a numbered step ("1." / "2)")
+    is always a step; a dash/star/bullet (*) is a step only when the
+    nearest preceding non-blank line that is not itself a list item ends
+    with a colon. Blank lines and dropped lines (already removed by P2) are
+    skipped when searching upward, so a heading, a blank line or a full
+    stop above a bullet all mean "not a step" -- see tests/fixtures/lint/
+    {warn-fp-imperative-bullets,warn-imperative-steps}.md. build_doc's
+    per-block list-line discovery visits every list line in the same
+    document order, so the two line up positionally.
+    """
+    flags = []
+    last_context = None
+    for raw_line in text.split('\n'):
+        stripped = raw_line.strip()
+        if not stripped:
+            continue
+        if NUMBERED_MARKER_RE.match(stripped):
+            flags.append(True)
+            continue
+        if BULLET_MARKER_RE.match(stripped):
+            flags.append(bool(last_context) and last_context.endswith(':'))
+            continue
+        last_context = stripped
+    return flags
+
+
+def build_sentence_specs(lines, step_flags, flag_idx):
     specs = []
     buf = []
 
@@ -662,7 +694,7 @@ def build_sentence_specs(lines):
         if buf:
             text = ' '.join(buf)
             for s in split_into_sentences(text):
-                specs.append(('plain', s))
+                specs.append(('plain', s, None))
             buf.clear()
 
     for line in lines:
@@ -672,17 +704,21 @@ def build_sentence_specs(lines):
         m_list = LIST_ITEM_RE.match(stripped)
         if m_list:
             flush()
-            specs.append(('list', stripped[m_list.end():].strip()))
+            is_step = False
+            if flag_idx < len(step_flags):
+                is_step = step_flags[flag_idx]
+                flag_idx += 1
+            specs.append(('list', stripped[m_list.end():].strip(), is_step))
             continue
         if ALSO_RE.match(stripped):
             flush()
-            specs.append(('also', ALSO_RE.sub('', stripped).strip()))
+            specs.append(('also', ALSO_RE.sub('', stripped).strip(), None))
             continue
         buf.append(stripped)
         if stripped.endswith(':'):
             flush()
     flush()
-    return specs
+    return specs, flag_idx
 
 
 def classify_procedural(data, is_list_item, content):
@@ -700,7 +736,7 @@ def classify_procedural(data, is_list_item, content):
 
 class Sentence:
     def __init__(self, index, paragraph_index, raw_text, tokens,
-                 is_list_item, is_also_line, procedural):
+                 is_list_item, is_also_line, procedural, is_procedure_step=False):
         self.index = index
         self.paragraph_index = paragraph_index
         self.raw_text = raw_text
@@ -709,6 +745,7 @@ class Sentence:
         self.is_list_item = is_list_item
         self.is_also_line = is_also_line
         self.procedural = procedural
+        self.is_procedure_step = is_procedure_step
 
 
 class Paragraph:
@@ -726,21 +763,24 @@ class Doc:
 def build_doc(data, text):
     doc = Doc()
     sentence_index = 0
+    step_flags = compute_step_flags(text)
+    flag_idx = 0
     for block in re.split(r'\n\s*\n', text):
         lines = [ln for ln in block.split('\n') if ln.strip()]
         if not lines:
             continue
-        specs = build_sentence_specs(lines)
+        specs, flag_idx = build_sentence_specs(lines, step_flags, flag_idx)
         if not specs:
             continue
         para = Paragraph(len(doc.paragraphs))
-        for kind, content in specs:
+        for kind, content, is_step in specs:
             is_list_item = (kind == 'list')
             is_also_line = (kind == 'also')
             tokens = tokenize(data, content)
             procedural = classify_procedural(data, is_list_item, content)
             sent = Sentence(sentence_index, para.index, content, tokens,
-                             is_list_item, is_also_line, procedural)
+                             is_list_item, is_also_line, procedural,
+                             bool(is_step))
             para.sentences.append(sent)
             doc.prose_words += len(tokens)
             sentence_index += 1
@@ -883,7 +923,7 @@ def check_one_instruction(data, sentence):
 
 
 def check_imperative(data, sentence):
-    if not sentence.is_list_item:
+    if not sentence.is_procedure_step:
         return []
     text = sentence.raw_text.strip()
     if re.match(r'^do\s+not\b', text, re.IGNORECASE):
