@@ -1,0 +1,88 @@
+# Admission rule: a phrase enters this file only when it is wrong in every
+# context and carries no technical meaning. Ordinary programming words such
+# as pass, list, order, check, test, both, under and any must never enter
+# this file.
+phrase	check	fix
+let me	NARRATION	Say what you found, not what you are about to do.
+i will now	NARRATION	Say what you found, not what you are about to do.
+now i will	NARRATION	Say what you found, not what you are about to do.
+next i will	NARRATION	Say what you found, not what you are about to do.
+i am going to	NARRATION	Say what you found, not what you are about to do.
+let us take a look	NARRATION	Say what you found, not what you are about to do.
+lets take a look	NARRATION	Say what you found, not what you are about to do.
+first i will	NARRATION	Say what you found, not what you are about to do.
+i will go ahead	NARRATION	Say what you found, not what you are about to do.
+going forward i will	NARRATION	Say what you found, not what you are about to do.
+let us dive in	NARRATION	Say what you found, not what you are about to do.
+lets dive in	NARRATION	Say what you found, not what you are about to do.
+i will start by	NARRATION	Say what you found, not what you are about to do.
+i will begin by	NARRATION	Say what you found, not what you are about to do.
+i will take a look	NARRATION	Say what you found, not what you are about to do.
+let me know if	NARRATION	Say what you found, not what you are about to do.
+great	FILLER-OPEN	Delete the opener. Start with the answer.
+perfect	FILLER-OPEN	Delete the opener. Start with the answer.
+absolutely	FILLER-OPEN	Delete the opener. Start with the answer.
+certainly	FILLER-OPEN	Delete the opener. Start with the answer.
+sure thing	FILLER-OPEN	Delete the opener. Start with the answer.
+you are right	FILLER-OPEN	Delete the opener. Start with the answer.
+youre right	FILLER-OPEN	Delete the opener. Start with the answer.
+good catch	FILLER-OPEN	Delete the opener. Start with the answer.
+of course	FILLER-OPEN	Delete the opener. Start with the answer.
+i apologize	FILLER-OPEN	Delete the opener. Start with the answer.
+i apologise	FILLER-OPEN	Delete the opener. Start with the answer.
+happy to help	FILLER-OPEN	Delete the opener. Start with the answer.
+i would be happy to	FILLER-OPEN	Delete the opener. Start with the answer.
+id be happy to	FILLER-OPEN	Delete the opener. Start with the answer.
+excellent	FILLER-OPEN	Delete the opener. Start with the answer.
+no problem	FILLER-OPEN	Delete the opener. Start with the answer.
+got it	FILLER-OPEN	Delete the opener. Start with the answer.
+understood	FILLER-OPEN	Delete the opener. Start with the answer.
+it is worth noting	SLOP	Name the property you mean, or delete the word.
+its worth noting	SLOP	Name the property you mean, or delete the word.
+it seems like	SLOP	Name the property you mean, or delete the word.
+i think maybe	SLOP	Name the property you mean, or delete the word.
+probably should	SLOP	Name the property you mean, or delete the word.
+you might want to	SLOP	Name the property you mean, or delete the word.
+feel free to	SLOP	Name the property you mean, or delete the word.
+as you know	SLOP	Name the property you mean, or delete the word.
+in order to	SLOP	Name the property you mean, or delete the word.
+leverage	SLOP	Name the property you mean, or delete the word.
+robust	SLOP	Name the property you mean, or delete the word.
+seamless	SLOP	Name the property you mean, or delete the word.
+delve	SLOP	Name the property you mean, or delete the word.
+crucial	SLOP	Name the property you mean, or delete the word.
+vital	SLOP	Name the property you mean, or delete the word.
+comprehensive	SLOP	Name the property you mean, or delete the word.
+powerful	SLOP	Name the property you mean, or delete the word.
+elegant	SLOP	Name the property you mean, or delete the word.
+simply	SLOP	Name the property you mean, or delete the word.
+just	SLOP	Name the property you mean, or delete the word.
+actually	SLOP	Name the property you mean, or delete the word.
+really	SLOP	Name the property you mean, or delete the word.
+very	SLOP	Name the property you mean, or delete the word.
+quite	SLOP	Name the property you mean, or delete the word.
+significantly	SLOP	Name the property you mean, or delete the word.
+essentially	SLOP	Name the property you mean, or delete the word.
+fundamentally	SLOP	Name the property you mean, or delete the word.
+dive into	SLOP	Name the property you mean, or delete the word.
+obviously	SLOP	Name the property you mean, or delete the word.
+clearly	SLOP	Name the property you mean, or delete the word.
+needless to say	SLOP	Name the property you mean, or delete the word.
+at the end of the day	SLOP	Name the property you mean, or delete the word.
+it is important to note	SLOP	Name the property you mean, or delete the word.
+it is important to	SLOP	Name the property you mean, or delete the word.
+important to note	SLOP	Name the property you mean, or delete the word.
+keep in mind	SLOP	Name the property you mean, or delete the word.
+note that	SLOP	Name the property you mean, or delete the word.
+arguably	SLOP	Name the property you mean, or delete the word.
+somewhat	SLOP	Name the property you mean, or delete the word.
+fairly	SLOP	Name the property you mean, or delete the word.
+utilize	SLOP	Name the property you mean, or delete the word.
+utilise	SLOP	Name the property you mean, or delete the word.
+game-changer	SLOP	Name the property you mean, or delete the word.
+cutting-edge	SLOP	Name the property you mean, or delete the word.
+state-of-the-art	SLOP	Name the property you mean, or delete the word.
+unleash	SLOP	Name the property you mean, or delete the word.
+a bit of a	SLOP	Name the property you mean, or delete the word.
+sort of	SLOP	Name the property you mean, or delete the word.
+kind of	SLOP	Name the property you mean, or delete the word.
