@@ -31,7 +31,7 @@ orchestration.
     ├── skills/                 stack skills + user commands
     ├── hooks/                  agent-cap, worker-git-block, track-session, cowork-notice, pre-compact, session-start-compact, compact-timeline
     ├── bin/                    reminder hooks, STE linter and gates, report, tfork, trestart
-    ├── ste/                    STE rules.tsv, glossary.txt, banned.txt, british.tsv, extract-dict.py, tests/; dict/ is gitignored
+    ├── ste/                    STE rules.tsv, phrases.tsv, tests/
     ├── output-styles/          terse.md
     ├── lessons/                grok output
     └── scripts/                notify-claude.sh
@@ -56,13 +56,13 @@ main session — plans, delegates, reviews, consolidates
 
 1. Output style (`output-styles/terse.md`): sets the shape of a reply,
    plus STE grammar and vocabulary.
-2. Global rules (`CLAUDE.md`): set honesty, the `Evidence` rules, and the
-   glossary rule.
+2. Global rules (`CLAUDE.md`): set honesty, the `Evidence` rules, and one
+   clear name for each term.
 3. Per-prompt reinforcement with measurement
    (`bin/claude-terse-reminder.sh`) puts the style reminder and the set of
-   block-class checks from `ste/rules.tsv` into the prompt. It also puts
-   in the lint result of the previous reply. It reads that result from
-   the state file the Stop gate wrote, with a transcript as a fallback.
+   checks from `ste/rules.tsv` into the prompt. It also puts in the lint
+   result of the previous reply. It reads that result from the state
+   file the Stop gate wrote, with a transcript as a fallback.
 4. Stop gate (`bin/claude-ste-gate.sh`): runs `bin/claude-ste-lint.py` on
    the last reply, writes the state file the next prompt reads, and adds
    to the log. It prints nothing and never refuses a reply, because
@@ -79,57 +79,48 @@ main session — plans, delegates, reviews, consolidates
 - `bin/claude-orient-reminder.sh` — reminder before each question to the
   user.
 
-## STE linter
-
-### Dictionary
-
-The source PDF for the STE dictionary has a copyright. The install never
-commits that PDF. `.gitignore` records `ste/dict/`. Run these two commands
-to regenerate the dictionary:
-
-```
-pdftotext -layout ~/Downloads/asd-ste100-issue-9.pdf ~/.claude/ste/dict/ste9.txt
-python3 ~/.claude/ste/extract-dict.py ~/.claude/ste/dict/ste9.txt
-```
-
-Expected counts: 846 approved words, 1313 unapproved words (1232 with an
-alternative), 196 verb-form rows, 39 recurring errors.
+## Voice linter
 
 ### Checks
 
-IDs, classes and corrections for each STE check live in `ste/rules.tsv`.
-A `block` class marks a hard violation. A `warn` class marks a soft
-violation. The gate never refuses a reply for the two classes. The next
-prompt shows the result.
+IDs, classes, and corrections for each check live in `ste/rules.tsv`.
+All 13 checks carry class `warn`, and the gate never refuses a reply for
+a hit on any check. The next prompt shows the result of the last reply.
 
-Block: SENTENCE-LENGTH, CONTRACTION, COMPLEX-VERB, `USING`, PASSIVE-BY,
-UNAPPROVED, BANNED, SEMICOLON, LATIN.
+Length and shape: SENTENCE-LENGTH flags a sentence past 25 words,
+PARAGRAPH-LENGTH flags a main-scope paragraph past six sentences, and
+PROSE-WORDS flags a response that runs over its word budget. ALSO-COUNT
+flags more than three "Also:" lines, and ALSO-LENGTH flags an "Also:"
+line past 20 words.
 
-`Warn`: PASSIVE, ING-FORM, NOUN-CLUSTER, ONE-INSTRUCTION, IMPERATIVE,
-PARAGRAPH-LENGTH, THIS-PRONOUN, POSSESSIVE, SAFETY, UNKNOWN, POS,
-PROSE-WORDS, ALSO-COUNT, ALSO-LENGTH.
+Typography and grammar: CONTRACTION flags a contraction in place of the
+words in full, and SEMICOLON flags a semicolon outside a code block.
+LATIN flags a Latin abbreviation in place of a plain phrase such as "for
+example" or "that is". PASSIVE-BY flags passive voice that names the
+actor with "by". THIS-PRONOUN flags a sentence that opens with "This",
+"It", or "That" plus a verb, leaving the noun unnamed.
 
-### Glossary
+Register: NARRATION flags an intent statement in place of a finding,
+FILLER-OPEN flags an opener such as "Great" or "Absolutely", and SLOP
+flags an empty intensifier or a vague hedge. Each of these three checks
+draws its phrase list from `ste/phrases.tsv`.
 
-The glossary lets in a word only when it names a specified software
-thing (a noun) or a specified software operation (a verb). Adjectives
-and adverbs never qualify. `banned.txt` holds words typical of AI chat
-tone that the dictionary does not map. The glossary wins when the two
-files have the word.
+The repo dropped its vocabulary check for a measured reason. Run against
+8133 words of this repo's own prose, the old dictionary check produced
+807 hits across 246 distinct words. The words it fired on most were
+ordinary technical English, among them pass, list, order, every, and
+under. Programming needs far more nouns and verbs than an aerospace
+dictionary holds.
 
 ### Report
 
 Run `bin/claude-ste-report.sh [--days N]`. Each metric reports one fact:
 
 - lints: the total count of lint runs.
-- hit rate: the share of replies that broke a must-fix rule.
+- hit rate: the share of replies that broke a check.
 - gate errors: the number of times the linter itself failed to run.
-- top ids: the rule IDs that fire most frequently.
-- top unapproved: the unapproved words that fire most frequently, each with
-  an alternative.
-- top unknown: the words the linter does not recognise at all. This record
-  supplies the glossary.
-- prose words: the minimum, median and maximum word count of main-scope
+- top ids: the rule IDs that fire most often.
+- prose words: the minimum, median, and maximum word count of main-scope
   replies.
 
 ### Not enforced
@@ -140,15 +131,15 @@ Some STE rules stay prompt-only. No automated check runs for rule 1.3
 `Evidence` (`read`, `ran`, `infer`) and define-on-first-use also stay
 prompt-only.
 
-One local deviation also applies. The words `I`, `me` and `my` stay
-permitted. American spelling stays unenforced, and `british.tsv`
-normalises a British word for dictionary lookup.
+One local deviation also applies. The words `I`, `me`, and `my` stay
+permitted. American spelling stays unenforced, with no vocabulary check
+in place to flag it.
 
 ### Tests
 
-Run `bash ~/.claude/ste/tests/run.sh`. It checks the extractor fixture,
-the lint fixtures, the transcript fallback, the state replay, the
-latency (below 150 ms), and resilience.
+Run `bash ~/.claude/ste/tests/run.sh`. It checks the lint fixtures, the
+transcript fallback, the state replay, the latency (below 150 ms), and
+resilience.
 
 Run the hook tests in `bin/`: `claude-ste-gate.test.sh`,
 `claude-ste-subagent-gate.test.sh`, `claude-terse-reminder.test.sh`, and

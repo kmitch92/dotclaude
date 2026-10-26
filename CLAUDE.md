@@ -9,8 +9,8 @@ When a hook, a script, or a settings key can make a behaviour occur on
 its own, build it there. Prompt text is the last option. Use it only for
 judgement no mechanism can check.
 
-An agent can select a rule to follow, a file to open, or a doc to read —
-or it can skip the step. A skipped step fails silently and at random. A
+An agent can select a rule to follow, a file to open, or a doc to read,
+or it can skip the step, which then fails silently and at random. A
 hook fires each time, reports what it did, and can refuse.
 
 ```
