@@ -12,11 +12,8 @@ allowed-tools: Bash(~/.claude/bin/claude-tfork.sh:*)
 
 ## Task
 
-The fork script above has ALREADY executed. Do not run it again.
+The fork script above has already executed, so do not run it again.
 
-- If the output starts with "FORK OK", give one short sentence.
-- Say that the forked session is now open.
-- Name where you started it (pane or window).
-- Give nothing else.
-- If the output starts with "FORK FAILED", give the error to the user in one or two sentences.
-- If the error has the manual `claude --resume ... --fork-session` command, include it.
+- If the output starts with "FORK OK", give one short sentence that says the forked session is now open.
+- Name where you started it, the pane or the window, and give nothing else.
+- If the output starts with "FORK FAILED", give the error to the user in one or two sentences, and include the manual `claude --resume ... --fork-session` command when it does.

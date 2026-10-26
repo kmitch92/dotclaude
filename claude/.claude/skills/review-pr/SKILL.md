@@ -5,13 +5,13 @@ disable-model-invocation: true
 allowed-tools: Bash(git:*), Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Read, Grep, Glob, AskUserQuestion
 ---
 
-Examine a pull request end-to-end in an isolated **worktree**. You are a safety net, not the owner. The dev who wrote the change stays responsible. Look at the full change. Let nothing ship unseen.
+Examine a pull request end-to-end in an isolated **worktree**. You are a safety net, not the owner, and the dev who wrote the change stays responsible. Look at the full change, and let nothing ship unseen.
 
-Surface errors, and save time. This task is not a quiz for the dev. Look at each question you can answer against the code, on your own. Resolve it there. Do not go to the dev for it. Question the dev only for what the code cannot give you. Examples: why the business wants it, intent, if an omission was deliberate, or context external to the repo.
+Surface errors, and save time. This task is not a quiz for the dev, so resolve each question you can answer against the code on your own, instead of taking it to the dev. Question the dev only for what the code cannot give you, such as why the business wants it, the intent, whether an omission was deliberate, or context external to the repo.
 
 ## 1. Get the branch
 
-If not given, request it. Check the target branch it points to (default `main`).
+If not given, request it, and check the target branch it points to (default `main`).
 
 ## 2. Create the worktree
 
@@ -20,7 +20,7 @@ ROOT=$(git rev-parse --show-toplevel)
 git ls-remote --exit-code --heads origin <branch>
 ```
 
-If that check fails, stop. The branch is not on the remote of this repo. Do not guess at a different repo. If the check succeeds, continue:
+If that check fails, stop, because the branch is not on the remote of this repo, and do not guess at a different repo. If the check succeeds, continue:
 
 ```bash
 git fetch origin <branch>
@@ -31,15 +31,15 @@ Work exclusively in `$ROOT/worktrees/<branch>` from here on.
 
 ## 3. Install dependencies
 
-Find the package manager from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm, `bun.lockb` → bun). Install it. The inspection runs against a working, installed tree.
+Find the package manager from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm, `bun.lockb` → bun), and install it, because the inspection runs against a working, installed tree.
 
 ## 4. Map the change surface
 
-Diff the branch against its target (`git diff <base>...HEAD`). Follow what the changed code touches, and what relies on it. The map is done when you examine each changed file and understand its blast radius. The goal is not a record of files. The goal is an understanding of what the change does, and everywhere it touches.
+Diff the branch against its target (`git diff <base>...HEAD`), and follow what the changed code touches, and what relies on it. The map is done when you examine each changed file and understand its blast radius. The goal is not a record of files, but an understanding of what the change does, and everywhere it touches.
 
 ## 5. Investigate and verify
 
-Work through the change and its blast radius on your own. You can find a bug, a deletion, unbounded growth, a broken contract, or a partial scope. Read the code that answers it before you report an issue. Never assert a claim the code can check or disprove.
+Work through the change and its blast radius on your own, watching for a bug, a deletion, unbounded growth, a broken contract, or a partial scope. Read the code that answers it before you report an issue, and never assert a claim the code can check or disprove.
 
 There are two types of open question.
 - **Answerable from the code**:
@@ -59,6 +59,6 @@ Report each result faithfully: a failure with output, a skip as a skip, and a su
 
 ## 7. Surface everything
 
-Look at the full change. Is it correct? What about edge conditions? Is it safe? How fast does it run? Are tests missing? Is the scope larger than planned? Check each issue raised against the code before you report it. Offer concrete test and debug steps the dev can run now. State plainly what you could not check, and why. The dev picks what to act on.
+Look at the full change for correctness, edge conditions, safety, performance, missing tests, and any scope creep beyond what was planned. Check each issue raised against the code before you report it, and offer concrete test and debug steps the dev can run now. State plainly what you could not check, and why, and let the dev pick what to act on.
 
 When done, offer to remove the worktree: `git worktree remove $ROOT/worktrees/<branch>`.
