@@ -1,13 +1,13 @@
 ---
 name: grill
-description: Interview to stress-test a plan or design before building
+description: Interview to stress-test a plan or architecture before you build it
 disable-model-invocation: true
 ---
 
-Interview the user about this plan or design until reaching shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one by one. Give a recommended answer with every question.
+Interview the user about this plan or architecture until reaching shared understanding. Walk down each branch of the architecture tree, resolving dependencies between decisions one by one. Give a recommended answer with each question.
 
-Ask one question at a time; wait for the answer before continuing. Multiple questions at once is confusing.
+Give the user one question at a time. Wait for the answer before you continue. Many questions at one time confuse the user.
 
-If a question can be answered by exploring the codebase, explore instead of asking.
+If the codebase can answer a question, explore it. Do not give that question to the user.
 
-Do not act on the plan until the user confirms shared understanding.
+Do not act on the plan until you and the user share an understanding of it.

@@ -1,7 +1,9 @@
 # dotclaude
 
-Personal Claude Code config: lean core rules, strict terse output in
-ASD-STE100, own orchestration system.
+dotclaude is a personal configuration for Claude Code (the command-line
+agent). It sets lean rules. Output stays terse and strict, in the style of
+ASD-STE100 (Simplified Technical English). It also runs its own system for
+orchestration.
 
 ## Layout
 
@@ -54,20 +56,19 @@ main session — plans, delegates, reviews, consolidates
 
 1. Output style (`output-styles/terse.md`): sets the shape of a reply,
    plus STE grammar and vocabulary.
-2. Global rules (`CLAUDE.md`): set honesty, the Evidence rules, and the
+2. Global rules (`CLAUDE.md`): set honesty, the `Evidence` rules, and the
    glossary rule.
 3. Per-prompt reinforcement with measurement
-   (`bin/claude-terse-reminder.sh`): injects the style reminder and the
-   block-class STE check list from `ste/rules.tsv`. It also injects the lint
-   result of the previous reply, read from the state file the Stop gate
-   wrote, with a transcript fallback.
+   (`bin/claude-terse-reminder.sh`) puts the style reminder and the set of
+   block-class checks from `ste/rules.tsv` into the prompt. It also puts
+   in the lint result of the previous reply. It reads that result from
+   the state file the Stop gate wrote, with a transcript as a fallback.
 4. Stop gate (`bin/claude-ste-gate.sh`): runs `bin/claude-ste-lint.py` on
-   the final reply. A block-class hit refuses the reply once, and the
-   retry never gets refused. `env.STE_GATE = "warn"` in `settings.json`
-   keeps the gate in report-only mode for rollout phase 1. Remove the key
-   to enforce the gate.
+   the last reply, writes the state file the next prompt reads, and adds
+   to the log. It prints nothing and never refuses a reply, because
+   writing a second full reply has a cost.
 5. Subagent voice by schema (`agents/worker.md`, `agents/scout.md`):
-   defines the report fields. The linter checks the free-text fields at
+   gives the report fields. The linter checks the free-text fields at
    SubagentStop with `bin/claude-ste-subagent-gate.sh`.
 
 ```
@@ -82,9 +83,9 @@ main session — plans, delegates, reviews, consolidates
 
 ### Dictionary
 
-The source PDF holds the STE dictionary and is copyrighted. The install
-never commits it. `ste/dict/` is listed in `.gitignore`. Regenerate the
-dictionary with these two commands:
+The source PDF for the STE dictionary has a copyright. The install never
+commits that PDF. `.gitignore` records `ste/dict/`. Run these two commands
+to regenerate the dictionary:
 
 ```
 pdftotext -layout ~/Downloads/asd-ste100-issue-9.pdf ~/.claude/ste/dict/ste9.txt
@@ -96,46 +97,48 @@ alternative), 196 verb-form rows, 39 recurring errors.
 
 ### Checks
 
-IDs, classes and fixes for each STE check live in `ste/rules.tsv`. A
-block class refuses a reply. A warn class gets reported on the next
+IDs, classes and corrections for each STE check live in `ste/rules.tsv`.
+A `block` class refuses a reply. A `warn` class gets reported on the next
 prompt.
 
-Block: SENTENCE-LENGTH, CONTRACTION, COMPLEX-VERB, USING, PASSIVE-BY,
+Block: SENTENCE-LENGTH, CONTRACTION, COMPLEX-VERB, `USING`, PASSIVE-BY,
 UNAPPROVED, BANNED, SEMICOLON, LATIN.
 
-Warn: PASSIVE, ING-FORM, NOUN-CLUSTER, ONE-INSTRUCTION, IMPERATIVE,
+`Warn`: PASSIVE, ING-FORM, NOUN-CLUSTER, ONE-INSTRUCTION, IMPERATIVE,
 PARAGRAPH-LENGTH, THIS-PRONOUN, POSSESSIVE, SAFETY, UNKNOWN, POS,
 PROSE-WORDS, ALSO-COUNT, ALSO-LENGTH.
 
 ### Glossary
 
-The glossary admits a word only if it names a specific software thing (a
-noun) or a specific software operation (a verb). Adjectives and adverbs
-never qualify. `banned.txt` holds register words that the dictionary does
-not map. The glossary wins when a word appears in both lists.
+The glossary lets in a word only when it names a specified software
+thing (a noun) or a specified software operation (a verb). Adjectives
+and adverbs never qualify. `banned.txt` holds words typical of AI chat
+tone that the dictionary does not map. The glossary wins when the two
+files have the word.
 
 ### Report
 
 Run `bin/claude-ste-report.sh [--days N]`. Each metric reports one fact:
 
-- lints: the total number of lint events.
-- block rate: the share of replies the gate would refuse.
-- retry rate: the share of refused replies that a later reply fixed.
+- lints: the total count of lint runs.
+- block rate: the share of replies the gate refuses.
+- retry rate: the share of refused replies that a subsequent reply repaired.
 - gate errors: the number of times the linter itself failed to run.
-- top ids: the rule IDs that fire most often.
-- top unapproved: the unapproved words that fire most often, each with a
-  fix.
-- top unknown: the words the linter does not recognise at all. This list
-  feeds the glossary.
+- top ids: the rule IDs that fire most frequently.
+- top unapproved: the unapproved words that fire most frequently, each with
+  an alternative.
+- top unknown: the words the linter does not recognise at all. This record
+  supplies the glossary.
 - prose words: the minimum, median and maximum word count of main-scope
   replies.
 
 ### Not enforced
 
-Some STE rules stay prompt-only, with no automated check: rule 1.3 (word
-meaning), rule 1.11 (synonym drift), rule 3.7 (nominalisation), rule 4.5
-(articles), the Evidence register (`read`, `ran`, `infer`), and
-define-on-first-use.
+Some STE rules stay prompt-only. No automated check runs for rule 1.3
+(word meaning), rule 1.11 (synonym substitution), rule 3.7
+(nominalisation), or rule 4.5 (`articles`). The word selection for
+`Evidence` (`read`, `ran`, `infer`) and define-on-first-use also stay
+prompt-only.
 
 One local deviation also applies. The words `I`, `me` and `my` stay
 permitted. American spelling stays unenforced, and `british.tsv`
@@ -143,9 +146,9 @@ normalises a British word for dictionary lookup.
 
 ### Tests
 
-Run `bash ~/.claude/ste/tests/run.sh` for the extractor fixture, the lint
-fixtures, the transcript fallback, the state replay, the latency check
-(under 150 ms), and the resilience check.
+Run `bash ~/.claude/ste/tests/run.sh`. It checks the extractor fixture,
+the lint fixtures, the transcript fallback, the state replay, the
+latency (below 150 ms), and resilience.
 
 Run the hook tests in `bin/`: `claude-ste-gate.test.sh`,
 `claude-ste-subagent-gate.test.sh`, `claude-terse-reminder.test.sh`, and
@@ -153,45 +156,44 @@ Run the hook tests in `bin/`: `claude-ste-gate.test.sh`,
 
 ## Skills
 
-Every skill is typed by hand (`/name`); none start themselves.
+A person types each skill by hand (`/name`). No skill starts on its own.
 
-- Stack skills, read by workers when a brief lists them: `aws-diagnostics`,
+- Stack skills, read by workers when a brief names them: `aws-diagnostics`,
   `backend`, `docs`, `react`, `security-performance`, `shell`, `testing`,
   `typescript`. `brief-writing` holds the full brief formats, for when the
-  short form in `CLAUDE.md` is not enough.
+  short version in `CLAUDE.md` is not sufficient.
 - User commands: `commit`, `cruft`, `docs-drift`, `domain-modeling`, `grill`,
   `grill-with-docs`, `grok`, `merge`, `review-pr`, `tfork`, `trestart`,
   `typetest`, `writing-great-skills`.
 
 ## Hooks
 
-- `agent-cap` — enforces per-machine parallel caps on worker/scout subagents.
+- `agent-cap` — stops worker and scout launches above the per-machine limit.
 - `worker-git-block` — blocks git commit, push, rebase, reset --hard in workers.
 - `track-session` — records session id and cwd for `tfork`/`trestart`.
-- `cowork-notice` — warns when another session shares cwd and branch.
-- `ste-gate` — lints the final reply at Stop. A block-class hit refuses
-  the reply once, and the retry never gets refused.
-- `ste-subagent-gate` — lints a worker or scout report at SubagentStop,
-  checking only the free-text fields.
+- `cowork-notice` — tells you when a different session shares the branch and cwd.
+- `ste-gate` — lints the last reply at Stop, writes the state file, and
+  adds to the log. It never refuses a reply.
+- `ste-subagent-gate` — lints a worker or scout report at SubagentStop, checking only the free-text fields.
 
 ## Per-machine config
 
-`claude/.claude/machine.json` is gitignored, written from the tracked
-template `claude/.claude/machine.template.json` by `install.sh` (or
-`scripts/setup-machine.sh`):
+`.gitignore` excludes `claude/.claude/machine.json`. `install.sh` (or
+`scripts/setup-machine.sh`) writes it from the tracked template
+`claude/.claude/machine.template.json`:
 
 ```json
 {"workerCap": 5, "scoutCap": 10}
 ```
 
-Each run replaces `machine.json`. To change caps, edit the template and rerun
-`scripts/setup-machine.sh`. The agent-cap hook defaults to 2/6 if
-`machine.json` is missing.
+Each run replaces `machine.json`. To change the limits, edit the template
+and rerun `scripts/setup-machine.sh`. The agent-cap hook defaults to 2/6 if
+`machine.json` is not there.
 
 ## Install
 
-Needs GNU Stow, gettext (`envsubst`), and `jq`. Recommended: Node.js/npm and `uv`
-for the Claude Code CLI and MCP servers.
+GNU Stow, gettext (`envsubst`), and `jq` are necessary. Node.js/npm and `uv`
+are optional, for the Claude Code CLI and MCP servers.
 
 ```
 ./install.sh
@@ -199,10 +201,10 @@ for the Claude Code CLI and MCP servers.
 
 Backs up `~/.claude` and `~/.mcp.json`, stows `claude/.claude/` to
 `~/.claude`, installs the CLI, writes `~/.claude/machine.json` from the
-template, registers MCP servers.
+template, and adds the MCP servers.
 
 `scripts/setup-mcp.sh` renders `mcp/mcp.json.template` with `envsubst` and
-registers each server with `claude mcp add-json --scope user`. Set
+adds each server with `claude mcp add-json --scope user`. Set
 `CONTEXT7_API_KEY` in `.env.mcp.local` (empty skips `context7`).
 
 ## Migrate an old machine
@@ -213,13 +215,13 @@ registers each server with `claude mcp add-json --scope user`. Set
 ```
 
 Uninstalls the claude-mem plugin, removes legacy AWS MCP servers, runs
-`setup-mcp.sh`, moves `~/.mcp.json` to a `.bak` file, creates `machine.json`
-from the template via `setup-machine.sh`. Safe to rerun.
+`setup-mcp.sh`, moves `~/.mcp.json` to a `.bak` file, makes `machine.json`
+from the template through `setup-machine.sh`. Safe to rerun.
 
 ## Updates
 
-Models pinned in `settings.json`, `worker.md`, `scout.md`. Claude Code on the
-stable channel, auto-update off; run `claude update` by hand.
+Models pinned in `settings.json`, `worker.md`, `scout.md`. Claude Code runs
+the stable release. Auto-update stays off. Run `claude update` by hand.
 
 ## Tests
 
@@ -232,5 +234,5 @@ Run one file at a time with `bash <file>`: `scripts/tests/*.test.sh`,
 stow -D claude
 ```
 
-Removes the `~/.claude` symlink. MCP servers stay registered; remove each with
-`claude mcp remove --scope user <name>`.
+Removes the `~/.claude` symlink. MCP servers stay registered. Remove each
+one with `claude mcp remove --scope user <name>`.

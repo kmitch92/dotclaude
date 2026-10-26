@@ -1,12 +1,12 @@
 ---
 name: domain-modeling
-description: Build and sharpen a project's domain model — glossary terms and architecture decision records (ADRs)
+description: This skill builds and sharpens the domain model of a project: the glossary terms and the architecture decision records (ADRs)
 disable-model-invocation: true
 ---
 
 # Domain Modeling
 
-Actively build and sharpen the project's domain model as you design. This is the *active* discipline — challenging terms, inventing edge-case scenarios, and writing the glossary and decisions down the moment they crystallise. (Merely *reading* `CONTEXT.md` for vocabulary is not this skill — that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
+Actively build and sharpen the domain model of the project. Do this while you build the system. Domain modeling is an active discipline. You challenge terms. You invent edge-case scenarios. You write the glossary and decisions down the moment they crystallise. To read `CONTEXT.md` for vocabulary is not this skill. This habit is small. Each skill could follow it. This skill applies when you change the model. It does not apply when you only read the model.
 
 ## File structure
 
@@ -22,7 +22,7 @@ Most repos have a single context:
 └── src/
 ```
 
-If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The map points to where each one lives:
+If a `CONTEXT-MAP.md` is there at the root, the repo has many contexts. The map points to where each one lives:
 
 ```
 /
@@ -38,38 +38,38 @@ If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The ma
 │       └── docs/adr/
 ```
 
-Create files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
+Make files only when you have something to write. If `CONTEXT.md` is not there, make one when you resolve the first term. If `docs/adr/` is not there, make it when the first ADR is necessary.
 
 ## During the session
 
 ### Challenge against the glossary
 
-When the user uses a term that conflicts with the existing language in `CONTEXT.md`, call it out immediately. "Your glossary defines 'cancellation' as X, but you seem to mean Y — which is it?"
+When the user uses a term that is different from the existing language in `CONTEXT.md`, call it out immediately. "Your glossary defines 'cancellation' as X, but you seem to mean Y — which is it?"
 
 ### Sharpen fuzzy language
 
-When the user uses vague or overloaded terms, propose a precise canonical term. "You're saying 'account' — do you mean the Customer or the User? Those are different things."
+When the user uses vague or overloaded terms, propose an accurate canonical term. "You're saying 'account' — do you mean the Customer or the User? Those are different things."
 
 ### Discuss concrete scenarios
 
-When domain relationships are being discussed, stress-test them with specific scenarios. Invent scenarios that probe edge cases and force the user to be precise about the boundaries between concepts.
+When the user speaks about domain relationships, stress-test them with specified scenarios. Invent scenarios that find edge conditions and push the user to be accurate about the boundaries between concepts.
 
 ### Cross-reference with code
 
-When the user states how something works, check whether the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible — which is right?"
+When the user states how something works, check if the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible — which is right?"
 
 ### Update CONTEXT.md inline
 
-When a term is resolved, update `CONTEXT.md` right there. Don't batch these up — capture them as they happen. Use the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
+When you resolve a term, update `CONTEXT.md` right there. Do not batch these up. Capture them as they occur. Use the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
 
-`CONTEXT.md` should be totally devoid of implementation details. Do not treat `CONTEXT.md` as a spec, a scratch pad, or a repository for implementation decisions. It is a glossary and nothing else.
+`CONTEXT.md` must be totally without instructions on how you do things. Do not apply `CONTEXT.md` as a spec or a scratch pad. Do not apply it as a position for decisions on how you do things. `CONTEXT.md` is a glossary and nothing else.
 
 ### Offer ADRs sparingly
 
-Only offer to create an ADR when all three are true:
+Only offer to make an ADR when all three are correct:
 
-1. **Hard to reverse** — the cost of changing your mind later is meaningful
-2. **Surprising without context** — a future reader will wonder "why did they do it this way?"
-3. **The result of a real trade-off** — there were genuine alternatives and you picked one for specific reasons
+1. **Hard to change back** — the cost of a subsequent change is meaningful
+2. **A surprise without context** — a future reader will wonder "why did they do it this way?"
+3. **The result of an actual trade-off** — there were actual alternatives and you picked one for specified causes
 
-If any of the three is missing, skip the ADR. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
+If one of the three is not there, skip the ADR. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
