@@ -19,8 +19,10 @@
 # =============================================================================
 # Architecture decision records. Never stowed into ~/.claude, so Claude Code
 # cannot load anything here as a skill, an agent or an output style.
+# Scoped to adr/ on purpose: docs/ also holds untracked research notes.
 !docs/
-!docs/**
+!docs/adr/
+!docs/adr/**
 
 # =============================================================================
 # BIN DIRECTORY - ALLOW ALL
