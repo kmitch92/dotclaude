@@ -1,69 +1,58 @@
 ---
 name: merge
-description: Resolve git merge conflicts after pulling from main, auto-resolving safe cases and asking on serious ones
+description: Resolve git disagreements after you pull from `main`. Resolve safe conditions on your own. Question the user about important disagreements after that.
 disable-model-invocation: true
 allowed-tools: Bash(git:*), Read, Edit, Grep, Glob, AskUserQuestion
 ---
 
-Resolve merge conflicts after pulling from main. Auto-resolve safe conflicts, ask on serious ones.
+Resolve merge disagreements after you pull from `main`. Resolve safe disagreements on your own. Question the user about important disagreements.
 
-## 1. Detect conflicts
+## 1. Find disagreements
 
 ```bash
 git status --porcelain | grep '^UU'
 ```
 
-If none, report the merge is already clean and stop.
+If there are none, state that the merge is clean, and stop.
 
-## 2. Order files
+## 2. Put files in sequence
 
-Resolve in this order: config → schemas → source → tests → docs → other.
+The sequence to resolve files is: config files first. Next come schema files. Source files come next. Test files come next. Doc files come next. Other files come last.
 
-## 3. Read and classify each conflict
+## 3. Read and classify each disagreement
 
-Read the full file, not just the conflict markers — understand the surrounding context.
+Read the full file, not only the disagreement markers. Check the context around each one carefully.
 
-**Auto-resolvable** (merge both sides):
-- Non-overlapping imports, functions, or object properties added on each side
-- Whitespace-only differences
-- Comments added in different places
-- Different test cases added on each side
+You can resolve some disagreements on your own: put the two sides together. One example: an import, a function, or an object property, added on one side and not on the other. One more example: differences made only of whitespace. One more: comments added in different positions. One more: different test conditions added on each side.
 
-**Ask the user** (never guess):
-- Same function or variable modified differently on each side
-- Conflicting type or schema definitions
-- Breaking API changes on either side
-- Conflicting dependency versions
-- Same business logic changed differently
-- One side deletes, the other modifies
-- Binary-file or file-rename conflicts
+Question the user about other disagreements. Never guess. Examples: the same function or variable, changed differently on each side. Type definitions or schema definitions that disagree with each other. API changes that break on one side. Dependency versions that disagree with each other. The same business logic, changed differently. One side removes a file, and the other side changes it. A disagreement about a binary file, or about a file name change.
 
 ## 4. Resolve
 
-For auto-resolvable conflicts, combine both changes (dedupe/alphabetise imports, include every addition) with Edit, then `git add <file>`.
+For a disagreement you can resolve on your own, put together the two changes with Edit. Remove duplicate imports. Sort them. Include each new part. Run `git add <file>`.
 
-For serious conflicts, use AskUserQuestion: state the file, both versions with context, and why auto-resolution is unsafe. Offer: keep current, keep incoming, or a manual instruction. Apply the answer, then `git add <file>`.
+For an important disagreement, use AskUserQuestion. State the file, the two versions with their context, and why you must not resolve it automatically. Offer: keep the current version, keep the incoming version, or give a manual instruction. Apply the answer. Run `git add <file>`.
 
-## 5. Verify all resolved
+## 5. Make sure each file is resolved
 
 ```bash
 git status
 ```
 
-No file may show `UU`; every conflicted file must be staged.
+No file can show `UU`. You must stage each file that had a disagreement.
 
-## 6. Type-check and test
+## 6. Run the type-check and the tests
 
-Detect the package manager from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm).
+Find the package manager from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm).
 
 ```bash
 <pkg-manager> run type-check || npx tsc --noEmit
 <pkg-manager> test <test files covering files touched by the merge>
 ```
 
-Run only the test files covering files touched by the merge, once, never in watch mode. Never the full suite unless the user asks.
+Run the test files for the files touched by the merge. Run them one time, never in `watch mode`. Never run the full suite unless the user tells you to.
 
-If either fails, report the failures and ask whether to proceed or fix first.
+If one run fails, report the failures. Question the user: continue, or repair the problem first?
 
 ## 7. Complete the merge
 
@@ -73,12 +62,12 @@ git commit --no-edit
 
 ## 8. Report
 
-State: conflicts resolved (auto vs. user-guided), files modified, type-check result, test result.
+State: the disagreements you resolved (on your own, compared with the user), the files you changed, the type-check result, and the test result.
 
 ## Rules
 
-1. Never auto-resolve a serious conflict — ask.
-2. Favor keeping both sides' functionality over deleting either.
-3. Read full file context, not just the markers.
-4. Config and schema conflicts always go to the user.
-5. Verify with type-check and the tests covering merged files before finishing.
+1. Do not resolve an important disagreement on your own. Question the user.
+2. Keep the function of the two sides, above removing one of them.
+3. Read the full file for context, not only the markers.
+4. Send config disagreements and schema disagreements to the user, always.
+5. Make sure the type-check and the tests for the changed files succeed, before you finish.

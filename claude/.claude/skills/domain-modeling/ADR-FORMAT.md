@@ -1,8 +1,8 @@
 # ADR Format
 
-ADRs live in `docs/adr/` and use sequential numbering: `0001-slug.md`, `0002-slug.md`, etc.
+ADRs live in `docs/adr/` and use sequential numbers, for example `0001-slug.md`, `0002-slug.md`, and so on.
 
-Create the `docs/adr/` directory lazily — only when the first ADR is needed.
+Make the `docs/adr/` directory only when the first ADR is necessary.
 
 ## Template
 
@@ -12,36 +12,43 @@ Create the `docs/adr/` directory lazily — only when the first ADR is needed.
 {1-3 sentences: what's the context, what did we decide, and why.}
 ```
 
-That's it. An ADR can be a single paragraph. The value is in recording *that* a decision was made and *why* — not in filling out sections.
+The template above is sufficient. An ADR can be a single paragraph. The value is in the record of *that* a decision happened, and of *why* it happened. The value is not in the sections you fill out.
 
 ## Optional sections
 
-Only include these when they add genuine value. Most ADRs won't need them.
+Add these only when they add value. Most ADRs do not use them.
 
-- **Status** frontmatter (`proposed | accepted | deprecated | superseded by ADR-NNNN`) — useful when decisions are revisited
-- **Considered Options** — only when the rejected alternatives are worth remembering
-- **Consequences** — only when non-obvious downstream effects need to be called out
+- Add a `Status` entry to the frontmatter (`proposed | accepted | deprecated | superseded by ADR-NNNN`) when someone can revisit the decision.
+- Add a `Considered Options` section only when the rejected selections are worth remembering.
+- Add a `Consequences` section only when it calls out downstream effects that are not obvious.
 
 ## Numbering
 
-Scan `docs/adr/` for the highest existing number and increment by one.
+Examine `docs/adr/` for the highest existing number. Add one to it.
 
 ## When to offer an ADR
 
-All three of these must be true:
+All three of these must be correct:
 
-1. **Hard to reverse** — the cost of changing your mind later is meaningful
-2. **Surprising without context** — a future reader will look at the code and wonder "why on earth did they do it this way?"
-3. **The result of a real trade-off** — there were genuine alternatives and you picked one for specific reasons
+First: the selection must be hard to change back. The cost of a change of mind, after the decision, is meaningful.
 
-If a decision is easy to reverse, skip it — you'll just reverse it. If it's not surprising, nobody will wonder why. If there was no real alternative, there's nothing to record beyond "we did the obvious thing."
+Second: the selection must surprise a reader who has no context. A future reader will look at the code and wonder "why on earth did they do it this way?"
+
+Third: the selection must be the result of an actual trade-off. There were actual alternatives, and you picked one for a clear cause.
+
+If a decision is easy to change back, skip it. You will change it back immediately anyway. If nobody finds it surprising, nobody will wonder why. If there was no actual alternative, you have nothing to record, beyond "we did the obvious thing."
 
 ### What qualifies
 
-- **Architectural shape.** "We're using a monorepo." "The write model is event-sourced, the read model is projected into Postgres."
-- **Integration patterns between contexts.** "Ordering and Billing communicate via domain events, not synchronous HTTP."
-- **Technology choices that carry lock-in.** Database, message bus, auth provider, deployment target. Not every library — just the ones that would take a quarter to swap out.
-- **Boundary and scope decisions.** "Customer data is owned by the Customer context; other contexts reference it by ID only." The explicit no-s are as valuable as the yes-s.
-- **Deliberate deviations from the obvious path.** "We're using manual SQL instead of an ORM because X." Anything where a reasonable reader would assume the opposite. These stop the next engineer from "fixing" something that was deliberate.
-- **Constraints not visible in the code.** "We can't use AWS because of compliance requirements." "Response times must be under 200ms because of the partner API contract."
-- **Rejected alternatives when the rejection is non-obvious.** If you considered GraphQL and picked REST for subtle reasons, record it — otherwise someone will suggest GraphQL again in six months.
+- Write down the architectural shape, for example "We're using a monorepo." or "The write model is event-sourced, the read model is projected into Postgres."
+- Write down integration patterns between contexts, for example "Ordering and Billing communicate via domain events, not synchronous HTTP."
+- Write down technology selections that have lock-in: the database, the message bus, the auth provider, or the deployment target.
+- Write only about the libraries that can cost a quarter to replace.
+- Write down boundary decisions and scope decisions, for example "Customer data is owned by the Customer context; other contexts reference it by ID only." The explicit no-s are as valuable as the yes-s.
+- Write down deliberate deviations from the obvious path, for example "We're using manual SQL instead of an ORM because X."
+- Write this down when a reasonable reader can think the opposite is correct.
+- Write this down, so the next engineer does not "fix" something that was deliberate.
+- Write down constraints you cannot see in the code, for example "We can't use AWS because of compliance requirements." or "Response times must be under 200ms because of the partner API contract."
+- Write down a rejected alternative when its cause is not obvious.
+- Record the cause, for example, when you think about GraphQL, but pick REST, for a cause others cannot see.
+- Record it, or someone will suggest GraphQL again in six months.
