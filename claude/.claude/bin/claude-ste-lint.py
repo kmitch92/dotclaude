@@ -1235,12 +1235,8 @@ def render(violations, fmt, prose_words, rc, args):
         return json.dumps(obj), obj
 
     if fmt == 'model':
-        if rc == 2:
-            first = ("Reply is blocked by STE checks below. Send the corrected "
-                     "reply in full, with no preamble and no explanation of "
-                     "the corrections.")
-        elif rc == 1:
-            first = "Previous reply broke STE rules. Fix these in the next reply."
+        if rc in (1, 2):
+            first = "Your last reply broke these STE rules. Write the next reply without them."
         else:
             return "STE: clean (%d prose words)." % prose_words, None
         lines = [first]

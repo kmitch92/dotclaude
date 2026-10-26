@@ -8,8 +8,7 @@
     "MCP_TOOL_TIMEOUT": "60000",
     "MAX_MCP_OUTPUT_TOKENS": "5000",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-    "DISABLE_AUTOUPDATER": "1",
-    "STE_GATE": "warn"
+    "DISABLE_AUTOUPDATER": "1"
   },
   "attribution": {
     "commit": "",

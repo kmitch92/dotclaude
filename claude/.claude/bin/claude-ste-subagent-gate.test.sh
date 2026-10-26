@@ -7,12 +7,10 @@
 # agent_type}), pipes last_assistant_message to the linter (STE_LINT_BIN) on
 # stdin as `LINTER --text - --scope sub --format model --log --session
 # <agent_id>` (agent_id, not session_id, is used as the id). Linter exit
-# code: 0 clean, 1 warn, 2 block. On rc 2 with stop_hook_active != true and
-# STE_GATE != "warn", prints exactly one JSON object
-# {"decision":"block","reason":"<linter stdout verbatim>"} to stdout and
-# exits 0. Otherwise prints nothing and exits 0. Writes
-# STE_STATE_DIR/<agent_id>.json (NOT session_id.json) with at least
-# {"rc", "gated", "output"}. Never exits non-zero.
+# code: 0 clean, 1 warn, 2 block. The gate never prints to stdout and never
+# blocks the SubagentStop event, for any rc or stop_hook_active value.
+# Writes STE_STATE_DIR/<agent_id>.json (NOT session_id.json) with
+# {"rc", "output"}. Never exits non-zero.
 #
 # Stubbed env: HOME is a throwaway dir. A fake linter at $WORK/fakelint.sh
 # records its argv and stdin, and behaves per env FAKE_RC / FAKE_OUT. The
@@ -89,11 +87,10 @@ hook_json() {
 RC=0; OUT=""
 
 run_gate() {
-  local input="$1" gate_mode="${2:-}"
+  local input="$1"
   rm -f "$WORK/argv" "$WORK/stdin"
   FAKE_ARGV_FILE="$WORK/argv" FAKE_STDIN_FILE="$WORK/stdin" \
     HOME="$HOME_DIR" STE_LINT_BIN="$FAKELINT" STE_STATE_DIR="$STATE_DIR" STE_LOG="$LOG_FILE" \
-    STE_GATE="$gate_mode" \
     bash "$SCRIPT" <<< "$input" >"$WORK/out" 2>"$WORK/err"
   RC=$?
   OUT="$(cat "$WORK/out")"
@@ -106,25 +103,17 @@ else
   fail "script exists and is executable (missing or not executable: $SCRIPT)"
 fi
 
-echo "== case 1: rc 2, stop_hook_active false, STE_GATE unset => blocks =="
+echo "== case 1: rc 2, stop_hook_active false => records, never blocks =="
 rm -rf "$STATE_DIR" "$LOG_FILE"
 FAKE_RC=2 FAKE_OUT='you used a banned word' run_gate "$(hook_json false "$MSG")"
 assert_eq "$RC" "0" "case1: exits 0"
-if printf '%s' "$OUT" | jq -e . >/dev/null 2>&1; then
-  pass "case1: stdout parses as JSON"
-  DECISION="$(printf '%s' "$OUT" | jq -r '.decision')"
-  REASON="$(printf '%s' "$OUT" | jq -r '.reason')"
-  assert_eq "$DECISION" "block" "case1: .decision == block"
-  assert_eq "$REASON" "you used a banned word" "case1: .reason == FAKE_OUT"
-else
-  fail "case1: stdout parses as JSON (got [$OUT])"
-fi
+assert_eq "$OUT" "" "case1: stdout empty"
 STATE_FILE="$STATE_DIR/$AGENT_ID.json"
 SESSION_STATE_FILE="$STATE_DIR/$SESSION_ID.json"
 if [ -f "$STATE_FILE" ]; then
   pass "case1: state file is named agent_id.json"
-  assert_eq "$(jq -r '.gated' "$STATE_FILE")" "true" "case1: state .gated == true"
   assert_eq "$(jq -r '.rc' "$STATE_FILE")" "2" "case1: state .rc == 2"
+  assert_eq "$(jq -r '.output' "$STATE_FILE")" "you used a banned word" "case1: state .output == FAKE_OUT"
 else
   fail "case1: state file is named agent_id.json (missing: $STATE_FILE)"
 fi
@@ -147,29 +136,17 @@ else
   fail "case1: lint.stdin recorded (missing: $WORK/stdin)"
 fi
 
-echo "== case 2: rc 2, stop_hook_active true => no block =="
+echo "== case 2: rc 2, stop_hook_active true => same result, stop_hook_active makes no difference =="
 rm -rf "$STATE_DIR" "$LOG_FILE"
 FAKE_RC=2 FAKE_OUT='banned word' run_gate "$(hook_json true "$MSG")"
 assert_eq "$RC" "0" "case2: exits 0"
 assert_eq "$OUT" "" "case2: stdout empty"
 STATE_FILE="$STATE_DIR/$AGENT_ID.json"
 if [ -f "$STATE_FILE" ]; then
-  assert_eq "$(jq -r '.gated' "$STATE_FILE")" "false" "case2: state .gated == false"
   assert_eq "$(jq -r '.rc' "$STATE_FILE")" "2" "case2: state .rc == 2"
+  assert_eq "$(jq -r '.output' "$STATE_FILE")" "banned word" "case2: state .output == FAKE_OUT"
 else
   fail "case2: state file exists (missing: $STATE_FILE)"
-fi
-
-echo "== case 3: rc 2, STE_GATE=warn => no block =="
-rm -rf "$STATE_DIR" "$LOG_FILE"
-FAKE_RC=2 FAKE_OUT='banned word' run_gate "$(hook_json false "$MSG")" "warn"
-assert_eq "$RC" "0" "case3: exits 0"
-assert_eq "$OUT" "" "case3: stdout empty"
-STATE_FILE="$STATE_DIR/$AGENT_ID.json"
-if [ -f "$STATE_FILE" ]; then
-  assert_eq "$(jq -r '.gated' "$STATE_FILE")" "false" "case3: state .gated == false"
-else
-  fail "case3: state file exists (missing: $STATE_FILE)"
 fi
 
 echo
