@@ -8,11 +8,7 @@ disable-model-invocation: true
 
 - Value-first: open with why it is material, not what it is.
 - Scannable: a clear heading hierarchy and bullets, code blocks and tables, and whitespace.
-- Disclosure in layers:
-  - Show the overview first.
-  - Show the instruction after.
-  - Connect to deep dives.
-  - Do not mark a deep dive inline.
+- Disclosure in layers: show the overview first, then the instruction, then connect to deep dives, but never mark a deep dive inline.
 - Problem-oriented: organize by what the reader wants to do ("How to..."), not by the method sequence of an API manual.
 - Show not tell: a runnable, copy-paste example with realistic data beats a paragraph of description.
 - Connected: connect to related docs and prerequisites, to source code, and to "see also" notes.
@@ -33,11 +29,7 @@ disable-model-invocation: true
 
 ## ADRs (architecture decision records)
 
-- Write one for a "one-way door" decision.
-  - This decision is hard to back out of.
-  - This decision is costly to redo.
-  - It has an effect on many systems or teams.
-  - This decision can cause technical debt if incorrect.
+- Write one for a "one-way door" decision: hard to back out of, costly to redo, with an effect on many systems or teams, or likely to cause technical debt if incorrect.
 - Test: three or more answers of "yes" mean write one.
   - Is it hard to back out of?
   - Did the team weigh many alternatives, with their own trade-offs?
@@ -45,20 +37,13 @@ disable-model-invocation: true
   - Will a future teammate want to know why?
   - Is it covered by a guideline now?
 - State the context first.
-  - Write the decision so a team can build it.
-  - Write the decision so a team can check it.
+  - Write the decision so a team can both build and check it.
   - State two or more rejected alternatives, with the cause for each.
-  - State the result of each: good, bad, or neutral.
-  - State how to build it.
+  - State the result of each, good, bad, or neutral, and state how to build it.
 - Status values: Proposed, Accepted, Superseded by ADR-N, Deprecated.
-- An accepted ADR cannot change.
-  - Never edit the content, only the status.
-  - A new decision gets a new ADR that supersedes the first one.
+- An accepted ADR cannot change: never edit the content, only the status, since a new decision gets a new ADR that supersedes the first one.
 
 ## Quality bar
 
-- Reject a doc if one pillar fails outright.
-  - Reject it if it has a careful issue, with no value statement or no working example.
-  - Reject it if it has no clear next step.
-- "Needs improvement": it has some pillar weak points but none fail outright.
-  - This doc can ship. Flag the weak points.
+- Reject a doc if one pillar fails outright, for example a careful issue with no value statement, no working example, or no clear next step.
+- "Needs improvement": it has some pillar weak points but none fail outright, so this doc can ship, but flag the weak points.

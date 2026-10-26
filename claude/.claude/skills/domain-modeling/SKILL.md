@@ -6,11 +6,11 @@ disable-model-invocation: true
 
 # Domain Modeling
 
-Actively build and sharpen the domain model of the project. Do this while you build the system. Domain modeling is an active discipline. You challenge terms. You invent edge-case scenarios. You write the glossary and decisions down the moment they crystallise. To read `CONTEXT.md` for vocabulary is not this skill. This habit is small. Each skill could follow it. This skill applies when you change the model. It does not apply when you only read the model.
+Actively build and sharpen the domain model of the project while you build the system. Domain modeling is an active discipline: you challenge terms, invent edge-case scenarios, and write the glossary and decisions down the moment they crystallise. Reading `CONTEXT.md` for vocabulary alone is not this skill, though every skill could follow this small habit. This skill applies when you change the model, not when you only read it.
 
 ## File structure
 
-Most repos have a single context:
+Most repos have a single context, shown below.
 
 ```
 /
@@ -22,7 +22,7 @@ Most repos have a single context:
 └── src/
 ```
 
-If a `CONTEXT-MAP.md` is there at the root, the repo has many contexts. The map points to where each one lives:
+If a `CONTEXT-MAP.md` is there at the root, the repo has many contexts, and the map points to where each one lives.
 
 ```
 /
@@ -38,13 +38,13 @@ If a `CONTEXT-MAP.md` is there at the root, the repo has many contexts. The map 
 │       └── docs/adr/
 ```
 
-Make files only when you have something to write. If `CONTEXT.md` is not there, make one when you resolve the first term. If `docs/adr/` is not there, make it when the first ADR is necessary.
+Make files only when you have something to write. Make `CONTEXT.md` when you resolve the first term, and make `docs/adr/` when the first ADR becomes necessary.
 
 ## During the session
 
 ### Challenge against the glossary
 
-When the user uses a term that is different from the existing language in `CONTEXT.md`, call it out immediately. "Your glossary defines 'cancellation' as X, but you seem to mean Y — which is it?"
+When the user uses a term that is different from the existing language in `CONTEXT.md`, call it out immediately. "Your glossary defines 'cancellation' as X, but you seem to mean Y. Which is it?"
 
 ### Sharpen fuzzy language
 
@@ -56,13 +56,13 @@ When the user speaks about domain relationships, stress-test them with specified
 
 ### Cross-reference with code
 
-When the user states how something works, check if the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible — which is right?"
+When the user states how something works, check if the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible. Which is right?"
 
 ### Update CONTEXT.md inline
 
-When you resolve a term, update `CONTEXT.md` right there. Do not batch these up. Capture them as they occur. Use the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
+When you resolve a term, update `CONTEXT.md` right there, rather than batching updates. Capture each one as it occurs, using the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
 
-`CONTEXT.md` must be totally without instructions on how you do things. Do not apply `CONTEXT.md` as a spec or a scratch pad. Do not apply it as a position for decisions on how you do things. `CONTEXT.md` is a glossary and nothing else.
+`CONTEXT.md` must be totally without instructions on how you do things. Do not apply `CONTEXT.md` as a spec, a scratch pad, or a position for decisions on how you do things. `CONTEXT.md` is a glossary and nothing else.
 
 ### Offer ADRs sparingly
 
@@ -70,6 +70,6 @@ Only offer to make an ADR when all three are correct:
 
 1. **Hard to change back** — the cost of a subsequent change is meaningful
 2. **A surprise without context** — a future reader will wonder "why did they do it this way?"
-3. **The result of an actual trade-off** — there were actual alternatives and you picked one for specified causes
+3. **The result of an actual trade-off** — there were actual alternatives and you picked one for specified causes.
 
-If one of the three is not there, skip the ADR. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
+If one of the three is not there, skip the ADR, and otherwise use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
