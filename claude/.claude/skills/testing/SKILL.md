@@ -1,53 +1,64 @@
 ---
 name: testing
-description: Test-writing rules and preferences (TDD, behavioral testing). Read by workers when a task brief lists this file.
+description: The rules and preferences to write tests (TDD, behavioral testing). Workers read this file when a task brief names it.
 disable-model-invocation: true
 ---
 
 ## What a test verifies
 
-- Test observable behavior from the user's perspective (human, API consumer, calling system) — not internal implementation.
-- Treat implementation as a black box: assert only on inputs, outputs, observable side effects.
-- Test only through the public API; never import or assert on internals, private methods, or component state.
-- Reject unit/integration as the organizing question; ask whether the test proves expected behavior.
+- Test observable behavior from the perspective of the user (human, API consumer, system), not the inner working of the code.
+- Use the code as a black box: assert only on input, output, and observable side effects.
+- Test only through the public API. Never import or assert on internals, private methods, or component state.
+- Reject unit/integration as the organizing question. Check if the test proves expected behavior.
 
 ## RED phase
 
-- Write the failing test before any production code exists.
-- Confirm it fails for the expected reason (missing behavior), not an unrelated error (typo, wrong import, syntax error).
+- Write the failing test before you write the production code.
+- Make sure it fails for the expected cause: a missing behavior.
+  - Do not accept an unrelated error, such as a typo, an incorrect import, or a syntax error.
 
 ## Structure
 
-- Group tests by feature/workflow, not file or function — no 1:1 mapping to implementation files.
+- Group tests by behavior or workflow, not by file or function.
+  - Do not map tests one-to-one to the file structure of the code.
 - Name tests so they read like a specification of behavior.
-- Arrange-Act-Assert: set up, execute, verify, in that order.
+- Arrange-Act-Assert: set up, do the step, check the result, in that sequence.
 
 ## Schemas & test data
 
-- Import schemas/types from the project source; never redefine a schema inline in a test.
-- Factories return a complete valid object with sensible defaults, accept partial overrides, and validate the result by parsing it through the real schema.
-- Compose factories for nested objects rather than duplicating structure.
+- Import schemas and data types from the project source, and never redefine a schema inline in a test.
+- Factories return a full, correct object with sensible defaults.
+  - A factory can accept partial overrides.
+  - Each factory must check its result against the schema it came from.
+- Compose factories for nested objects. Do not duplicate structure.
 
 ## What to test
 
-- Cover: happy path, edge cases, error handling, side effects, full user workflows.
-- Don't cover: implementation details, internal/private functions, framework internals, mock internals.
+- Include the happy path, and edge conditions, and error handling, and side effects, and full user workflows.
+- Do not include the internal structure of the code, internal or private functions, and framework internals, or mock internals.
 
 ## Code standards in tests
 
-- No `any` — use `unknown` with narrowing. Immutable data only, never mutate fixtures. No comments — self-documenting names instead.
-- ES `import` only; never `require()`. For module-reset/mock-reload, use `jest.resetModules()` plus a dynamic `await import('./module')`.
-- Coverage is a side effect of testing every behavior, never a target pursued directly.
+- No `any` — use `unknown` with narrowing.
+  - Immutable data only, never mutate fixtures.
+  - No comments, only self-documenting names.
+- ES `import` only. Never `require()`. For module-reset/mock-reload, use `jest.resetModules()` plus a dynamic `await import('./module')`.
+- Coverage is a side effect when tests include each behavior. This coverage is never a target to pursue alone.
 
 ## Running tests
 
-- Run only the specific test file(s) covering the change being verified.
-- Never run the full suite unless explicitly asked — full runs are expensive and are the user's/CI's responsibility.
-- Bare runner commands (`npm test`, `pytest`, `go test ./...`) run everything — always pass the test file path or a filter.
-- Run once, never in watch mode (`vitest run`, not `vitest`; no `--watch`) — watch mode never exits.
+- Run only the test files for the changed code.
+- Never run the full suite unless someone explicitly requests it.
+  - Full runs are expensive.
+  - The responsibility for them belongs to the user or to CI.
+- Bare runner commands (`npm test`, `pytest`, `go test ./...`) run everything — always give the test file path or a filter.
+- Run the suite one time, never in monitor mode (`vitest run`, not `vitest`, no `--watch`) — monitor mode, by itself, never exits.
 
 ## Self-correction
 
-- Importing internals → test the public API instead. Asserting on state/props → assert on output.
-- Mirroring implementation file structure → reorganize by behavior. Defining a schema inline → import from source.
-- Writing the test after the code → stop, this is not TDD.
+- Self-correct these patterns:
+  - Do not import internals. Test the public API.
+  - Do not assert on state or props. Assert on output.
+  - Do not mirror the file structure of the code. Reorganize the tests by behavior.
+  - Do not write a schema inline. Import it from source.
+  - Do not write the test after the code. Stop — this is not TDD.

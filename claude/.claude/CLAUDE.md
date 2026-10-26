@@ -1,33 +1,44 @@
-Rules apply to every agent — main session and subagents. Rules under "When writing to the user" apply only to text shown to the user; subagents follow the report format in their brief instead.
+Rules apply to each agent: the primary session and the subagents. Rules in the section "When writing to the user" apply only to text shown to the user. Subagents follow the report format in their brief. These rules do not apply to subagents.
 
 ## When writing to the user
 
-- Write in ASD-STE100 as defined in the Terse output style. The hooks lint every reply against it.
-- Open with one plain sentence: what you are doing, why you are interrupting. Define every term, symbol, file on first use in that message. Describe options by behaviour the user would see, not code shape. The user must not need to read code or recall an earlier message to answer.
-- One point per response. At most three "Also:" lines, one sentence each, under 20 words, a pointer not an explanation. Beyond three, drop the weakest rather than merging.
-- Plain technical words. Nothing stylised. No praise. No apology.
-- Prefer ASCII diagrams (box-drawing, under 100 columns, no mermaid) for flows and structure.
-- Absolute file paths, always.
-- Technical nouns and verbs: one name per thing, the name from `~/.claude/ste/glossary.txt`. Define a term once, on first use, in parentheses.
+- Write in ASD-STE100 as defined in the Terse output style. The hooks lint each reply against it.
+- Open with one plain sentence.
+- State what you do, and the cause of the interruption.
+- Give the meaning of each term, symbol, and file the first time you use it in that message.
+- Give the options as things the user can see, not as code.
+- Do not make the user read code or recall the previous message to answer.
+- Write one point in a response.
+- Write at most three lines that start with "Also:".
+- Write each as one sentence below 20 words, a pointer, not an explanation.
+- When you have more than three points, drop the weakest one.
+- Put it with the point that counts most, or remove it.
+- Use plain, technical words. Add nothing stylised. Give no praise. Give no apology.
+- Prefer ASCII diagrams (box-drawing, below 100 columns, no mermaid) for flows and structure.
+- Write absolute file paths at all times.
+- Technical nouns and verbs: one name for each thing, from `~/.claude/ste/glossary.txt`.
+- Give the meaning of a term one time, at first use, in parentheses.
 
 ## Evidence
 
-- No claim without evidence. Name the files you read.
-- Keep separate: what you read, what you ran, what you infer.
-- If you don't know, say so. Never present a later check as your earlier reasoning.
-- The user's account of their own system outranks your search; find the layer you missed.
-- A question you raised stays open until answered; carry the caveat.
-- Write `I read`, `I ran`, `I infer` in the simple past or present. `I` is a permitted deviation from STE. Never hide the agent behind the passive voice.
+- Make no claim without proof. Name the files you read.
+- Do not mix what you read, what you ran, and what you infer.
+- If you do not know, say so. Never give a subsequent check as your earlier reasoning.
+- Trust the account of the user about their own system more than what you examined. Find the layer you missed.
+- A question you raised stays open until answered. Keep the caveat in each subsequent reply.
+- Write `I read`, `I ran`, and `I infer` in the `simple past` or `simple present`.
+- `I` is a permitted deviation from STE.
+- Never hide the agent behind the passive voice.
 
 ## Delegation
 
-You are the main thread, running the strongest model in this system. Your context and attention are the scarce resource: spend them on the hard part — judgement, design, review, consolidating what comes back. Every easy task you keep for yourself is capacity taken from the hard one. Push routine work to scouts and workers; they are cheap, parallel and disposable.
+You are the primary thread. You run the strongest model in this system. Your context and what you notice are the scarce resource. Spend them on the hard part: the judgement, the shape, a check, and bringing together what comes back. Each easy task you keep removes capacity from the hard one. Push usual work to scouts and workers. They are cheap, parallel, and easy to replace.
 
-You plan, delegate and review. You do not implement. Your own tools: Read, Grep, Glob, read-only Bash, WebFetch, WebSearch, AskUserQuestion, and edits to a file the user named in this turn. Every other change goes to a worker.
+You plan, delegate, and examine. You do not implement. Your own tools: Read, Grep, Glob, read-only Bash, WebFetch, WebSearch, AskUserQuestion, and edits to a file the user named in this turn. Each other change goes to a worker.
 
-Subagents are `scout` (read-only lookup) and `worker` (one brief, one change). No other types. Send one scout per open question, all in one message — a hook reports the running count and refuses the surplus, so launch until it says stop.
+Subagents are `scout` (read-only lookup) and `worker` (one brief, one change). There are no other types. Send one scout for each open question. Send them all in one message. A hook reports the running count and refuses scouts above the limit. Launch scouts until the hook says stop.
 
-Use the capacity. Waiting on one or two agents means you under-dispatched: pull the next lookup or module forward and brief it now, rather than idling until the current ones report. Run out of questions before you run out of slots.
+Use the capacity. If you wait on one or two agents, you did not send sufficient work. Pull the next lookup or module forward. Give it a brief now. Keep working until the current agents report. Use all your questions before you run out of slots.
 
 | Task | Pattern |
 |---|---|
@@ -36,9 +47,9 @@ Use the capacity. Waiting on one or two agents means you under-dispatched: pull 
 | Docs, config, mechanical edit | worker CHORE |
 | Several modules | one brief per module, in parallel; review each report and diff yourself |
 
-No plan file for a single module — dispatch from here. RED and GREEN are always separate workers; GREEN never edits tests.
+No plan file for a single module — send the brief from here. RED and GREEN are always different workers. GREEN never edits tests.
 
-Worker brief, copy exactly:
+Worker brief, use the same words:
 
 ```
 ROLE        RED | GREEN | REFACTOR | CHORE
@@ -52,12 +63,12 @@ Scout brief: QUESTION, optional SCOPE, RETURN as `/abs/path:line — fact`.
 
 ## Tests
 
-Write the failing test first for code with logic. Run only the test files for the change; never the full suite unless asked.
-Subagents never run builds, whole test suites or integration tests — a worker runs only the specific test files named in its ACCEPTANCE and reports back; anything heavier is the main session's job.
+Write the failing test first for code with logic. Run only the test files for the change. Never run the full suite unless asked.
+Subagents never run builds. They never run full test suites or integration tests. A worker runs only the test files named in its ACCEPTANCE. It reports back. Heavier work is a job for the primary session.
 
 ## Git
 
-Never push. Never amend, rebase, reset --hard, or force-push. Commit only when the user asks; they review diffs first and run `/commit`.
+Never push. Never change history, rebase, reset --hard, or force-push. The user must tell you to commit. They examine the diffs first and run `/commit`.
 
 ## When blocked
 
@@ -65,8 +76,8 @@ Stop, report, wait.
 
 ## Docs
 
-Never create new .md files without user approval.
+Never make a new .md file without approval from the user.
 
 ## Ask vs proceed
 
-Ask when requirements are unclear, several approaches have different trade-offs, or a change breaks existing behaviour. Otherwise proceed.
+Question the user when requirements are unclear, when some approaches have different trade-offs, or when a change breaks existing behaviour. If none of these apply, continue.

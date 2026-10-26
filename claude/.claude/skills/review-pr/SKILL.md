@@ -1,17 +1,17 @@
 ---
 name: review-pr
-description: Review a pull request in an isolated worktree — investigate and verify the change against the code, run checks, and surface concerns before it merges
+description: This skill examines a pull request in an isolated worktree. It runs an investigation, and it checks the change against the code. It runs checks, and it surfaces issues before the change merges.
 disable-model-invocation: true
 allowed-tools: Bash(git:*), Bash(npm:*), Bash(npx:*), Bash(pnpm:*), Bash(yarn:*), Read, Grep, Glob, AskUserQuestion
 ---
 
-Review a pull request end-to-end in an isolated **worktree**. You are a safety net, not the owner — the submitting dev stays responsible. Canvas the whole change surface; let nothing ship unseen.
+Examine a pull request end-to-end in an isolated **worktree**. You are a safety net, not the owner. The dev who wrote the change stays responsible. Look at the full change. Let nothing ship unseen.
 
-Surface real errors and save time — this is not a quiz for the developer. Investigate and settle every question you can against the code yourself. Ask the developer only for what the code cannot give you: business need, intent, whether an omission was deliberate, context outside the repo.
+Surface errors, and save time. This task is not a quiz for the dev. Look at each question you can answer against the code, on your own. Resolve it there. Do not go to the dev for it. Question the dev only for what the code cannot give you. Examples: why the business wants it, intent, if an omission was deliberate, or context external to the repo.
 
 ## 1. Get the branch
 
-If not given, ask for it. Confirm the base it targets (default `main`).
+If not given, request it. Check the target branch it points to (default `main`).
 
 ## 2. Create the worktree
 
@@ -20,40 +20,45 @@ ROOT=$(git rev-parse --show-toplevel)
 git ls-remote --exit-code --heads origin <branch>
 ```
 
-If that check fails, stop — the branch isn't on this repo's remote; don't guess another repo. Otherwise:
+If that check fails, stop. The branch is not on the remote of this repo. Do not guess at a different repo. If the check succeeds, continue:
 
 ```bash
 git fetch origin <branch>
 git worktree add "$ROOT/worktrees/<branch>" origin/<branch>
 ```
 
-Work exclusively inside `$ROOT/worktrees/<branch>` from here on.
+Work exclusively in `$ROOT/worktrees/<branch>` from here on.
 
 ## 3. Install dependencies
 
-Detect the package manager from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm, `bun.lockb` → bun) and install. The review runs against a working, installed tree.
+Find the package manager from the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm, `bun.lockb` → bun). Install it. The inspection runs against a working, installed tree.
 
 ## 4. Map the change surface
 
-Diff the branch against its base (`git diff <base>...HEAD`). Trace what the changed code touches and what depends on it. Done when every changed file is examined and its blast radius understood — not a file list, an understanding of what the change does and everywhere it reaches.
+Diff the branch against its target (`git diff <base>...HEAD`). Follow what the changed code touches, and what relies on it. The map is done when you examine each changed file and understand its blast radius. The goal is not a record of files. The goal is an understanding of what the change does, and everywhere it touches.
 
 ## 5. Investigate and verify
 
-Work through the change and its blast radius yourself. For anything you suspect — a bug, a wipe, unbounded growth, a broken contract, a scope gap — read the code that would settle it before raising it. Never assert a claim the code can confirm or refute.
+Work through the change and its blast radius on your own. You can find a bug, a deletion, unbounded growth, a broken contract, or a partial scope. Read the code that answers it before you report an issue. Never assert a claim the code can check or disprove.
 
-Two kinds of open question:
-- **Answerable from the code** — resolve by investigation, don't ask.
-- **Answerable only by the developer** — business need, why this approach, whether a scope gap was intentional, external context. Ask these one at a time, only when the answer changes your assessment, grounded in what you already found.
+There are two types of open question.
+- **Answerable from the code**:
+  - Resolve it through investigation.
+  - Do not put it to the dev.
+- **Answerable only by the dev**:
+  - Examples: why the business wants this, why this approach, if a partial scope was on purpose, or external context.
+  - Question these one at a time, only when the answer changes your view.
+  - Ground each question in what you found.
 
 ## 6. Run the checks
 
-- Targeted tests covering the affected files only — never the full suite, that's CI's job.
-- Typecheck with no emit (`tsc --noEmit`) and the linter.
+- Targeted tests for the affected files only. Never run the full suite — that job belongs to CI.
+- Typecheck with `tsc --noEmit`. Run the linter too.
 
-Report every result faithfully: failures with output, skips as skips, passes as passes.
+Report each result faithfully: a failure with output, a skip as a skip, and a success as a success.
 
 ## 7. Surface everything
 
-Canvas the whole change: correctness, edge cases, security, performance, missing tests, scope creep. Every concern raised should already be checked against the code. Offer concrete test/debug steps the dev can run now. State plainly what you couldn't verify and why. The dev decides what to act on.
+Look at the full change. Is it correct? What about edge conditions? Is it safe? How fast does it run? Are tests missing? Is the scope larger than planned? Check each issue raised against the code before you report it. Offer concrete test and debug steps the dev can run now. State plainly what you could not check, and why. The dev picks what to act on.
 
 When done, offer to remove the worktree: `git worktree remove $ROOT/worktrees/<branch>`.
