@@ -2,14 +2,14 @@
 """claude-ste-lint.py -- Simplified Technical English (STE) linter.
 
 Lints text (or the last assistant turn of a Claude Code transcript, or a
-stored gate-result state file) against the rule set in plan section 4's
-linter spec (ste/dict/linter-spec.txt): preprocessing P1-P6 normalises the
-text, then a fixed table of checks (block-class and warn-class, driven by
-ste/rules.tsv for class/scope/message/fix) runs over paragraphs/sentences
-built from that normalised text. Exit codes: 0 clean, 1 warn-class only,
-2 at least one block-class violation, 3 linter failure (missing dict, bad
-args, exception). Formats: human, model (for hook/reminder consumption),
-json (machine-readable, also used for --log). Python 3 stdlib only.
+stored gate-result state file) against a fixed table of 13 warn-class
+checks: ste/rules.tsv carries each check's class, scope, message and fix
+text, and ste/phrases.tsv carries the NARRATION, FILLER-OPEN and SLOP
+phrase lists. There is no dictionary; the linter runs with none present.
+Exit codes: 0 clean, 1 one or more warnings, 3 linter failure (bad args,
+missing rule/phrase file, exception). Formats: human, model (for
+hook/reminder consumption), json (machine-readable, also used for --log).
+Python 3 stdlib only.
 """
 
 import argparse
@@ -23,33 +23,25 @@ from datetime import datetime, timezone
 # Module-level constants
 # ---------------------------------------------------------------------------
 
-# FUNCTION WORDS AND AUXILIARIES (linter-spec.txt lines 27-34): the dictionary
-# only lists base forms (be, have, do, can, will, must, not) plus articles,
-# demonstratives and the D2 pronoun deviation (i, me, my) are already in
-# glossary.txt. These are the inflections and extra closed-class words that
-# must be treated as approved/function words in every form.
-AUX_INFLECTIONS = {
-    "am", "is", "are", "was", "were", "been", "being",
-    "has", "had", "having",
-    "does", "did",
-}
-ARTICLES = {"a", "an", "the"}
-DEMONSTRATIVES = {"this", "that", "these", "those"}
-EXTRA_PRONOUNS = {
-    "i", "me", "my", "you", "your", "we", "us", "our",
-    "it", "its", "they", "them", "their", "who", "which",
-}
-BASE_AUX = {"be", "have", "do", "can", "will", "must", "not"}
-FUNCTION_WORDS = AUX_INFLECTIONS | ARTICLES | DEMONSTRATIVES | EXTRA_PRONOUNS | BASE_AUX
-
-# STATE WORDS (linter-spec.txt lines 50-54): be + one of these participles
-# describes a state, not an action, so PASSIVE/PASSIVE-BY must not fire.
+# STATE WORDS: the verb "be" followed by one of these participles describes
+# a state, not an action, so PASSIVE-BY must not fire.
 # See tests/fixtures/lint/warn-fp-passive.md.
 STATE_WORDS = {
     "closed", "open", "complete", "completed", "clean", "ready", "full",
     "empty", "correct", "incorrect", "present", "absent", "visible", "set",
     "done", "installed", "attached", "connected", "disconnected", "locked",
     "unlocked",
+}
+
+# Irregular participles whose base/participle form does not end in -ed/-en
+# (run, put, cut, ...). PASSIVE-BY's trailing "by <agent>" is itself a
+# strong passive-voice signal, so these are accepted alongside any word
+# ending in -ed/-en.
+IRREGULAR_PARTICIPLES = {
+    "run", "put", "cut", "set", "sent", "built", "made", "held", "found",
+    "written", "given", "taken", "done", "kept", "read", "left", "lost",
+    "met", "paid", "said", "told", "won", "brought", "caught", "thought",
+    "bought",
 }
 
 UNITS = {
@@ -64,10 +56,7 @@ BOX_CHARS = set("─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩
 ABBREV_SET = ("e.g.", "i.e.", "etc.", "vs.", "cf.", "n.b.", "et al.")
 
 LIST_ITEM_RE = re.compile(r'^(?:[-*•]\s+|\d+[.)]\s+)')
-BULLET_MARKER_RE = re.compile(r'^[-*•]\s+')
-NUMBERED_MARKER_RE = re.compile(r'^\d+[.)]\s+')
 ALSO_RE = re.compile(r'^Also:\s*')
-PROC_PREFIX_RE = re.compile(r'^(Do not|Always|Never|Then)\s+', re.IGNORECASE)
 
 FENCE_RE = re.compile(r'```.*?```', re.DOTALL)
 INLINE_CODE_RE = re.compile(r'`([^`\n]+)`')
@@ -85,7 +74,6 @@ CONTRACTION_RE = re.compile(
     r"\b\w+n't\b|\b(?:it|that|there|what|who|let|here)'s\b|\b\w+'(?:re|ll|ve|d|m)\b",
     re.IGNORECASE,
 )
-POSSESSIVE_RE = re.compile(r"\b(\w+)'s\b")
 LATIN_RE = re.compile(
     # A blanket trailing \b (as the spec's regex sketch has it) never fires
     # after a literal "." (both the "." and the following space/end are
@@ -94,38 +82,14 @@ LATIN_RE = re.compile(
     r"\be\.g\.|\bi\.e\.|\bet al\.|\bcf\.|\bn\.b\.|\betc\.|\betc\b|\bvs\.|\bvs\b|\bvia\b",
     re.IGNORECASE,
 )
-USING_RE = re.compile(r"\busing\b", re.IGNORECASE)
 THIS_PRONOUN_RE = re.compile(
     r"^(?:This|It|That)\s+(?:is|was|means|allows|ensures|makes|gives|will|"
     r"can|lets|helps|prevents|causes|keeps|avoids)\b",
     re.IGNORECASE,
 )
-PERFECT_RE = re.compile(r"\b(?:have|has|had)\s+(?:not\s+)?(?:been\s+)?(\w+)\b", re.IGNORECASE)
-PROGRESSIVE_RE = re.compile(
-    r"\b(?:am|is|are|was|were|be|been|being)\s+(?:not\s+)?(\w+ing)\b", re.IGNORECASE
-)
-BEING_RE = re.compile(r"\bbeing\b", re.IGNORECASE)
 PASSIVE_BY_RE = re.compile(
     r"\b(?:is|are|was|were|be|been)\s+(?:not\s+)?(\w+)\s+by\b", re.IGNORECASE
 )
-PASSIVE_RE = re.compile(
-    r"\b(?:am|is|are|was|were|be|been)\s+(?:not\s+)?(\w+)\b(?!\s+by\b)", re.IGNORECASE
-)
-AND_VERB_RE = re.compile(r"\band\s+([A-Za-z]+)\b", re.IGNORECASE)
-THEN_RE = re.compile(r"\bthen\b", re.IGNORECASE)
-ING_PRECEDED_WORDS = {
-    "by", "when", "while", "before", "after", "for", "without", "of", "in", "on",
-}
-POS_TARGET_WORDS = {"test", "check", "damage", "need", "fit", "insert", "follow", "press"}
-POS_PRECEDING = {"to", "you", "i", "we"}
-
-CHECK_ORDER = [
-    "SENTENCE-LENGTH", "CONTRACTION", "COMPLEX-VERB", "USING", "PASSIVE-BY",
-    "UNAPPROVED", "BANNED", "SEMICOLON", "LATIN",
-    "PASSIVE", "ING-FORM", "NOUN-CLUSTER", "ONE-INSTRUCTION", "IMPERATIVE",
-    "PARAGRAPH-LENGTH", "THIS-PRONOUN", "POSSESSIVE", "SAFETY", "UNKNOWN",
-    "POS", "PROSE-WORDS", "ALSO-COUNT", "ALSO-LENGTH",
-]
 
 # ---------------------------------------------------------------------------
 # Data loading
@@ -134,133 +98,9 @@ CHECK_ORDER = [
 
 class Data:
     def __init__(self):
-        self.glossary = {}
-        self.glossary_phrases = {}
-        self.approved = {}
-        self.approved_phrases = {}
-        self.banned = {}
-        self.banned_phrases = {}
-        self.unapproved = {}
-        self.unapproved_phrases = {}
-        self.british = {}
-        self.form_to_base = {}
-        self.participles = set()
         self.rules = {}
-        self.max_phrase_words = 3
-
-
-def _split_single_phrase(d, word, value):
-    target = d[1] if ' ' in word else d[0]
-    return target
-
-
-def load_glossary_style(path):
-    """word<TAB>pos per line, '#' comments, multi-word phrases allowed."""
-    single, phrases = {}, {}
-    if not os.path.isfile(path):
-        return single, phrases
-    with open(path, encoding='utf-8') as f:
-        for line in f:
-            line = line.rstrip('\n')
-            if not line.strip() or line.lstrip().startswith('#'):
-                continue
-            parts = line.split('\t')
-            if len(parts) < 2:
-                continue
-            word = parts[0].strip().lower()
-            pos = parts[1].strip().lower()
-            if not word or not pos:
-                continue
-            target = phrases if ' ' in word else single
-            target.setdefault(word, set()).add(pos)
-    return single, phrases
-
-
-def load_banned(path):
-    single, phrases = {}, {}
-    if not os.path.isfile(path):
-        return single, phrases
-    with open(path, encoding='utf-8') as f:
-        for line in f:
-            line = line.rstrip('\n')
-            if not line.strip() or line.lstrip().startswith('#'):
-                continue
-            parts = line.split('\t')
-            word = parts[0].strip().lower()
-            if not word:
-                continue
-            replacement = None
-            if len(parts) > 1:
-                cand = parts[1].strip()
-                if cand and not cand.startswith('#'):
-                    replacement = cand
-            target = phrases if ' ' in word else single
-            target[word] = replacement
-    return single, phrases
-
-
-def load_unapproved(path):
-    single, phrases = {}, {}
-    if not os.path.isfile(path):
-        return single, phrases
-    with open(path, encoding='utf-8') as f:
-        for line in f:
-            line = line.rstrip('\n')
-            if not line.strip() or line.lstrip().startswith('#'):
-                continue
-            parts = line.split('\t')
-            if len(parts) < 2:
-                continue
-            word = parts[0].strip().lower()
-            pos = parts[1].strip().lower()
-            alt = parts[2].strip() if len(parts) > 2 else ''
-            if not word:
-                continue
-            target = phrases if ' ' in word else single
-            target.setdefault(word, []).append((pos, alt))
-    return single, phrases
-
-
-def load_british(path):
-    d = {}
-    if not os.path.isfile(path):
-        return d
-    with open(path, encoding='utf-8') as f:
-        first = True
-        for line in f:
-            line = line.rstrip('\n')
-            if first:
-                first = False
-                continue
-            if not line.strip() or line.lstrip().startswith('#'):
-                continue
-            parts = line.split('\t')
-            if len(parts) < 2:
-                continue
-            d[parts[0].strip().lower()] = parts[1].strip().lower()
-    return d
-
-
-def load_verb_forms(path):
-    form_to_base = {}
-    participles = set()
-    if not os.path.isfile(path):
-        return form_to_base, participles
-    with open(path, encoding='utf-8') as f:
-        for line in f:
-            line = line.rstrip('\n')
-            if not line.strip() or line.lstrip().startswith('#'):
-                continue
-            parts = line.split('\t')
-            if len(parts) < 4:
-                continue
-            base, sform, past, part = (p.strip().lower() for p in parts[:4])
-            for form in (sform, past, part):
-                if form and form != base and form not in form_to_base:
-                    form_to_base[form] = base
-            if part:
-                participles.add(part)
-    return form_to_base, participles
+        self.phrases = {}
+        self.phrase_res = {}
 
 
 def load_rules(path):
@@ -287,250 +127,59 @@ def load_rules(path):
     return rules
 
 
+def load_phrases(path):
+    """phrase<TAB>check<TAB>fix per line, '#' comments, blank lines and the
+    header row skipped. check is one of NARRATION, FILLER-OPEN, SLOP."""
+    phrases = {'NARRATION': {}, 'FILLER-OPEN': {}, 'SLOP': {}}
+    if not os.path.isfile(path):
+        return phrases
+    header_skipped = False
+    with open(path, encoding='utf-8') as f:
+        for line in f:
+            line = line.rstrip('\n')
+            if not line.strip() or line.lstrip().startswith('#'):
+                continue
+            if not header_skipped:
+                header_skipped = True
+                continue
+            parts = line.split('\t')
+            if len(parts) < 3:
+                continue
+            phrase = parts[0].strip().lower()
+            check = parts[1].strip()
+            fix = parts[2].strip()
+            if not phrase or check not in phrases:
+                continue
+            phrases[check][phrase] = fix
+    return phrases
+
+
+def compile_phrase_regex(phrase_map):
+    """One word-boundary alternation regex for a phrase->fix map, longest
+    phrase first (then alphabetical) so matching never depends on dict or
+    set iteration order."""
+    if not phrase_map:
+        return None
+    ordered = sorted(phrase_map.keys(), key=lambda p: (-len(p), p))
+    pattern = r'\b(?:%s)\b' % '|'.join(re.escape(p) for p in ordered)
+    return re.compile(pattern, re.IGNORECASE)
+
+
 def load_data():
     script_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.environ.get('STE_DATA_DIR') or os.path.join(script_dir, '..', 'ste')
-    dict_dir = os.environ.get('STE_DICT_DIR') or os.path.join(data_dir, 'dict')
-
-    approved_path = os.path.join(dict_dir, 'approved.tsv')
-    if not os.path.isfile(approved_path):
-        sys.stderr.write(
-            "claude-ste-lint: dictionary not found: %s (set STE_DICT_DIR)\n" % approved_path
-        )
-        sys.exit(3)
 
     data = Data()
     try:
-        data.glossary, data.glossary_phrases = load_glossary_style(
-            os.path.join(data_dir, 'glossary.txt'))
-        data.banned, data.banned_phrases = load_banned(os.path.join(data_dir, 'banned.txt'))
-        data.british = load_british(os.path.join(data_dir, 'british.tsv'))
         data.rules = load_rules(os.path.join(data_dir, 'rules.tsv'))
-        data.approved, data.approved_phrases = load_glossary_style(approved_path)
-        data.unapproved, data.unapproved_phrases = load_unapproved(
-            os.path.join(dict_dir, 'unapproved.tsv'))
-        data.form_to_base, data.participles = load_verb_forms(
-            os.path.join(dict_dir, 'verb-forms.tsv'))
+        data.phrases = load_phrases(os.path.join(data_dir, 'phrases.tsv'))
+        data.phrase_res = {
+            cid: compile_phrase_regex(pmap) for cid, pmap in data.phrases.items()
+        }
     except Exception as exc:  # noqa: BLE001
-        sys.stderr.write("claude-ste-lint: failed to load dictionary data: %s\n" % exc)
+        sys.stderr.write("claude-ste-lint: failed to load rule/phrase data: %s\n" % exc)
         sys.exit(3)
     return data
-
-
-# ---------------------------------------------------------------------------
-# P6 lookup normalisation
-# ---------------------------------------------------------------------------
-
-
-def _add_doubled_consonant_variants(add, w, suffix_len):
-    stem = w[:-suffix_len]
-    add(stem)
-    add(stem + 'e')
-    if len(stem) >= 3 and stem[-1] == stem[-2] and stem[-1] not in 'aeiou':
-        add(stem[:-1])
-
-
-def gen_candidates(data, w, include_verbal_suffix_strip=False):
-    """P6 lookup normalisation candidates, in order, for word w.
-
-    include_verbal_suffix_strip adds the generic "-ing/-ed with doubled
-    consonant and e-restoration" step. It is deliberately NOT used by
-    classify_for_dict_checks: an -ed/-ing word with no verb-forms.tsv row
-    and no plain-noun/plural reading (e.g. "quoted") would otherwise land
-    on an unrelated unapproved homonym (unapproved.tsv "quote v GIVE(v)")
-    purely by accident of spelling -- see tests/fixtures/lint/
-    warn-fp-unknown.md. is_known_any() still uses it (a broader, lower-risk
-    "have we ever heard of this word" test used for UNKNOWN/proper nouns).
-    """
-    out = []
-    seen = set()
-
-    def add(c):
-        if c and c not in seen:
-            seen.add(c)
-            out.append(c)
-
-    add(w)
-    if w in data.british:
-        add(data.british[w])
-    if w.endswith('ies') and len(w) > 4:
-        add(w[:-3] + 'y')
-    elif w.endswith('es') and len(w) > 3:
-        add(w[:-2])
-        add(w[:-1])
-    elif w.endswith('s') and not w.endswith('ss') and len(w) > 2:
-        add(w[:-1])
-    base = data.form_to_base.get(w)
-    if base:
-        add(base)
-    if include_verbal_suffix_strip:
-        if w.endswith('ied') and len(w) > 4:
-            add(w[:-3] + 'y')
-        if w.endswith('ing') and len(w) > 4:
-            _add_doubled_consonant_variants(add, w, 3)
-        if w.endswith('ed') and len(w) > 3 and not w.endswith('ied'):
-            _add_doubled_consonant_variants(add, w, 2)
-    if w.endswith('est') and len(w) > 4:
-        stem = w[:-3]
-        add(stem)
-        if len(stem) >= 3 and stem[-1] == stem[-2] and stem[-1] not in 'aeiou':
-            add(stem[:-1])
-    if w.endswith('er') and len(w) > 3:
-        stem = w[:-2]
-        add(stem)
-        if len(stem) >= 3 and stem[-1] == stem[-2] and stem[-1] not in 'aeiou':
-            add(stem[:-1])
-    if w.endswith('ly') and len(w) > 3:
-        add(w[:-2])
-    return out
-
-
-def strip_pos_tag(alt_token):
-    m = re.match(r'^(.*?)\(\s*\w+\s*\)$', alt_token.strip())
-    if m:
-        return m.group(1).strip()
-    return alt_token.strip()
-
-
-def parse_alternatives(alt_str):
-    if not alt_str:
-        return []
-    return [a.strip() for a in alt_str.split('|') if a.strip()]
-
-
-# POS pick order: a word in glossary.txt/approved.tsv can carry more than
-# one part-of-speech tag (e.g. "lint" is both v and n, "retry" is both v
-# and n), stored as a set per word (load_glossary_style). Reading that set
-# with next(iter(...)) picked an arbitrary tag that changed with Python's
-# per-run hash seed (PYTHONHASHSEED), which flipped IMPERATIVE's verdict on
-# "lints"/"retry" between runs. Fixed rule: verb first, then noun, then
-# adjective, then adverb, then any other tag, alphabetically inside a tie.
-POS_PICK_ORDER = ('v', 'n', 'adj', 'adv')
-
-
-def pick_pos(poses):
-    """Deterministically choose one part-of-speech tag from a set of tags.
-
-    See POS_PICK_ORDER for the fixed rule this applies.
-    """
-    def key(p):
-        if p in POS_PICK_ORDER:
-            return (0, POS_PICK_ORDER.index(p))
-        return (1, p)
-    return min(poses, key=key)
-
-
-def classify_for_dict_checks(data, word):
-    """Resolve a single word for BANNED/UNAPPROVED purposes.
-
-    Precedence is glossary > approved > banned > unapproved, searched across
-    every P6-derived candidate (word-level, part-of-speech-agnostic), per the
-    "key"/"complete" examples in linter-spec.txt: a word present in
-    glossary.txt or approved.tsv under ANY part of speech is exempt from
-    UNAPPROVED, even when unapproved.tsv also lists it under a different
-    part of speech (e.g. "complete" approved as a verb, unapproved as an
-    adjective: approved wins). NOTE: this also exempts "strip"/"stripped"
-    (approved.tsv has "strip n") even though unapproved.tsv separately lists
-    "strip v -> REMOVE(v)" -- see the REPORT for this as a documented
-    disagreement with the brief's ACCEPTANCE case C, which the dictionary
-    data and tests/fixtures/lint/{inflections,good-reply}.md contradict.
-    """
-    w = word.lower()
-    # Exemption (glossary/approved) is checked across the broad candidate
-    # set, including generic -ing/-ed stripping: a regular past tense of a
-    # glossary/approved verb (e.g. "failed" -> "fail") must be recognised
-    # even without a verb-forms.tsv row. Violation (banned/unapproved) is
-    # checked only across the narrow candidate set, so an -ed/-ing word
-    # that merely resembles an unrelated unapproved lemma by spelling (e.g.
-    # "quoted" -> "quote") is not flagged purely by that accident -- see
-    # tests/fixtures/lint/warn-fp-unknown.md.
-    exempt_candidates = gen_candidates(data, w, include_verbal_suffix_strip=True)
-    strict_candidates = gen_candidates(data, w, include_verbal_suffix_strip=False)
-
-    for cand in exempt_candidates:
-        if cand in data.glossary:
-            pos = pick_pos(data.glossary[cand])
-            return ('glossary', pos, None)
-
-    for cand in exempt_candidates:
-        if cand in data.approved:
-            pos = pick_pos(data.approved[cand])
-            return ('approved', pos, None)
-
-    for cand in strict_candidates:
-        if cand in data.banned:
-            return ('banned', None, data.banned[cand])
-
-    for cand in strict_candidates:
-        if cand in data.unapproved:
-            for (upos, altstr) in data.unapproved[cand]:
-                alts = parse_alternatives(altstr)
-                if alts:
-                    return ('unapproved', upos, alts)
-
-    return ('unknown', None, None)
-
-
-def is_known_any(data, word):
-    w = word.lower()
-    if w in FUNCTION_WORDS or w in STATE_WORDS:
-        return True
-    for cand in gen_candidates(data, w, include_verbal_suffix_strip=True):
-        if (cand in data.glossary or cand in data.approved
-                or cand in data.banned or cand in data.unapproved):
-            return True
-    return False
-
-
-def lookup_phrase(data, phrase):
-    if phrase in data.glossary_phrases:
-        pos = pick_pos(data.glossary_phrases[phrase])
-        return ('glossary', pos, None)
-    if phrase in data.approved_phrases:
-        pos = pick_pos(data.approved_phrases[phrase])
-        return ('approved', pos, None)
-    if phrase in data.banned_phrases:
-        return ('banned', None, data.banned_phrases[phrase])
-    if phrase in data.unapproved_phrases:
-        for (pos, altstr) in data.unapproved_phrases[phrase]:
-            alts = parse_alternatives(altstr)
-            if alts:
-                return ('unapproved', pos, alts)
-    return None
-
-
-def is_participle_like(data, word):
-    w = word.lower()
-    if w in data.participles:
-        return True
-    if w.endswith('ed') or w.endswith('en'):
-        if w in data.glossary and 'n' in data.glossary[w] and 'v' not in data.glossary[w]:
-            return False
-        return True
-    return False
-
-
-def is_approved_verb(data, text):
-    cls, pos, _ = classify_for_dict_checks(data, text)
-    if cls in ('glossary', 'approved') and pos == 'v':
-        return True
-    # test/check/damage/need/fit/insert/follow/press are approved only as
-    # nouns (POS check's own domain) but are common, acceptable imperative
-    # openers in practice -- don't also fire IMPERATIVE/ONE-INSTRUCTION/
-    # SAFETY/NOUN-CLUSTER on them (tests/fixtures/good-reply.md step 2,
-    # "Check the result.").
-    if cls in ('glossary', 'approved') and text.lower() in POS_TARGET_WORDS:
-        return True
-    return False
-
-
-def is_function_word(data, norm):
-    if norm is None:
-        return False
-    if norm in FUNCTION_WORDS:
-        return True
-    poses = data.approved.get(norm, set()) | data.glossary.get(norm, set())
-    return bool(poses & {'art', 'prep', 'conj', 'pron'})
 
 
 # ---------------------------------------------------------------------------
@@ -651,8 +300,8 @@ def classify_raw(data, raw, is_first):
             return Token(raw, raw.lower(), 'ident', True)
         if "'" in raw:
             # Contraction/possessive (don't, it's, we'll): kept as one word
-            # token for counting, never matched against the dictionaries --
-            # CONTRACTION/POSSESSIVE already flag these via regex.
+            # token for counting, never matched against a dictionary --
+            # CONTRACTION already flags these via regex.
             return Token(raw, raw.lower(), 'word', False)
         if '-' in raw:
             return Token(raw, raw.lower(), 'hyphen', False)
@@ -662,10 +311,7 @@ def classify_raw(data, raw, is_first):
     if raw.isupper() and len(raw) >= 2:
         return Token(raw, raw.lower(), 'allcaps', True)
     if raw[0].isupper() and not is_first:
-        lw = raw.lower()
-        if not is_known_any(data, lw):
-            return Token(raw, lw, 'proper', True)
-        return Token(raw, lw, 'word', False)
+        return Token(raw, raw.lower(), 'proper', True)
     return Token(raw, raw.lower(), 'word', False)
 
 
@@ -722,37 +368,7 @@ def split_into_sentences(text):
     return sentences
 
 
-def compute_step_flags(text):
-    """IMPERATIVE's "is this list line a procedure step" flag, one per list
-    line, in document order. This is a global pass over every non-blank
-    line of the whole (already P1/P2-processed) text, deliberately not
-    scoped to one blank-line-separated block: a numbered step ("1." / "2)")
-    is always a step; a dash/star/bullet (*) is a step only when the
-    nearest preceding non-blank line that is not itself a list item ends
-    with a colon. Blank lines and dropped lines (already removed by P2) are
-    skipped when searching upward, so a heading, a blank line or a full
-    stop above a bullet all mean "not a step" -- see tests/fixtures/lint/
-    {warn-fp-imperative-bullets,warn-imperative-steps}.md. build_doc's
-    per-block list-line discovery visits every list line in the same
-    document order, so the two line up positionally.
-    """
-    flags = []
-    last_context = None
-    for raw_line in text.split('\n'):
-        stripped = raw_line.strip()
-        if not stripped:
-            continue
-        if NUMBERED_MARKER_RE.match(stripped):
-            flags.append(True)
-            continue
-        if BULLET_MARKER_RE.match(stripped):
-            flags.append(bool(last_context) and last_context.endswith(':'))
-            continue
-        last_context = stripped
-    return flags
-
-
-def build_sentence_specs(lines, step_flags, flag_idx):
+def build_sentence_specs(lines):
     specs = []
     buf = []
 
@@ -760,7 +376,7 @@ def build_sentence_specs(lines, step_flags, flag_idx):
         if buf:
             text = ' '.join(buf)
             for s in split_into_sentences(text):
-                specs.append(('plain', s, None))
+                specs.append(('plain', s))
             buf.clear()
 
     for line in lines:
@@ -770,39 +386,22 @@ def build_sentence_specs(lines, step_flags, flag_idx):
         m_list = LIST_ITEM_RE.match(stripped)
         if m_list:
             flush()
-            is_step = False
-            if flag_idx < len(step_flags):
-                is_step = step_flags[flag_idx]
-                flag_idx += 1
-            specs.append(('list', stripped[m_list.end():].strip(), is_step))
+            specs.append(('list', stripped[m_list.end():].strip()))
             continue
         if ALSO_RE.match(stripped):
             flush()
-            specs.append(('also', ALSO_RE.sub('', stripped).strip(), None))
+            specs.append(('also', ALSO_RE.sub('', stripped).strip()))
             continue
         buf.append(stripped)
         if stripped.endswith(':'):
             flush()
     flush()
-    return specs, flag_idx
-
-
-def classify_procedural(data, is_list_item, content):
-    if is_list_item:
-        return True
-    text = content.strip()
-    m = PROC_PREFIX_RE.match(text)
-    if m:
-        text = text[m.end():]
-    m2 = re.match(r'[A-Za-z]+', text)
-    if not m2:
-        return False
-    return is_approved_verb(data, m2.group(0))
+    return specs
 
 
 class Sentence:
     def __init__(self, index, paragraph_index, raw_text, tokens,
-                 is_list_item, is_also_line, procedural, is_procedure_step=False):
+                 is_list_item, is_also_line):
         self.index = index
         self.paragraph_index = paragraph_index
         self.raw_text = raw_text
@@ -810,8 +409,6 @@ class Sentence:
         self.tokens = tokens
         self.is_list_item = is_list_item
         self.is_also_line = is_also_line
-        self.procedural = procedural
-        self.is_procedure_step = is_procedure_step
 
 
 class Paragraph:
@@ -829,24 +426,20 @@ class Doc:
 def build_doc(data, text):
     doc = Doc()
     sentence_index = 0
-    step_flags = compute_step_flags(text)
-    flag_idx = 0
     for block in re.split(r'\n\s*\n', text):
         lines = [ln for ln in block.split('\n') if ln.strip()]
         if not lines:
             continue
-        specs, flag_idx = build_sentence_specs(lines, step_flags, flag_idx)
+        specs = build_sentence_specs(lines)
         if not specs:
             continue
         para = Paragraph(len(doc.paragraphs))
-        for kind, content, is_step in specs:
+        for kind, content in specs:
             is_list_item = (kind == 'list')
             is_also_line = (kind == 'also')
             tokens = tokenize(data, content)
-            procedural = classify_procedural(data, is_list_item, content)
             sent = Sentence(sentence_index, para.index, content, tokens,
-                             is_list_item, is_also_line, procedural,
-                             bool(is_step))
+                             is_list_item, is_also_line)
             para.sentences.append(sent)
             doc.prose_words += len(tokens)
             sentence_index += 1
@@ -864,7 +457,7 @@ def _mk(text, hint=None):
 
 
 def check_sentence_length(data, sentence):
-    limit = 20 if sentence.procedural else 25
+    limit = 25
     n = len(sentence.tokens)
     if n > limit:
         excerpt = sentence.raw_text[:80]
@@ -879,34 +472,17 @@ def check_contraction(data, sentence):
     return out
 
 
-def check_complex_verb(data, sentence):
-    out = []
-    text = sentence.scan_text
-    for m in PERFECT_RE.finditer(text):
-        word = m.group(1)
-        if is_participle_like(data, word):
-            out.append(_mk(m.group(0)))
-    for m in PROGRESSIVE_RE.finditer(text):
-        out.append(_mk(m.group(0)))
-    if BEING_RE.search(text) and not PROGRESSIVE_RE.search(text):
-        out.append(_mk('being'))
-    return out
-
-
-def check_using(data, sentence):
-    return [_mk(m.group(0)) for m in USING_RE.finditer(sentence.scan_text)]
-
-
 def check_passive_by(data, sentence):
     out = []
     for m in PASSIVE_BY_RE.finditer(sentence.scan_text):
         word = m.group(1)
-        if word.lower() in STATE_WORDS:
+        wl = word.lower()
+        if wl in STATE_WORDS:
             continue
         # The trailing "by <agent>" is itself a strong passive-voice signal,
-        # so also accept irregular verbs whose participle equals their base
-        # form (run, put, cut, ...) and isn't in verb-forms.tsv.
-        if is_participle_like(data, word) or is_approved_verb(data, word):
+        # so accept any -ed/-en word, plus the small set of irregular
+        # participles whose form doesn't end that way (run, put, cut, ...).
+        if wl.endswith('ed') or wl.endswith('en') or wl in IRREGULAR_PARTICIPLES:
             out.append(_mk(m.group(0)))
     return out
 
@@ -921,239 +497,58 @@ def check_latin(data, sentence):
     return [_mk(m.group(0)) for m in LATIN_RE.finditer(sentence.scan_text)]
 
 
-def check_passive(data, sentence):
-    out = []
-    for m in PASSIVE_RE.finditer(sentence.scan_text):
-        word = m.group(1)
-        if word.lower().endswith('ing'):
-            continue
-        if word.lower() in STATE_WORDS:
-            continue
-        if is_participle_like(data, word):
-            out.append(_mk(m.group(0)))
-    return out
-
-
-def check_ing_form(data, sentence):
-    out = []
-    tokens = sentence.tokens
-    for i, tok in enumerate(tokens):
-        if tok.kind != 'word' or tok.norm is None:
-            continue
-        if not tok.norm.endswith('ing'):
-            continue
-        if tok.norm in data.glossary or tok.norm in data.approved:
-            continue
-        preceded = tokens[i - 1].norm if i > 0 else None
-        if i == 0 or preceded in ING_PRECEDED_WORDS:
-            out.append(_mk(tok.text))
-    return out
-
-
-def check_noun_cluster(data, sentence):
-    out = []
-    run = []
-
-    def flush():
-        if len(run) >= 4:
-            out.append(_mk(' '.join(t.text for t in run)))
-
-    for tok in sentence.tokens:
-        excluded = False
-        if tok.kind in ('proper', 'number', 'numunit', 'allcaps'):
-            excluded = True
-        elif tok.norm and tok.norm.endswith('ly'):
-            excluded = True
-        elif is_function_word(data, tok.norm):
-            excluded = True
-        elif tok.kind == 'word' and is_approved_verb(data, tok.text):
-            excluded = True
-        if excluded:
-            flush()
-            run = []
-        else:
-            run.append(tok)
-    flush()
-    return out
-
-
-def check_one_instruction(data, sentence):
-    if not sentence.procedural:
-        return []
-    if THEN_RE.search(sentence.scan_text):
-        return [_mk(sentence.raw_text[:80])]
-    for m in AND_VERB_RE.finditer(sentence.scan_text):
-        if is_approved_verb(data, m.group(1)):
-            return [_mk(m.group(0))]
-    return []
-
-
-def check_imperative(data, sentence):
-    if not sentence.is_procedure_step:
-        return []
-    text = sentence.raw_text.strip()
-    if re.match(r'^do\s+not\b', text, re.IGNORECASE):
-        return []
-    m = re.match(r'[A-Za-z]+', text)
-    if m and is_approved_verb(data, m.group(0)):
-        return []
-    return [_mk(text[:80])]
-
-
-def check_safety(data, sentence):
-    text = sentence.raw_text.strip()
-    m = re.match(r'^(WARNING|CAUTION):\s*(.*)$', text)
-    if not m:
-        return []
-    rest = m.group(2).strip()
-    if re.match(r'^do\s+not\b', rest, re.IGNORECASE):
-        return []
-    wm = re.match(r'[A-Za-z]+', rest)
-    if wm:
-        w = wm.group(0).lower()
-        if w in ('if', 'when'):
-            return []
-        if is_approved_verb(data, w):
-            return []
-    return [_mk(text[:80])]
-
-
 def check_this_pronoun(data, sentence):
     if THIS_PRONOUN_RE.match(sentence.scan_text.strip()):
         return [_mk(sentence.raw_text[:60])]
     return []
 
 
-def check_possessive(data, sentence):
+def check_narration(data, sentence):
+    rx = data.phrase_res.get('NARRATION')
+    if rx is None:
+        return []
     out = []
-    contraction_spans = {m.span() for m in CONTRACTION_RE.finditer(sentence.scan_text)}
-    for m in POSSESSIVE_RE.finditer(sentence.scan_text):
-        overlapped = any(m.start() >= s and m.end() <= e for (s, e) in contraction_spans)
-        if overlapped:
-            continue
-        word = m.group(1).lower()
-        if word in ('it', 'that', 'there', 'what', 'who', 'let', 'here'):
-            continue
-        out.append(_mk(m.group(0)))
+    for m in rx.finditer(sentence.scan_text):
+        fix = data.phrases['NARRATION'].get(m.group(0).lower())
+        out.append(_mk(m.group(0), fix))
     return out
 
 
-def check_unknown(data, sentence, args):
-    if not args.unknown:
+def check_filler_open(data, sentence):
+    """Fires only when the sentence (already known to be the first of its
+    paragraph -- see run_checks) starts with a FILLER-OPEN phrase."""
+    rx = data.phrase_res.get('FILLER-OPEN')
+    if rx is None:
         return []
-    words = []
-    for tok in sentence.tokens:
-        if tok.exempt or tok.kind != 'word' or tok.norm is None:
-            continue
-        if not is_known_any(data, tok.text):
-            words.append(tok.text)
-    if words:
-        return [_mk(', '.join(words), 'glossary or replace')]
-    return []
+    text = sentence.scan_text.lstrip()
+    m = rx.match(text)
+    if not m:
+        return []
+    fix = data.phrases['FILLER-OPEN'].get(m.group(0).lower())
+    return [_mk(m.group(0), fix)]
 
 
-def check_pos(data, sentence, args):
-    if not args.pos:
+def check_slop(data, sentence):
+    rx = data.phrase_res.get('SLOP')
+    if rx is None:
         return []
     out = []
-    tokens = sentence.tokens
-    for i, tok in enumerate(tokens):
-        if tok.kind != 'word' or tok.norm is None:
-            continue
-        if tok.norm not in POS_TARGET_WORDS:
-            continue
-        if i == 0 or (tokens[i - 1].norm in POS_PRECEDING):
-            out.append(_mk(sentence.raw_text[:60]))
-            break
+    for m in rx.finditer(sentence.scan_text):
+        fix = data.phrases['SLOP'].get(m.group(0).lower())
+        out.append(_mk(m.group(0), fix))
     return out
-
-
-def _ing_claimed_elsewhere(data, sentence, tokens, idx):
-    """True if an -ing token is already reported by COMPLEX-VERB (be + ing,
-    e.g. "is running") or ING-FORM (gerund at sentence start or after a
-    preposition, e.g. "When running..."). Several -ing words are listed in
-    unapproved.tsv under their adjective/noun sense (running, setting,
-    following, ...); when the word is actually acting as a progressive
-    verb or a bare gerund, that other check already names it, so UNAPPROVED
-    should not also fire -- see tests/fixtures/lint/{complex-verb,
-    warn-ing-form}.md.
-    """
-    tok = tokens[idx]
-    if PROGRESSIVE_RE.search(sentence.scan_text):
-        for m in PROGRESSIVE_RE.finditer(sentence.scan_text):
-            if m.group(1).lower() == tok.text.lower():
-                return True
-    preceded = tokens[idx - 1].norm if idx > 0 else None
-    if idx == 0 or preceded in ING_PRECEDED_WORDS:
-        return True
-    return False
-
-
-def scan_dict_checks(data, sentence):
-    out_banned = []
-    out_unapproved = []
-    tokens = sentence.tokens
-    n = len(tokens)
-    i = 0
-    max_phrase = 3
-    while i < n:
-        tok = tokens[i]
-        if tok.exempt or tok.kind != 'word' or tok.norm is None:
-            i += 1
-            continue
-        if LATIN_RE.fullmatch(tok.norm):
-            # LATIN already reports these (e.g. "via"); don't double-report
-            # them as UNAPPROVED too (tests/fixtures/lint/latin.md).
-            i += 1
-            continue
-        if tok.norm.endswith('ing') and _ing_claimed_elsewhere(data, sentence, tokens, i):
-            i += 1
-            continue
-        matched_n = None
-        matched_hit = None
-        for span_n in range(max_phrase, 1, -1):
-            if i + span_n > n:
-                continue
-            if not all(tokens[j].kind == 'word' and not tokens[j].exempt
-                       and tokens[j].norm for j in range(i, i + span_n)):
-                continue
-            phrase = ' '.join(tokens[j].norm for j in range(i, i + span_n))
-            hit = lookup_phrase(data, phrase)
-            if hit:
-                matched_n = span_n
-                matched_hit = hit
-                break
-        if matched_n:
-            text = ' '.join(tokens[j].text for j in range(i, i + matched_n))
-            src, pos, extra = matched_hit
-            i += matched_n
-        else:
-            text = tok.text
-            src, pos, extra = classify_for_dict_checks(data, tok.text)
-            i += 1
-        if src == 'banned':
-            out_banned.append(_mk(text, extra))
-        elif src == 'unapproved' and extra:
-            out_unapproved.append(_mk(text, ' / '.join(extra)))
-    return out_banned, out_unapproved
 
 
 PER_SENTENCE_CHECKS = {
     'SENTENCE-LENGTH': check_sentence_length,
     'CONTRACTION': check_contraction,
-    'COMPLEX-VERB': check_complex_verb,
-    'USING': check_using,
-    'PASSIVE-BY': check_passive_by,
     'SEMICOLON': check_semicolon,
     'LATIN': check_latin,
-    'PASSIVE': check_passive,
-    'ING-FORM': check_ing_form,
-    'NOUN-CLUSTER': check_noun_cluster,
-    'ONE-INSTRUCTION': check_one_instruction,
-    'IMPERATIVE': check_imperative,
+    'PASSIVE-BY': check_passive_by,
     'THIS-PRONOUN': check_this_pronoun,
-    'POSSESSIVE': check_possessive,
-    'SAFETY': check_safety,
+    'NARRATION': check_narration,
+    'FILLER-OPEN': check_filler_open,
+    'SLOP': check_slop,
 }
 
 
@@ -1175,47 +570,14 @@ def run_checks(data, doc, args):
         return rule
 
     for p in doc.paragraphs:
-        for s in p.sentences:
-            # BANNED / UNAPPROVED need phrase-aware scanning together.
-            banned_rule = check_scope_ok('BANNED')
-            unapproved_rule = check_scope_ok('UNAPPROVED')
-            need_banned = banned_rule is not None
-            need_unapproved = unapproved_rule is not None
-            if need_banned or need_unapproved:
-                banned_hits, unapproved_hits = scan_dict_checks(data, s)
-                if need_banned:
-                    for h in banned_hits:
-                        violations.append({
-                            'id': 'BANNED', 'cls': banned_rule['class'],
-                            'text': h['text'],
-                            'hint': h['hint'] or banned_rule['fix'],
-                            'sentence_index': s.index,
-                        })
-                if need_unapproved:
-                    for h in unapproved_hits:
-                        violations.append({
-                            'id': 'UNAPPROVED', 'cls': unapproved_rule['class'],
-                            'text': h['text'],
-                            'hint': h['hint'] or unapproved_rule['fix'],
-                            'sentence_index': s.index,
-                        })
-
+        for idx, s in enumerate(p.sentences):
             for rid, fn in PER_SENTENCE_CHECKS.items():
                 rule = check_scope_ok(rid)
                 if rule is None:
                     continue
-                for h in fn(data, s):
-                    violations.append({
-                        'id': rid, 'cls': rule['class'],
-                        'text': h['text'], 'hint': h['hint'] or rule['fix'],
-                        'sentence_index': s.index,
-                    })
-
-            for rid, fn in (('UNKNOWN', check_unknown), ('POS', check_pos)):
-                rule = check_scope_ok(rid)
-                if rule is None:
+                if rid == 'FILLER-OPEN' and idx != 0:
                     continue
-                for h in fn(data, s, args):
+                for h in fn(data, s):
                     violations.append({
                         'id': rid, 'cls': rule['class'],
                         'text': h['text'], 'hint': h['hint'] or rule['fix'],
@@ -1341,7 +703,7 @@ def render(violations, fmt, prose_words, rc, args):
         return json.dumps(obj), obj
 
     if fmt == 'model':
-        if rc in (1, 2):
+        if rc == 1:
             first = "Your last reply broke these STE rules. Write the next reply without them."
         else:
             return "STE: clean (%d prose words)." % prose_words, None
@@ -1499,8 +861,6 @@ def build_arg_parser():
     parser.add_argument('--budget', type=int, default=120)
     parser.add_argument('--log', action='store_true')
     parser.add_argument('--session')
-    parser.add_argument('--unknown', action='store_true')
-    parser.add_argument('--pos', action='store_true')
     return parser
 
 
@@ -1544,8 +904,7 @@ def main(argv=None):
         pre = p2_filter(pre)
         doc = build_doc(data, pre)
         violations = run_checks(data, doc, args)
-        rc = 2 if any(v['cls'] == 'block' for v in violations) else (
-            1 if violations else 0)
+        rc = 1 if violations else 0
 
         out_str, _ = render(violations, args.format, doc.prose_words, rc, args)
         print(out_str)
