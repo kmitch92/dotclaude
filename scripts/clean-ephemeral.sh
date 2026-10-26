@@ -32,7 +32,6 @@ EPHEMERAL_DIRS=(
   paste-cache
   image-cache
   ide
-  # ste/dict is gitignored but NOT ephemeral: it needs the PDF to regenerate.
   ste/state
 )
 
