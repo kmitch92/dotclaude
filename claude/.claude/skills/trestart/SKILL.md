@@ -11,13 +11,8 @@ allowed-tools: Bash(~/.claude/bin/claude-trestart.sh:*)
 
 ## Task
 
-The script above ran. Do not run it again.
+The script above ran, so do not run it again.
 
-- If the output starts with `RESTART OK`:
-  - Give one short sentence.
-  - State that the session continues.
-  - Name the location: the same tmux pane, or a new terminal window.
-  - Give no other text.
-- If the output starts with `RESTART FAILED`:
-  - Send the error to the user in one or two sentences.
-  - Include the manual `claude --resume ...` command when the error shows it.
+- If the output starts with `RESTART OK`, give one short sentence that states the session continues.
+- Name the location, the same tmux pane or a new terminal window, and give no other text.
+- If the output starts with `RESTART FAILED`, send the error to the user in one or two sentences, and include the manual `claude --resume ...` command when it does.
