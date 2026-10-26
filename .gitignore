@@ -90,9 +90,12 @@
 /worktrees/
 
 # Claude runtime directories
-# STE dictionary extracted from the copyrighted ASD-STE100 PDF: never committed, regenerate with ste/extract-dict.py
-claude/.claude/ste/dict/
+# STE word files: tracked, so the linter never needs the PDF. The raw spec text stays out.
 claude/.claude/ste/dict/**
+!claude/.claude/ste/dict/approved.tsv
+!claude/.claude/ste/dict/unapproved.tsv
+!claude/.claude/ste/dict/verb-forms.tsv
+!claude/.claude/ste/dict/recurring-errors.tsv
 # STE runtime state written by the hooks
 claude/.claude/ste/lint.log.jsonl
 claude/.claude/ste/state/
