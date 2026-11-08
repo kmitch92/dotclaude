@@ -86,6 +86,14 @@
             "command": "~/.claude/hooks/session-start-compact.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -sS -m 2 -X POST -H 'Content-Type: application/json' -H \"X-Isle-Pty: ${ISLE_PTY:-}\" --data-binary @- http://127.0.0.1:8766/hook >/dev/null 2>&1 || true"
+          }
+        ]
       }
     ],
     "PreCompact": [
@@ -110,6 +118,14 @@
             "command": "~/.claude/hooks/claude-cowork-notice.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -sS -m 2 -X POST -H 'Content-Type: application/json' -H \"X-Isle-Pty: ${ISLE_PTY:-}\" --data-binary @- http://127.0.0.1:8766/hook >/dev/null 2>&1 || true"
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -130,6 +146,14 @@
             "command": "~/.claude/hooks/agent-cap.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -sS -m 2 -X POST -H 'Content-Type: application/json' -H \"X-Isle-Pty: ${ISLE_PTY:-}\" --data-binary @- http://127.0.0.1:8766/hook >/dev/null 2>&1 || true"
+          }
+        ]
       }
     ],
     "Stop": [
@@ -139,6 +163,14 @@
             "type": "command",
             "command": "~/.claude/bin/claude-ste-gate.sh",
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -sS -m 2 -X POST -H 'Content-Type: application/json' -H \"X-Isle-Pty: ${ISLE_PTY:-}\" --data-binary @- http://127.0.0.1:8766/hook >/dev/null 2>&1 || true"
           }
         ]
       }
@@ -155,6 +187,36 @@
             "type": "command",
             "command": "~/.claude/bin/claude-ste-subagent-gate.sh",
             "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -sS -m 2 -X POST -H 'Content-Type: application/json' -H \"X-Isle-Pty: ${ISLE_PTY:-}\" --data-binary @- http://127.0.0.1:8766/hook >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -sS -m 2 -X POST -H 'Content-Type: application/json' -H \"X-Isle-Pty: ${ISLE_PTY:-}\" --data-binary @- http://127.0.0.1:8766/hook >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -sS -m 2 -X POST -H 'Content-Type: application/json' -H \"X-Isle-Pty: ${ISLE_PTY:-}\" --data-binary @- http://127.0.0.1:8766/hook >/dev/null 2>&1 || true"
           }
         ]
       }
